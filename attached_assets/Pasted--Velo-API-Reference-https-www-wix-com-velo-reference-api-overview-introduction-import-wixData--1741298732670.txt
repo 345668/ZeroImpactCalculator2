@@ -1,0 +1,307 @@
+// Velo API Reference: https://www.wix.com/velo/reference/api-overview/introduction
+import wixData from 'wix-data';
+import { currentMember } from 'wix-members';
+
+let uploadedFile = null; // Variable to store the uploaded file reference
+
+$w.onReady(function () {
+    console.log("Page initialized");
+    // Initialize UI elements and state
+    initializeUI();
+    
+    // Set up event handlers
+    setupEventHandlers();
+});
+
+/**
+ * Initializes UI elements and their initial state
+ */
+function initializeUI() {
+    console.log("Initializing UI elements");
+    // Configure upload button
+    if ($w("#uploadButton")) {
+        $w("#uploadButton").label = "Upload PDF";
+        console.log("Upload button initialized");
+    }
+    
+    // Configure send button
+    if ($w("#sendButton")) {
+        $w("#sendButton").label = "Send";
+        $w("#sendButton").disabled = true; // Disable until file is uploaded
+        console.log("Send button initialized and disabled");
+    }
+    
+    // Initialize status text
+    if ($w("#statusText")) {
+        $w("#statusText").text = "Please upload a PDF document and fill in your details";
+        // Make status text visible with blue color
+        $w("#statusText").style.color = "#2196F3";
+        console.log("Status text initialized");
+    }
+}
+
+/**
+ * Sets up event handlers for interactive elements
+ */
+function setupEventHandlers() {
+    console.log("Setting up event handlers");
+    // Upload button click handler
+    if ($w("#uploadButton")) {
+        $w("#uploadButton").onClick(() => {
+            console.log("Upload button clicked");
+            if ($w("#pdfUploader")) {
+                $w("#pdfUploader").click();
+            } else {
+                console.error("PDF Uploader element not found");
+                updateStatus("PDF Uploader not configured properly", "error");
+            }
+        });
+        console.log("Upload button handler set up");
+    }
+    
+    // Send button click handler
+    if ($w("#sendButton")) {
+        $w("#sendButton").onClick(() => {
+            console.log("Send button clicked");
+            if (validateForm()) {
+                saveSubmission();
+            }
+        });
+        console.log("Send button handler set up");
+    }
+    
+    // PDF uploader change handler
+    if ($w("#pdfUploader")) {
+        $w("#pdfUploader").onChange(() => {
+            console.log("PDF uploader changed");
+            handleFileSelected();
+        });
+        console.log("PDF uploader handler set up");
+    }
+}
+
+/**
+ * Handles when a file is selected in the uploader
+ */
+function handleFileSelected() {
+    console.log("Handling file selection");
+    if ($w("#pdfUploader").value && $w("#pdfUploader").value.length > 0) {
+        const file = $w("#pdfUploader").value[0];
+        
+        // Debug the file object in detail
+        console.log("File selected:", JSON.stringify({
+            fileName: file.fileName,
+            fileUrl: file.fileUrl,
+            size: file.size,
+            mediaId: file.mediaId,
+            type: file.type,
+            // Print all available properties
+            allProps: Object.keys(file)
+        }));
+        
+        // Store the file reference for later use
+        uploadedFile = file;
+        
+        // Update status
+        updateStatus(`File "${file.fileName}" selected. Click Send to process.`, "success");
+        
+        // Enable the send button if it exists
+        if ($w("#sendButton")) {
+            $w("#sendButton").disabled = false;
+            console.log("Send button enabled");
+        }
+        
+        // Don't try to read the file content yet - we'll let the backend job handle that
+    } else {
+        console.log("No file was selected");
+        updateStatus("No file was selected", "error");
+    }
+}
+
+/**
+ * Validates the form fields
+ * @returns {boolean} True if all required fields are filled
+ */
+function validateForm() {
+    console.log("Validating form");
+    let isValid = true;
+    let errorMessage = "";
+    
+    // Check if file is uploaded
+    if (!uploadedFile) {
+        errorMessage = "Please upload a PDF document";
+        isValid = false;
+        console.log("Validation failed: No file uploaded");
+    }
+    
+    // Check first name if the field exists
+    if ($w("#firstName") && !$w("#firstName").value) {
+        errorMessage = "Please enter your first name";
+        isValid = false;
+        console.log("Validation failed: Missing first name");
+    }
+    
+    // Check last name if the field exists
+    if ($w("#lastName") && !$w("#lastName").value) {
+        errorMessage = "Please enter your last name";
+        isValid = false;
+        console.log("Validation failed: Missing last name");
+    }
+    
+    // Check email if the field exists (required)
+    if ($w("#email")) {
+        if (!$w("#email").value) {
+            errorMessage = "Please enter your email";
+            isValid = false;
+            console.log("Validation failed: Missing email");
+        } else if (!isValidEmail($w("#email").value)) {
+            errorMessage = "Please enter a valid email address";
+            isValid = false;
+            console.log("Validation failed: Invalid email format");
+        }
+    }
+    
+    // Phone number is optional, but if provided, validate format
+    if ($w("#phoneNumber") && $w("#phoneNumber").value && !isValidPhone($w("#phoneNumber").value)) {
+        errorMessage = "Please enter a valid phone number";
+        isValid = false;
+        console.log("Validation failed: Invalid phone format");
+    }
+    
+    if (!isValid) {
+        updateStatus(errorMessage, "error");
+    } else {
+        console.log("Form validation passed");
+    }
+    
+    return isValid;
+}
+
+/**
+ * Simple email validation
+ */
+function isValidEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+/**
+ * Simple phone validation (allows various formats)
+ */
+function isValidPhone(phone) {
+    // Accept digits, spaces, dashes, parentheses, and plus sign
+    const re = /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,3}[-\s.]?[0-9]{1,4}[-\s.]?[0-9]{1,4}$/;
+    return re.test(phone);
+}
+
+/**
+ * Saves the submission directly to database for backend processing
+ */
+function saveSubmission() {
+    console.log("Saving submission");
+    if (!uploadedFile) {
+        updateStatus("No file has been uploaded", "error");
+        return;
+    }
+    
+    // Disable send button to prevent multiple submissions
+    if ($w("#sendButton")) {
+        $w("#sendButton").disabled = true;
+        console.log("Send button disabled");
+    }
+    
+    updateStatus("Processing your submission...", "info");
+    
+    // Create a database record with processing flags
+    const record = {
+        firstName: $w("#firstName") ? $w("#firstName").value : "",
+        lastName: $w("#lastName") ? $w("#lastName").value : "",
+        email: $w("#email") ? $w("#email").value : "",
+        phoneNumber: $w("#phoneNumber") ? $w("#phoneNumber").value : "",
+        fileName: uploadedFile.fileName,
+        fileUrl: uploadedFile.fileUrl,  // We'll still save this for reference
+        fileSize: uploadedFile.size,
+        submissionDate: new Date(),
+        processed: false,
+        processingStatus: "new"
+    };
+    
+    console.log("Saving submission to database with file URL:", uploadedFile.fileUrl);
+    
+    // Save directly to database - the cron job will handle the rest
+    wixData.insert("CarbonCalculatorSubmissions", record)
+        .then((result) => {
+            console.log("Submission saved to database successfully:", result._id);
+            updateStatus("Your document has been submitted successfully! We will process it and send results to your email.", "success");
+            resetForm();
+        })
+        .catch((error) => {
+            console.error("Database error:", error);
+            updateStatus("Error saving your submission: " + error.message, "error");
+            
+            // Re-enable send button if error
+            if ($w("#sendButton")) {
+                $w("#sendButton").disabled = false;
+                console.log("Send button re-enabled due to error");
+            }
+        });
+}
+
+/**
+ * Resets the form after successful submission
+ */
+function resetForm() {
+    console.log("Resetting form");
+    // Reset file uploader
+    uploadedFile = null;
+    
+    if ($w("#pdfUploader")) {
+        $w("#pdfUploader").value = [];
+        console.log("PDF uploader reset");
+    }
+    
+    // Reset form fields
+    if ($w("#firstName")) $w("#firstName").value = "";
+    if ($w("#lastName")) $w("#lastName").value = "";
+    if ($w("#phoneNumber")) $w("#phoneNumber").value = "";
+    if ($w("#email")) $w("#email").value = "";
+    console.log("Form fields reset");
+    
+    // Disable send button until next upload
+    if ($w("#sendButton")) {
+        $w("#sendButton").disabled = true;
+        console.log("Send button disabled");
+    }
+}
+
+/**
+ * Updates the status message with appropriate styling
+ */
+function updateStatus(message, type = "info") {
+    if (!$w("#statusText")) {
+        console.error("Status text element not found");
+        return;
+    }
+    
+    console.log(`Status update (${type}): ${message}`);
+    $w("#statusText").text = message;
+    
+    // Make status visible with appropriate color
+    switch (type) {
+        case "success":
+            $w("#statusText").style.color = "#4CAF50"; // Green
+            break;
+        case "error":
+            $w("#statusText").style.color = "#F44336"; // Red
+            break;
+        case "info":
+        default:
+            $w("#statusText").style.color = "#2196F3"; // Blue
+            break;
+    }
+}
+
+// Keep any existing section handlers
+$w("#section4").onClick((event) => {
+    console.log("Section4 clicked", event);
+});

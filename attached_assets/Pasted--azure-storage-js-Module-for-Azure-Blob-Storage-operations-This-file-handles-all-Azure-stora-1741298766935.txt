@@ -1,0 +1,469 @@
+// azure-storage.js - Module for Azure Blob Storage operations
+// This file handles all Azure storage operations including uploads, SAS URL generation, and verification
+
+import { fetch } from 'wix-fetch';
+import crypto from 'crypto-js';
+import { getSecret } from 'wix-secrets-backend';
+
+// Azure Storage connection constants
+// Only the account name and container are hardcoded; the key is retrieved securely
+const STORAGE_ACCOUNT = "mystorageacct345668";
+const CONTAINER_NAME = "carbon-credit-docs";
+
+// Cache the storage key promise to avoid unnecessary calls to the secrets store
+let storageKeyPromise = null;
+
+/**
+ * Retrieves the Azure Storage account key from Wix Secrets
+ * This approach keeps the key secure and not hardcoded in the source code
+ * @returns {Promise<string>} The Azure storage account key
+ */
+async function getStorageKey() {
+    if (!storageKeyPromise) {
+        // Store the promise to avoid multiple requests to the secrets service
+        storageKeyPromise = getSecret("AZURE_STORAGE_KEY");
+    }
+    return storageKeyPromise;
+}
+
+/**
+ * Generates the authorization header for Azure Storage REST API requests
+ * Uses HMAC-SHA256 signing with the securely retrieved storage key
+ * 
+ * @param {string} verb - HTTP verb (GET, PUT, etc.)
+ * @param {string} contentLength - Content length as string
+ * @param {string} contentType - Content type (e.g., application/pdf)
+ * @param {string} canonicalizedHeaders - Formatted headers string
+ * @param {string} canonicalizedResource - Formatted resource string
+ * @returns {Promise<string>} Authorization header value
+ */
+async function generateAuthorizationHeader(verb, contentLength, contentType, canonicalizedHeaders, canonicalizedResource) {
+    const storageKey = await getStorageKey();
+    
+    // This string format is required by Azure Storage API for authorization
+    const stringToSign = [
+        verb,                  // HTTP Verb
+        "",                    // Content-Encoding
+        "",                    // Content-Language
+        contentLength,         // Content-Length
+        "",                    // Content-MD5
+        contentType,           // Content-Type
+        "",                    // Date
+        "",                    // If-Modified-Since
+        "",                    // If-Match
+        "",                    // If-None-Match
+        "",                    // If-Unmodified-Since
+        "",                    // Range
+        canonicalizedHeaders,  // Canonicalized Headers
+        canonicalizedResource  // Canonicalized Resource
+    ].join("\n");
+
+    // Sign the string using the storage key
+    const signature = crypto.HmacSHA256(stringToSign, crypto.enc.Base64.parse(storageKey)).toString(crypto.enc.Base64);
+    return `SharedKey ${STORAGE_ACCOUNT}:${signature}`;
+}
+
+/**
+ * Creates the container if it doesn't already exist
+ * The container will store all PDF documents processed by the system
+ * @returns {Promise<boolean>} True if container exists or was created
+ */
+export async function ensureContainerExists() {
+    try {
+        const date = new Date().toUTCString();
+        const url = `https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}?restype=container`;
+        
+        const canonicalizedHeaders = `x-ms-date:${date}\nx-ms-version:2019-12-12`;
+        const canonicalizedResource = `/${STORAGE_ACCOUNT}/${CONTAINER_NAME}\nrestype:container`;
+        
+        const authHeader = await generateAuthorizationHeader(
+            "HEAD",
+            "",
+            "",
+            canonicalizedHeaders,
+            canonicalizedResource
+        );
+        
+        // First, check if container exists using HEAD request
+        console.log(`Checking if container ${CONTAINER_NAME} exists...`);
+        const checkResponse = await fetch(url, {
+            method: 'HEAD',
+            headers: {
+                'x-ms-date': date,
+                'x-ms-version': '2019-12-12',
+                'Authorization': authHeader
+            }
+        });
+        
+        if (checkResponse.status === 404) {
+            // Container doesn't exist, need to create it
+            console.log(`Container ${CONTAINER_NAME} not found. Creating...`);
+            
+            const createAuthHeader = await generateAuthorizationHeader(
+                "PUT",
+                "0",
+                "",
+                canonicalizedHeaders,
+                canonicalizedResource
+            );
+            
+            const createResponse = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'x-ms-date': date,
+                    'x-ms-version': '2019-12-12',
+                    'Authorization': createAuthHeader,
+                    'x-ms-blob-public-access': 'container'  // Make the container public so blobs can be accessed directly
+                }
+            });
+            
+            if (!createResponse.ok) {
+                const errorText = await createResponse.text();
+                throw new Error(`Failed to create container: ${createResponse.status} - ${errorText}`);
+            }
+            
+            console.log(`Container ${CONTAINER_NAME} created successfully with public access`);
+        } else if (checkResponse.ok) {
+            console.log(`Container ${CONTAINER_NAME} already exists`);
+            
+            // If the container exists, make sure it has public access
+            const updateAuthHeader = await generateAuthorizationHeader(
+                "PUT",
+                "0",
+                "",
+                canonicalizedHeaders,
+                canonicalizedResource
+            );
+            
+            const updateResponse = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    'x-ms-date': date,
+                    'x-ms-version': '2019-12-12',
+                    'Authorization': updateAuthHeader,
+                    'x-ms-blob-public-access': 'container'  // Update to container-level public access
+                }
+            });
+            
+            if (!updateResponse.ok) {
+                console.warn(`Could not update container access level: ${updateResponse.status}`);
+            } else {
+                console.log(`Container access level updated successfully`);
+            }
+        } else {
+            const errorText = await checkResponse.text();
+            throw new Error(`Error checking container: ${checkResponse.status} - ${errorText}`);
+        }
+        
+        return true;
+    } catch (error) {
+        console.error("Error ensuring container exists:", error);
+        throw error;
+    }
+}
+
+/**
+ * Uploads a file to Azure Blob Storage from a Wix file URL
+ * This function handles the entire process: downloading from Wix, uploading to Azure
+ * 
+ * @param {string} fileUrl - The Wix file URL to download from
+ * @param {string} fileName - The name to give the file in Azure
+ * @param {string} contentType - The MIME type of the file
+ * @returns {Promise<Object>} - Object containing both the public URL and SAS URL
+ */
+export async function uploadFileToAzure(fileUrl, fileName, contentType = 'application/pdf') {
+    try {
+        console.log(`Uploading file to Azure: ${fileName}`);
+        
+        // Ensure the container exists before uploading
+        await ensureContainerExists();
+        
+        // Generate a unique blob name to avoid collisions
+        // We add a timestamp and sanitize the filename to ensure it's valid for Azure
+        const blobName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9_.]/g, '_')}`;
+        
+        // Step 1: Get the file content from Wix
+        console.log(`Fetching file from Wix URL: ${fileUrl}`);
+        const fileResponse = await fetch(fileUrl);
+        
+        if (!fileResponse.ok) {
+            throw new Error(`Failed to fetch file from Wix: ${fileResponse.status}`);
+        }
+        
+        const fileBuffer = await fileResponse.arrayBuffer();
+        const contentLength = fileBuffer.byteLength.toString();
+        console.log(`File fetched successfully, size: ${contentLength} bytes`);
+        
+        // Step 2: Upload file to Azure Blob Storage
+        const date = new Date().toUTCString();
+        const blobUrl = `https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}/${blobName}`;
+        
+        // Create headers for Azure Storage REST API
+        const canonicalizedHeaders = `x-ms-blob-type:BlockBlob\nx-ms-date:${date}\nx-ms-version:2019-12-12`;
+        const canonicalizedResource = `/${STORAGE_ACCOUNT}/${CONTAINER_NAME}/${blobName}`;
+        
+        const authHeader = await generateAuthorizationHeader(
+            "PUT",
+            contentLength,
+            contentType,
+            canonicalizedHeaders,
+            canonicalizedResource
+        );
+        
+        console.log(`Uploading to Azure: ${blobUrl}`);
+        
+        // Set Content-Disposition header to make the file downloadable with original name
+        const contentDisposition = `attachment; filename="${fileName}"`;
+        
+        // Upload to Azure using the REST API
+        const azureResponse = await fetch(blobUrl, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': contentType,
+                'Content-Length': contentLength,
+                'Content-Disposition': contentDisposition,
+                'x-ms-blob-type': 'BlockBlob',
+                'x-ms-date': date,
+                'x-ms-version': '2019-12-12',
+                'Authorization': authHeader
+            },
+            body: fileBuffer
+        });
+        
+        if (!azureResponse.ok) {
+            const errorText = await azureResponse.text();
+            throw new Error(`Azure upload failed: ${azureResponse.status} - ${errorText}`);
+        }
+        
+        console.log(`File successfully uploaded to Azure: ${blobUrl}`);
+        
+        // Generate SAS token for the blob (for secure access)
+        const sasUrl = await generateSasUrl(blobName);
+        console.log(`Generated SAS URL with temporary access`);
+        
+        // Return both the public URL and the SAS URL
+        return {
+            publicUrl: blobUrl,
+            sasUrl: sasUrl,
+            blobName: blobName
+        };
+    } catch (error) {
+        console.error("Error uploading to Azure Blob Storage:", error);
+        throw error;
+    }
+}
+
+/**
+ * Generates a Shared Access Signature (SAS) URL for a blob
+ * This provides secure, time-limited access to the blob
+ * 
+ * @param {string} blobName - The name of the blob in Azure
+ * @param {number} expiryHours - How many hours until the SAS expires
+ * @returns {Promise<string>} - The full SAS URL for accessing the blob
+ */
+export async function generateSasUrl(blobName, expiryHours = 24) {
+    try {
+        const storageKey = await getStorageKey();
+        
+        // Create start time 5 minutes in the past to avoid clock skew issues
+        const start = new Date();
+        start.setMinutes(start.getMinutes() - 5);
+        
+        // Create expiry time based on the requested hours
+        const expiry = new Date();
+        expiry.setHours(expiry.getHours() + expiryHours);
+        
+        // Format dates for SAS token in the specific format Azure expects
+        const formatDate = (date) => {
+            return date.toISOString()
+                .replace(/\.\d{3}Z$/, 'Z') // Remove milliseconds
+                .replace(/:/g, '%3A')      // URL encode colon
+                .replace(/\+/g, '%2B');    // URL encode plus
+        };
+        
+        const startFormatted = formatDate(start);
+        const expiryFormatted = formatDate(expiry);
+        
+        // Construct string to sign for SAS token
+        // This format is required by Azure for SAS token generation
+        const permissions = "r"; // Read-only
+        const stringToSign = [
+            permissions,
+            startFormatted,
+            expiryFormatted,
+            `/${STORAGE_ACCOUNT}/${CONTAINER_NAME}/${blobName}`, // canonicalized resource
+            "", // signed identifier
+            "", // IP range
+            "https", // protocol
+            "2019-12-12", // version
+        ].join('\n');
+        
+        // Create signature using the storage key
+        const signature = crypto.HmacSHA256(stringToSign, crypto.enc.Base64.parse(storageKey)).toString(crypto.enc.Base64);
+        const encodedSignature = encodeURIComponent(signature);
+        
+        // Construct SAS token with all required parameters
+        const sasToken = [
+            `sv=2019-12-12`,        // Signed version
+            `sr=b`,                 // Signed resource (b for blob)
+            `sp=${permissions}`,    // Signed permissions
+            `st=${startFormatted}`, // Start time
+            `se=${expiryFormatted}`,// Expiry time
+            `spr=https`,            // Protocol
+            `sig=${encodedSignature}` // Signature
+        ].join('&');
+        
+        // Combine the blob URL with the SAS token
+        const sasUrl = `https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}/${blobName}?${sasToken}`;
+        return sasUrl;
+    } catch (error) {
+        console.error("Error generating SAS URL:", error);
+        throw error;
+    }
+}
+
+/**
+ * Generates a direct download URL for a blob
+ * This URL will download the file with original filename
+ * 
+ * @param {string} blobName - The name of the blob in Azure
+ * @param {string} originalFileName - The original file name to use for download
+ * @returns {string} - The direct download URL
+ */
+export function getDirectDownloadUrl(blobName, originalFileName) {
+    // Encode the original filename to ensure it works in URLs
+    const encodedFileName = encodeURIComponent(originalFileName);
+    
+    // Create a URL that will trigger download with the original filename
+    return `https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}/${blobName}?response-content-disposition=attachment%3B%20filename%3D${encodedFileName}`;
+}
+
+/**
+ * Lists all blobs in the container
+ * Useful for verification and debugging
+ * 
+ * @returns {Promise<Array>} Array of blob objects with metadata
+ */
+export async function listBlobsInContainer() {
+    try {
+        // First make sure we have the container
+        await ensureContainerExists();
+        
+        const date = new Date().toUTCString();
+        // URL to list all blobs in the container
+        const url = `https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}?restype=container&comp=list`;
+        
+        // Create the canonicalized headers and resource strings for the signature
+        const canonicalizedHeaders = `x-ms-date:${date}\nx-ms-version:2019-12-12`;
+        const canonicalizedResource = `/${STORAGE_ACCOUNT}/${CONTAINER_NAME}\ncomp:list\nrestype:container`;
+        
+        // Get the authorization header using our secure key retrieval
+        const authHeader = await generateAuthorizationHeader(
+            "GET",
+            "",
+            "",
+            canonicalizedHeaders,
+            canonicalizedResource
+        );
+        
+        console.log(`Checking for blobs in container: ${CONTAINER_NAME}`);
+        
+        // Make the API request to Azure
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'x-ms-date': date,
+                'x-ms-version': '2019-12-12',
+                'Authorization': authHeader
+            }
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to list blobs: ${response.status} - ${errorText}`);
+        }
+        
+        // Get the XML response
+        const xmlText = await response.text();
+        console.log("Received response from Azure");
+        
+        // Parse the XML to extract blob information
+        // This is a simple approach using regex - in production you might want a proper XML parser
+        const blobs = [];
+        const blobRegex = /<Blob>[\s\S]*?<Name>([^<]+)<\/Name>[\s\S]*?<LastModified>([^<]+)<\/LastModified>[\s\S]*?<Content-Length>(\d+)<\/Content-Length>[\s\S]*?<\/Blob>/g;
+        
+        let match;
+        while ((match = blobRegex.exec(xmlText)) !== null) {
+            blobs.push({
+                name: match[1],
+                lastModified: new Date(match[2]),
+                size: parseInt(match[3], 10),
+                url: `https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}/${match[1]}`
+            });
+        }
+        
+        console.log(`Found ${blobs.length} blobs in container ${CONTAINER_NAME}`);
+        return blobs;
+    } catch (error) {
+        console.error("Error listing blobs:", error);
+        throw error;
+    }
+}
+
+/**
+ * Gets details about a specific blob
+ * 
+ * @param {string} blobName - The name of the blob to check
+ * @returns {Promise<Object|null>} - Blob details or null if not found
+ */
+export async function getBlobDetails(blobName) {
+    try {
+        const date = new Date().toUTCString();
+        const url = `https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}/${blobName}`;
+        
+        const canonicalizedHeaders = `x-ms-date:${date}\nx-ms-version:2019-12-12`;
+        const canonicalizedResource = `/${STORAGE_ACCOUNT}/${CONTAINER_NAME}/${blobName}`;
+        
+        const authHeader = await generateAuthorizationHeader(
+            "HEAD",
+            "",
+            "",
+            canonicalizedHeaders,
+            canonicalizedResource
+        );
+        
+        console.log(`Getting details for blob: ${blobName}`);
+        
+        // Use HEAD request to get metadata without downloading the blob
+        const response = await fetch(url, {
+            method: 'HEAD',
+            headers: {
+                'x-ms-date': date,
+                'x-ms-version': '2019-12-12',
+                'Authorization': authHeader
+            }
+        });
+        
+        if (!response.ok) {
+            if (response.status === 404) {
+                return null; // Blob doesn't exist
+            }
+            throw new Error(`Failed to get blob details: ${response.status}`);
+        }
+        
+        // Extract headers
+        return {
+            exists: true,
+            name: blobName,
+            contentType: response.headers.get('Content-Type'),
+            contentLength: parseInt(response.headers.get('Content-Length'), 10),
+            lastModified: new Date(response.headers.get('Last-Modified')),
+            etag: response.headers.get('ETag'),
+            url: url,
+            downloadUrl: url // This is now a direct download link since container is public
+        };
+    } catch (error) {
+        console.error(`Error getting blob details for ${blobName}:`, error);
+        throw error;
+    }
+}

@@ -1,0 +1,39 @@
+please can you make a landing page for my company Radical-Zero.com   where users would enter only a few information and get to learn how many co2 tons their energy efficiency measures can save, then translate this into carbon credits (one ton co2= 1 carbon credits ) and translate into EUr (1 carbon credit would be sold for 50 eur)  the data that users have to enter:   1. Do you own the building   or do you rent it? (tenant)  2. What is the size of the building in sqm?   3. What is the heating system   check the right answer:  Gas, Oil, Pellet, other   4. What is the consumption of energy per year for the system?  (excluding sola PV) 5. What is the projected consumption of energy of the new heating?    please enter your first Name, your last name, and your email.   check the box to confirm that you accept our terms and conditions and that Radical Zero can contact you per email to provide information about the carbon credits.
+lovable logo
+Lovable
+19:57 on Mar 06, 2025
+
+I'm inspired by your vision for Radical-Zero.com! This project evokes the clean, minimalist aesthetics of sustainable tech companies with a focus on environmental impact measurement. Let's create a premium, Apple-inspired landing page that calculates carbon savings from energy efficiency measures.
+
+For this first version, I'll implement:
+
+A sleek, minimalist hero section with a clear value proposition
+A multi-step form with smooth transitions between questions
+Real-time calculation of CO2 savings and carbon credits
+A results section showing financial benefits
+A clean contact information collection form with terms acceptance
+Design aesthetic:
+
+Colors: Clean whites, subtle blues, and soft greens for sustainability
+Animations: Subtle fade transitions between form steps
+Typography: Clean, sans-serif fonts with clear hierarchy
+Layout: Generous whitespace with focused content areas
+
+
+Restore
+Preview
+
+Implement landing page
+View code
+The landing page for Radical-Zero.com has been created with a sleek calculator that helps users discover their potential carbon savings and financial benefits from energy efficiency measures.
+
+What's next?
+Refine & Customize: Tweak the design, animations, and layouts via prompts or visual edits.
+Master Prompting: Use clear, detailed, and iterative prompts for better outcomes.
+Expand with Backend: Connect Supabase to add login, store data, manage user input, and calculate carbon credit savings.
+GitHub Sync: Transfer your project's code to GitHub for two-way sync of edits.
+Debug with Ease: Activate our experimental “chat mode” to troubleshoot issues quickly.
+Add project knowledge: Set key context or custom instructions you want to include in every edit in this project.
+Visit docs
+Explore Supabase
+Manage knowledge

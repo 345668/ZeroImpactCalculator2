@@ -1,0 +1,336 @@
+// http-functions.js - HTTP endpoints for the Carbon Credit Calculator
+// This file contains all HTTP endpoints for processing PDF submissions
+
+import wixData from 'wix-data';
+import { fetch } from 'wix-fetch';
+import { ok, badRequest } from 'wix-http-functions';
+import { 
+    uploadFileToAzure, 
+    ensureContainerExists,
+    listBlobsInContainer,
+    getBlobDetails,
+    generateSasUrl,
+    getDirectDownloadUrl
+} from './azure-storage.js';
+
+/**
+ * HTTP endpoint for processing submissions
+ * This can be called directly or via a cron job
+ * 
+ * @param {Object} request - The HTTP request object
+ * @returns {Promise<Object>} - The HTTP response
+ */
+export async function post_processSubmissions(request) {
+    try {
+        // Verify Azure storage connection first
+        await ensureContainerExists();
+        
+        // Query unprocessed submissions
+        const results = await wixData.query("CarbonCalculatorSubmissions")
+            .eq("processed", false)
+            .find();
+            
+        if (results.items.length === 0) {
+            console.log("No new submissions to process");
+            return ok({ processed: 0 });
+        }
+        
+        console.log(`Found ${results.items.length} submissions to process`);
+        
+        // Process each submission
+        let successCount = 0;
+        let failureCount = 0;
+        
+        for (const submission of results.items) {
+            try {
+                const success = await processSubmission(submission);
+                if (success) {
+                    successCount++;
+                } else {
+                    failureCount++;
+                }
+            } catch (error) {
+                console.error(`Error in submission ${submission._id}:`, error);
+                failureCount++;
+            }
+        }
+        
+        return ok({ 
+            processed: results.items.length,
+            success: successCount,
+            failure: failureCount,
+            message: "Processing complete" 
+        });
+    } catch (error) {
+        console.error("Error processing submissions:", error);
+        return badRequest({ error: error.message });
+    }
+}
+
+/**
+ * Process a single submission using Azure Blob Storage as intermediary
+ * This function handles the full workflow:
+ * 1. Upload PDF to Azure Blob Storage
+ * 2. Generate secure SAS URL and public download URL
+ * 3. Send metadata and URL to Power Automate
+ * 
+ * @param {Object} submission - The submission record from the database
+ * @returns {Promise<boolean>} - Whether processing was successful
+ */
+async function processSubmission(submission) {
+    try {
+        console.log(`Processing submission ${submission._id}`);
+        
+        if (!submission.fileUrl) {
+            throw new Error("No file URL available for processing");
+        }
+        
+        // Step 1: Upload the file to Azure Blob Storage
+        console.log(`Uploading file from Wix URL: ${submission.fileUrl}`);
+        const uploadResult = await uploadFileToAzure(
+            submission.fileUrl, 
+            submission.fileName || "document.pdf",
+            "application/pdf"
+        );
+        
+        console.log(`File uploaded to Azure Blob Storage with SAS URL and public URL generated`);
+        
+        // Get both URLs
+        const { publicUrl, sasUrl, blobName } = uploadResult;
+        
+        // Create a direct download URL that includes the original filename
+        const downloadUrl = getDirectDownloadUrl(blobName, submission.fileName || "document.pdf");
+        
+        // Step 2: Send only the URL and metadata to Power Automate
+        const dataToSend = {
+            // Send both URLs
+            documentUrl: sasUrl,
+            publicDownloadUrl: downloadUrl,
+            
+            // Include metadata in a separate section
+            metadata: {
+                userData: {
+                    firstName: submission.firstName || "",
+                    lastName: submission.lastName || "",
+                    email: submission.email || "",
+                    phoneNumber: submission.phoneNumber || ""
+                },
+                fileInfo: {
+                    fileName: submission.fileName || "document.pdf",
+                    fileSize: submission.fileSize || 0,
+                    uploadDate: submission.submissionDate || new Date()
+                },
+                documentType: "Carbon Credit",
+                source: "Wix Website"
+            }
+        };
+        
+        // Log the data being sent (without exposing the entire SAS URL)
+        console.log(`Sending metadata and Azure URLs to Power Automate`);
+        console.log(`Document URL prefix: ${publicUrl}`);
+        console.log(`Download URL available: ${downloadUrl}`);
+        
+        // Power Automate URL
+        const powerAutomateUrl = "https://prod-26.germanywestcentral.logic.azure.com:443/workflows/69c5b998bd2a4107bc01fbdcc7fce9be/triggers/manual/paths/invoke?api-version=2016-06-01";
+        
+        // Send to Power Automate
+        const response = await fetch(powerAutomateUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dataToSend)
+        });
+        
+        let responseBody = null;
+        
+        if (!response.ok) {
+            try {
+                responseBody = await response.text();
+                console.error(`Power Automate error response: ${responseBody}`);
+            } catch (e) {
+                console.error("Could not read error response body");
+            }
+            throw new Error(`HTTP error ${response.status}: ${responseBody || "Unknown error"}`);
+        }
+        
+        // Try to get response body
+        try {
+            responseBody = await response.json();
+            console.log(`Power Automate response success:`, responseBody);
+        } catch (parseError) {
+            console.log(`Could not parse response body as JSON, but request was successful`);
+            try {
+                responseBody = await response.text();
+                console.log(`Response as text: ${responseBody}`);
+            } catch (e) {
+                console.log("Could not read response as text either");
+            }
+        }
+        
+        // Mark as processed and store both URLs
+        await wixData.update("CarbonCalculatorSubmissions", {
+            ...submission,
+            processed: true,
+            processingStatus: "sent",
+            azureBlobUrl: publicUrl,  // Store the public URL
+            downloadUrl: downloadUrl, // Store the download URL
+            processedDate: new Date(),
+            powerAutomateResponse: responseBody ? (typeof responseBody === 'string' ? responseBody : JSON.stringify(responseBody)) : null
+        });
+        
+        console.log(`Successfully processed submission ${submission._id}`);
+        return true;
+    } catch (error) {
+        console.error(`Error processing submission ${submission._id}:`, error);
+        
+        // Mark as failed but don't set processed=true so we can retry
+        await wixData.update("CarbonCalculatorSubmissions", {
+            ...submission,
+            processingStatus: "failed",
+            processingError: error.message,
+            lastAttempt: new Date()
+        });
+        
+        return false;
+    }
+}
+
+/**
+ * Endpoint to list all blobs in the container
+ * Useful for verifying uploads and debugging
+ * 
+ * @param {Object} request - The HTTP request object
+ * @returns {Promise<Object>} - The HTTP response with file information
+ */
+export async function get_listUploadedFiles(request) {
+    try {
+        const blobs = await listBlobsInContainer();
+        
+        return ok({
+            success: true,
+            container: "carbon-credit-docs",
+            fileCount: blobs.length,
+            files: blobs.map(blob => ({
+                name: blob.name,
+                size: blob.size,
+                lastModified: blob.lastModified,
+                publicUrl: blob.url,
+                downloadUrl: `https://${STORAGE_ACCOUNT}.blob.core.windows.net/${CONTAINER_NAME}/${blob.name}?response-content-disposition=attachment%3B%20filename%3D${encodeURIComponent(blob.name.split('-').slice(1).join('-'))}`
+            }))
+        });
+    } catch (error) {
+        console.error("Error in list uploaded files endpoint:", error);
+        return badRequest({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+/**
+ * Endpoint to generate a download link for a specific file
+ * 
+ * @param {Object} request - The HTTP request object
+ * @returns {Promise<Object>} - The HTTP response with download URL
+ */
+export async function get_generateDownloadLink(request) {
+    try {
+        // Get the filename from the request query parameters
+        const blobName = request.query.blobName;
+        const fileName = request.query.fileName || blobName;
+        
+        if (!blobName) {
+            return badRequest({
+                success: false,
+                error: "Missing blobName parameter"
+            });
+        }
+        
+        const blobDetails = await getBlobDetails(blobName);
+        
+        if (!blobDetails) {
+            return ok({
+                success: false,
+                exists: false,
+                blobName: blobName,
+                message: "File not found"
+            });
+        }
+        
+        // Create a direct download URL
+        const downloadUrl = getDirectDownloadUrl(blobName, fileName);
+        
+        return ok({
+            success: true,
+            exists: true,
+            fileName: fileName,
+            blobName: blobName,
+            size: blobDetails.contentLength,
+            contentType: blobDetails.contentType,
+            lastModified: blobDetails.lastModified,
+            downloadUrl: downloadUrl
+        });
+    } catch (error) {
+        console.error("Error generating download link:", error);
+        return badRequest({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+/**
+ * Endpoint to check if a specific file exists
+ * 
+ * @param {Object} request - The HTTP request object
+ * @returns {Promise<Object>} - The HTTP response with file details
+ */
+export async function get_checkFileExists(request) {
+    try {
+        // Get the filename from the request query parameters
+        const fileName = request.query.fileName;
+        
+        if (!fileName) {
+            return badRequest({
+                success: false,
+                error: "Missing fileName parameter"
+            });
+        }
+        
+        const blobDetails = await getBlobDetails(fileName);
+        
+        if (!blobDetails) {
+            return ok({
+                success: true,
+                exists: false,
+                fileName: fileName
+            });
+        }
+        
+        // Create a download URL for convenience
+        const downloadUrl = getDirectDownloadUrl(fileName, fileName.split('-').slice(1).join('-'));
+        
+        return ok({
+            success: true,
+            exists: true,
+            fileName: fileName,
+            size: blobDetails.contentLength,
+            contentType: blobDetails.contentType,
+            lastModified: blobDetails.lastModified,
+            downloadUrl: downloadUrl
+        });
+    } catch (error) {
+        console.error("Error in check file exists endpoint:", error);
+        return badRequest({
+            success: false,
+            error: error.message
+        });
+    }
+}
+
+/**
+ * Test endpoint that uploads a sample file and verifies it
+ * Great for testing your Azure Blob Storage connection
+ * 
+ **//*@param {Object} request - The**/
