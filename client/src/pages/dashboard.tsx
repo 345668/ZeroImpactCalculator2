@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -47,6 +47,25 @@ export default function Dashboard() {
   if (isLoading) {
     return <div className="p-6">Loading analytics...</div>;
   }
+
+  const chartConfig = {
+    theme: {
+      background: "transparent",
+      axis: {
+        domain: {
+          line: {
+            stroke: "hsl(var(--border))",
+          },
+        },
+      },
+      grid: {
+        line: {
+          stroke: "hsl(var(--border))",
+          strokeWidth: 1,
+        },
+      },
+    },
+  };
 
   return (
     <div className="p-6 space-y-6">
@@ -103,7 +122,7 @@ export default function Dashboard() {
             <CardTitle>CO₂ Savings Over Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="h-[300px]">
+            <ChartContainer className="h-[300px]" config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <XAxis dataKey="date" />
@@ -127,7 +146,7 @@ export default function Dashboard() {
             <CardTitle>Financial Value Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="h-[300px]">
+            <ChartContainer className="h-[300px]" config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <XAxis dataKey="date" />
