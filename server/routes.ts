@@ -14,27 +14,74 @@ const upload = multer({
 });
 
 async function processDocumentWithMistral(file: Express.Multer.File) {
-  const formData = new FormData();
-  formData.append('file', file.buffer, { filename: file.originalname });
+  try {
+    // First call: Chat completion to analyze the document
+    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "mistral-small-latest",
+        messages: [
+          {
+            role: "system",
+            content: "Extract the following information from the document: building size (m²), current energy consumption (kWh/year), projected energy consumption (kWh/year). Return the data in JSON format."
+          },
+          {
+            role: "user",
+            content: file.buffer.toString()
+          }
+        ],
+        response_format: { type: "json_object" }
+      })
+    });
 
-  const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
-    },
-    body: formData
-  });
+    if (!response.ok) {
+      throw new Error(`Mistral API error: ${response.statusText}`);
+    }
 
-  if (!response.ok) {
-    throw new Error(`Mistral API error: ${response.statusText}`);
+    const data = await response.json();
+    const extractedData = data.choices[0].message.content;
+
+    // Language detection
+    const langResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: "mistral-small-latest",
+        messages: [
+          {
+            role: "system",
+            content: "Detect the language of the following text and return only the ISO 639-1 language code (e.g., 'en', 'de', 'fr')."
+          },
+          {
+            role: "user",
+            content: file.buffer.toString()
+          }
+        ]
+      })
+    });
+
+    if (!langResponse.ok) {
+      throw new Error(`Language detection failed: ${langResponse.statusText}`);
+    }
+
+    const langData = await langResponse.json();
+    const language = langData.choices[0].message.content.trim().toLowerCase();
+
+    return {
+      language,
+      extractedData: JSON.parse(extractedData),
+    };
+  } catch (error) {
+    console.error('Document processing error:', error);
+    throw error;
   }
-
-  const data = await response.json();
-  return {
-    language: data.language,
-    extractedData: data.content,
-    text: data.text
-  };
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
