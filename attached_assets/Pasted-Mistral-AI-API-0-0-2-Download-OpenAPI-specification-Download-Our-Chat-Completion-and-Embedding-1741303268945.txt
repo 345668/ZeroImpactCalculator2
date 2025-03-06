@@ -1,0 +1,1665 @@
+Mistral AI API (0.0.2)
+Download OpenAPI specification:Download
+
+Our Chat Completion and Embeddings APIs specification. Create your account on La Plateforme to get access and read the docs to learn how to use it.
+
+Chat
+Chat Completion API.
+
+Chat Completion
+Authorizations:
+ApiKey
+Request Body schema: application/json
+required
+model
+required
+string (Model)
+ID of the model to use. You can use the List Available Models API to see all of your available models, or see our Model overview for model descriptions.
+
+temperature	
+Temperature (number) or Temperature (null) (Temperature)
+What sampling temperature to use, we recommend between 0.0 and 0.7. Higher values like 0.7 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both. The default value varies depending on the model you are targeting. Call the /models endpoint to retrieve the appropriate value.
+
+top_p	
+number (Top P) [ 0 .. 1 ]
+Default: 1
+Nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.
+
+max_tokens	
+Max Tokens (integer) or Max Tokens (null) (Max Tokens)
+The maximum number of tokens to generate in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.
+
+stream	
+boolean (Stream)
+Default: false
+Whether to stream back partial progress. If set, tokens will be sent as data-only server-side events as they become available, with the stream terminated by a data: [DONE] message. Otherwise, the server will hold the request open until the timeout or until completion, with the response containing the full result as JSON.
+
+stop	
+Stop (string) or Array of Stop (strings) (Stop)
+Stop generation if this token is detected. Or if one of these tokens is detected when providing an array
+
+random_seed	
+Random Seed (integer) or Random Seed (null) (Random Seed)
+The seed to use for random sampling. If set, different calls will generate deterministic results.
+
+messages
+required
+Array of any (Messages)
+The prompt(s) to generate completions for, encoded as a list of dict with role and content.
+
+response_format	
+object (ResponseFormat)
+tools	
+Array of Tools (objects) or Tools (null) (Tools)
+tool_choice	
+ToolChoice (object) or ToolChoiceEnum (string) (Tool Choice)
+Default: "auto"
+presence_penalty	
+number (Presence Penalty) [ -2 .. 2 ]
+Default: 0
+presence_penalty determines how much the model penalizes the repetition of words or phrases. A higher presence penalty encourages the model to use a wider variety of words and phrases, making the output more diverse and creative.
+
+frequency_penalty	
+number (Frequency Penalty) [ -2 .. 2 ]
+Default: 0
+frequency_penalty penalizes the repetition of words based on their frequency in the generated text. A higher frequency penalty discourages the model from repeating words that have already appeared frequently in the output, promoting diversity and reducing repetition.
+
+n	
+N (integer) or N (null) (N)
+Number of completions to return for each request, input tokens are only billed once.
+
+prediction	
+object (Prediction)
+Default: {"type":"content","content":""}
+Enable users to specify expected results, optimizing response times by leveraging known or predictable content. This approach is especially effective for updating text documents or code files with minimal changes, reducing latency while maintaining high-quality results.
+
+safe_prompt	
+boolean
+Default: false
+Whether to inject a safety prompt before all conversations.
+
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+post
+/v1/chat/completions
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"model": "mistral-small-latest",
+"temperature": 1.5,
+"top_p": 1,
+"max_tokens": 0,
+"stream": false,
+"stop": "string",
+"random_seed": 0,
+"messages": [
+{}
+],
+"response_format": {
+"type": "text",
+"json_schema": {}
+},
+"tools": [
+{}
+],
+"tool_choice": "auto",
+"presence_penalty": 0,
+"frequency_penalty": 0,
+"n": 1,
+"prediction": {
+"type": "content",
+"content": ""
+},
+"safe_prompt": false
+}
+Response samples
+200422
+Content type
+
+application/json
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "cmpl-e5cc70bb28c444948073e77776eb30ef",
+"object": "chat.completion",
+"model": "mistral-small-latest",
+"usage": {
+"prompt_tokens": 16,
+"completion_tokens": 34,
+"total_tokens": 50
+},
+"created": 1702256327,
+"choices": [
+{}
+]
+}
+FIM
+Fill-in-the-middle API.
+
+Fim Completion
+FIM completion.
+
+Authorizations:
+ApiKey
+Request Body schema: application/json
+required
+model
+required
+string (Model)
+Default: "codestral-2405"
+ID of the model to use. Only compatible for now with:
+
+codestral-2405
+codestral-latest
+temperature	
+Temperature (number) or Temperature (null) (Temperature)
+What sampling temperature to use, we recommend between 0.0 and 0.7. Higher values like 0.7 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both. The default value varies depending on the model you are targeting. Call the /models endpoint to retrieve the appropriate value.
+
+top_p	
+number (Top P) [ 0 .. 1 ]
+Default: 1
+Nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. We generally recommend altering this or temperature but not both.
+
+max_tokens	
+Max Tokens (integer) or Max Tokens (null) (Max Tokens)
+The maximum number of tokens to generate in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.
+
+stream	
+boolean (Stream)
+Default: false
+Whether to stream back partial progress. If set, tokens will be sent as data-only server-side events as they become available, with the stream terminated by a data: [DONE] message. Otherwise, the server will hold the request open until the timeout or until completion, with the response containing the full result as JSON.
+
+stop	
+Stop (string) or Array of Stop (strings) (Stop)
+Stop generation if this token is detected. Or if one of these tokens is detected when providing an array
+
+random_seed	
+Random Seed (integer) or Random Seed (null) (Random Seed)
+The seed to use for random sampling. If set, different calls will generate deterministic results.
+
+prompt
+required
+string (Prompt)
+The text/code to complete.
+
+suffix	
+Suffix (string) or Suffix (null) (Suffix)
+Default: ""
+Optional text/code that adds more context for the model. When given a prompt and a suffix the model will fill what is between them. When suffix is not provided, the model will simply execute completion starting with prompt.
+
+min_tokens	
+Min Tokens (integer) or Min Tokens (null) (Min Tokens)
+The minimum number of tokens to generate in the completion.
+
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+post
+/v1/fim/completions
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"model": "codestral-2405",
+"temperature": 1.5,
+"top_p": 1,
+"max_tokens": 0,
+"stream": false,
+"stop": "string",
+"random_seed": 0,
+"prompt": "def",
+"suffix": "return a+b",
+"min_tokens": 0
+}
+Response samples
+200422
+Content type
+
+application/json
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "cmpl-e5cc70bb28c444948073e77776eb30ef",
+"object": "chat.completion",
+"model": "codestral-latest",
+"usage": {
+"prompt_tokens": 16,
+"completion_tokens": 34,
+"total_tokens": 50
+},
+"created": 1702256327,
+"choices": [
+{}
+]
+}
+Agents
+Agents API.
+
+Agents Completion
+Authorizations:
+ApiKey
+Request Body schema: application/json
+required
+max_tokens	
+Max Tokens (integer) or Max Tokens (null) (Max Tokens)
+The maximum number of tokens to generate in the completion. The token count of your prompt plus max_tokens cannot exceed the model's context length.
+
+stream	
+boolean (Stream)
+Default: false
+Whether to stream back partial progress. If set, tokens will be sent as data-only server-side events as they become available, with the stream terminated by a data: [DONE] message. Otherwise, the server will hold the request open until the timeout or until completion, with the response containing the full result as JSON.
+
+stop	
+Stop (string) or Array of Stop (strings) (Stop)
+Stop generation if this token is detected. Or if one of these tokens is detected when providing an array
+
+random_seed	
+Random Seed (integer) or Random Seed (null) (Random Seed)
+The seed to use for random sampling. If set, different calls will generate deterministic results.
+
+messages
+required
+Array of any (Messages)
+The prompt(s) to generate completions for, encoded as a list of dict with role and content.
+
+response_format	
+object (ResponseFormat)
+tools	
+Array of Tools (objects) or Tools (null) (Tools)
+tool_choice	
+ToolChoice (object) or ToolChoiceEnum (string) (Tool Choice)
+Default: "auto"
+presence_penalty	
+number (Presence Penalty) [ -2 .. 2 ]
+Default: 0
+presence_penalty determines how much the model penalizes the repetition of words or phrases. A higher presence penalty encourages the model to use a wider variety of words and phrases, making the output more diverse and creative.
+
+frequency_penalty	
+number (Frequency Penalty) [ -2 .. 2 ]
+Default: 0
+frequency_penalty penalizes the repetition of words based on their frequency in the generated text. A higher frequency penalty discourages the model from repeating words that have already appeared frequently in the output, promoting diversity and reducing repetition.
+
+n	
+N (integer) or N (null) (N)
+Number of completions to return for each request, input tokens are only billed once.
+
+prediction	
+object (Prediction)
+Default: {"type":"content","content":""}
+Enable users to specify expected results, optimizing response times by leveraging known or predictable content. This approach is especially effective for updating text documents or code files with minimal changes, reducing latency while maintaining high-quality results.
+
+agent_id
+required
+string
+The ID of the agent to use for this completion.
+
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+post
+/v1/agents/completions
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"max_tokens": 0,
+"stream": false,
+"stop": "string",
+"random_seed": 0,
+"messages": [
+{}
+],
+"response_format": {
+"type": "text",
+"json_schema": {}
+},
+"tools": [
+{}
+],
+"tool_choice": "auto",
+"presence_penalty": 0,
+"frequency_penalty": 0,
+"n": 1,
+"prediction": {
+"type": "content",
+"content": ""
+},
+"agent_id": "string"
+}
+Response samples
+200422
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "cmpl-e5cc70bb28c444948073e77776eb30ef",
+"object": "chat.completion",
+"model": "mistral-small-latest",
+"usage": {
+"prompt_tokens": 16,
+"completion_tokens": 34,
+"total_tokens": 50
+},
+"created": 1702256327,
+"choices": [
+{}
+]
+}
+Embeddings
+Embeddings API.
+
+Embeddings
+Embeddings
+
+Authorizations:
+ApiKey
+Request Body schema: application/json
+required
+model
+required
+string (Model)
+Default: "mistral-embed"
+ID of the model to use.
+
+input
+required
+Input (string) or Array of Input (strings) (Input)
+Text to embed.
+
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+post
+/v1/embeddings
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"model": "mistral-embed",
+"input": [
+"Embed this sentence.",
+"As well as this one."
+]
+}
+Response samples
+200422
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "cmpl-e5cc70bb28c444948073e77776eb30ef",
+"object": "chat.completion",
+"model": "mistral-small-latest",
+"usage": {
+"prompt_tokens": 16,
+"completion_tokens": 34,
+"total_tokens": 50
+},
+"data": [
+{}
+]
+}
+Classifiers
+Classifiers API.
+
+Moderations
+Authorizations:
+ApiKey
+Request Body schema: application/json
+required
+model
+required
+string (Model)
+ID of the model to use.
+
+input
+required
+Input (string) or Array of Input (strings) (Input)
+Text to classify.
+
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+post
+/v1/moderations
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"model": "string",
+"input": "string"
+}
+Response samples
+200422
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "mod-e5cc70bb28c444948073e77776eb30ef",
+"model": "string",
+"results": [
+{}
+]
+}
+Moderations Chat
+Authorizations:
+ApiKey
+Request Body schema: application/json
+required
+model
+required
+string (Model)
+input
+required
+Array of Input (any) or Array of Input (any) (Input)
+Chat to classify
+
+truncate_for_context_length	
+boolean (Truncate For Context Length)
+Default: false
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+post
+/v1/chat/moderations
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"model": "string",
+"input": [
+{}
+],
+"truncate_for_context_length": false
+}
+Response samples
+200422
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "mod-e5cc70bb28c444948073e77776eb30ef",
+"model": "string",
+"results": [
+{}
+]
+}
+Files
+Files API
+
+Upload File
+Upload a file that can be used across various endpoints.
+
+The size of individual files can be a maximum of 512 MB. The Fine-tuning API only supports .jsonl files.
+
+Please contact us if you need to increase these storage limits.
+
+Authorizations:
+ApiKey
+Request Body schema: multipart/form-data
+required
+file
+required
+string <binary> (File)
+The File object (not file name) to be uploaded. To upload a file and specify a custom file name you should format your request as such:
+
+file=@path/to/your/file.jsonl;filename=custom_name.jsonl
+Otherwise, you can just keep the original file name:
+
+file=@path/to/your/file.jsonl
+purpose	
+string (FilePurpose)
+Enum: "fine-tune" "batch"
+Responses
+200
+OK
+
+
+post
+/v1/files
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+{
+"id": "497f6eca-6276-4993-bfeb-53cbbbba6f09",
+"object": "file",
+"bytes": 13000,
+"created_at": 1716963433,
+"filename": "files_upload.jsonl",
+"purpose": "fine-tune",
+"sample_type": "pretrain",
+"num_lines": 0,
+"source": "upload"
+}
+List Files
+Returns a list of files that belong to the user's organization.
+
+Authorizations:
+ApiKey
+query Parameters
+page	
+integer (Page)
+Default: 0
+page_size	
+integer (Page Size)
+Default: 100
+sample_type	
+Array of Sample Type (strings) or Sample Type (null) (Sample Type)
+source	
+Array of Source (strings) or Source (null) (Source)
+search	
+Search (string) or Search (null) (Search)
+purpose	
+FilePurpose (string) or null
+Responses
+200
+OK
+
+
+get
+/v1/files
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"data": [
+{}
+],
+"object": "string",
+"total": 0
+}
+Retrieve File
+Returns information about a specific file.
+
+Authorizations:
+ApiKey
+path Parameters
+file_id
+required
+string (File Id)
+Responses
+200
+OK
+
+
+get
+/v1/files/{file_id}
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+{
+"id": "497f6eca-6276-4993-bfeb-53cbbbba6f09",
+"object": "file",
+"bytes": 13000,
+"created_at": 1716963433,
+"filename": "files_upload.jsonl",
+"purpose": "fine-tune",
+"sample_type": "pretrain",
+"num_lines": 0,
+"source": "upload",
+"deleted": true
+}
+Delete File
+Delete a file.
+
+Authorizations:
+ApiKey
+path Parameters
+file_id
+required
+string (File Id)
+Responses
+200
+OK
+
+
+delete
+/v1/files/{file_id}
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+{
+"id": "497f6eca-6276-4993-bfeb-53cbbbba6f09",
+"object": "file",
+"deleted": false
+}
+Download File
+Download a file
+
+Authorizations:
+ApiKey
+path Parameters
+file_id
+required
+string (File Id)
+Responses
+200
+OK
+
+
+get
+/v1/files/{file_id}/content
+
+Get Signed Url
+Authorizations:
+ApiKey
+path Parameters
+file_id
+required
+string (File Id)
+query Parameters
+expiry	
+integer (Expiry)
+Default: 24
+Number of hours before the url becomes invalid. Defaults to 24h
+
+Responses
+200
+OK
+
+
+get
+/v1/files/{file_id}/url
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+{
+"url": "string"
+}
+Fine Tuning
+Fine-tuning API
+
+Get Fine Tuning Jobs
+Get a list of fine-tuning jobs for your organization and user.
+
+Authorizations:
+ApiKey
+query Parameters
+page	
+integer (Page)
+Default: 0
+The page number of the results to be returned.
+
+page_size	
+integer (Page Size)
+Default: 100
+The number of items to return per page.
+
+model	
+Model (string) or Model (null) (Model)
+The model name used for fine-tuning to filter on. When set, the other results are not displayed.
+
+created_after	
+Created After (string) or Created After (null) (Created After)
+The date/time to filter on. When set, the results for previous creation times are not displayed.
+
+created_by_me	
+boolean (Created By Me)
+Default: false
+When set, only return results for jobs created by the API caller. Other results are not displayed.
+
+status	
+Status (string) or Status (null) (Status)
+The current job state to filter on. When set, the other results are not displayed.
+
+wandb_project	
+Wandb Project (string) or Wandb Project (null) (Wandb Project)
+The Weights and Biases project to filter on. When set, the other results are not displayed.
+
+wandb_name	
+Wandb Name (string) or Wandb Name (null) (Wandb Name)
+The Weight and Biases run name to filter on. When set, the other results are not displayed.
+
+suffix	
+Suffix (string) or Suffix (null) (Suffix)
+The model suffix to filter on. When set, the other results are not displayed.
+
+Responses
+200
+OK
+
+
+get
+/v1/fine_tuning/jobs
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"data": [ ],
+"object": "list",
+"total": 0
+}
+Create Fine Tuning Job
+Create a new fine-tuning job, it will be queued for processing.
+
+Authorizations:
+ApiKey
+query Parameters
+dry_run	
+Dry Run (boolean) or Dry Run (null) (Dry Run)
+If true the job is not spawned, instead the query returns a handful of useful metadata for the user to perform sanity checks (see LegacyJobMetadataOut response).
+Otherwise, the job is started and the query returns the job ID along with some of the input parameters (see JobOut response).
+Request Body schema: application/json
+required
+model
+required
+string (FineTuneableModel)
+Enum: "open-mistral-7b" "mistral-small-latest" "codestral-latest" "mistral-large-latest" "open-mistral-nemo" "ministral-3b-latest"
+The name of the model to fine-tune.
+
+training_files	
+Array of objects (Training Files)
+Default: []
+validation_files	
+Array of Validation Files (strings) or Validation Files (null) (Validation Files)
+A list containing the IDs of uploaded files that contain validation data. If you provide these files, the data is used to generate validation metrics periodically during fine-tuning. These metrics can be viewed in checkpoints when getting the status of a running fine-tuning job. The same data should not be present in both train and validation files.
+
+hyperparameters
+required
+object (TrainingParametersIn)
+The fine-tuning hyperparameter settings used in a fine-tune job.
+
+suffix	
+Suffix (string) or Suffix (null) (Suffix)
+A string that will be added to your fine-tuning model name. For example, a suffix of "my-great-model" would produce a model name like ft:open-mistral-7b:my-great-model:xxx...
+
+integrations	
+Array of Integrations (any) or Integrations (null) (Integrations)
+A list of integrations to enable for your fine-tuning job.
+
+repositories	
+Array of any (Repositories) <= 50 items
+Default: []
+auto_start	
+boolean (Auto Start)
+This field will be required in a future release.
+
+Responses
+200
+OK
+
+
+post
+/v1/fine_tuning/jobs
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"model": "open-mistral-7b",
+"training_files": [ ],
+"validation_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"hyperparameters": {
+"training_steps": 1,
+"learning_rate": 0.0001,
+"weight_decay": 0.1,
+"warmup_fraction": 0.05,
+"epochs": 0,
+"fim_ratio": 0.9,
+"seq_len": 100
+},
+"suffix": "string",
+"integrations": [
+{}
+],
+"repositories": [ ],
+"auto_start": true
+}
+Response samples
+200
+Content type
+application/json
+Example
+
+JobOut
+JobOut
+
+Copy
+Expand allCollapse all
+{
+"id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+"auto_start": true,
+"hyperparameters": {
+"training_steps": 1,
+"learning_rate": 0.0001,
+"weight_decay": 0.1,
+"warmup_fraction": 0.05,
+"epochs": 0,
+"fim_ratio": 0.9,
+"seq_len": 100
+},
+"model": "open-mistral-7b",
+"status": "QUEUED",
+"job_type": "string",
+"created_at": 0,
+"modified_at": 0,
+"training_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"validation_files": [ ],
+"object": "job",
+"fine_tuned_model": "string",
+"suffix": "string",
+"integrations": [
+{}
+],
+"trained_tokens": 0,
+"repositories": [ ],
+"metadata": {
+"expected_duration_seconds": 0,
+"cost": 0,
+"cost_currency": "string",
+"train_tokens_per_step": 0,
+"train_tokens": 0,
+"data_tokens": 0,
+"estimated_start_time": 0
+}
+}
+Get Fine Tuning Job
+Get a fine-tuned job details by its UUID.
+
+Authorizations:
+ApiKey
+path Parameters
+job_id
+required
+string <uuid> (Job Id)
+The ID of the job to analyse.
+
+Responses
+200
+OK
+
+
+get
+/v1/fine_tuning/jobs/{job_id}
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+"auto_start": true,
+"hyperparameters": {
+"training_steps": 1,
+"learning_rate": 0.0001,
+"weight_decay": 0.1,
+"warmup_fraction": 0.05,
+"epochs": 0,
+"fim_ratio": 0.9,
+"seq_len": 100
+},
+"model": "open-mistral-7b",
+"status": "QUEUED",
+"job_type": "string",
+"created_at": 0,
+"modified_at": 0,
+"training_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"validation_files": [ ],
+"object": "job",
+"fine_tuned_model": "string",
+"suffix": "string",
+"integrations": [
+{}
+],
+"trained_tokens": 0,
+"repositories": [ ],
+"metadata": {
+"expected_duration_seconds": 0,
+"cost": 0,
+"cost_currency": "string",
+"train_tokens_per_step": 0,
+"train_tokens": 0,
+"data_tokens": 0,
+"estimated_start_time": 0
+},
+"events": [ ],
+"checkpoints": [ ]
+}
+Cancel Fine Tuning Job
+Request the cancellation of a fine tuning job.
+
+Authorizations:
+ApiKey
+path Parameters
+job_id
+required
+string <uuid> (Job Id)
+The ID of the job to cancel.
+
+Responses
+200
+OK
+
+
+post
+/v1/fine_tuning/jobs/{job_id}/cancel
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+"auto_start": true,
+"hyperparameters": {
+"training_steps": 1,
+"learning_rate": 0.0001,
+"weight_decay": 0.1,
+"warmup_fraction": 0.05,
+"epochs": 0,
+"fim_ratio": 0.9,
+"seq_len": 100
+},
+"model": "open-mistral-7b",
+"status": "QUEUED",
+"job_type": "string",
+"created_at": 0,
+"modified_at": 0,
+"training_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"validation_files": [ ],
+"object": "job",
+"fine_tuned_model": "string",
+"suffix": "string",
+"integrations": [
+{}
+],
+"trained_tokens": 0,
+"repositories": [ ],
+"metadata": {
+"expected_duration_seconds": 0,
+"cost": 0,
+"cost_currency": "string",
+"train_tokens_per_step": 0,
+"train_tokens": 0,
+"data_tokens": 0,
+"estimated_start_time": 0
+},
+"events": [ ],
+"checkpoints": [ ]
+}
+Start Fine Tuning Job
+Request the start of a validated fine tuning job.
+
+Authorizations:
+ApiKey
+path Parameters
+job_id
+required
+string <uuid> (Job Id)
+Responses
+200
+OK
+
+
+post
+/v1/fine_tuning/jobs/{job_id}/start
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "497f6eca-6276-4993-bfeb-53cbbbba6f08",
+"auto_start": true,
+"hyperparameters": {
+"training_steps": 1,
+"learning_rate": 0.0001,
+"weight_decay": 0.1,
+"warmup_fraction": 0.05,
+"epochs": 0,
+"fim_ratio": 0.9,
+"seq_len": 100
+},
+"model": "open-mistral-7b",
+"status": "QUEUED",
+"job_type": "string",
+"created_at": 0,
+"modified_at": 0,
+"training_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"validation_files": [ ],
+"object": "job",
+"fine_tuned_model": "string",
+"suffix": "string",
+"integrations": [
+{}
+],
+"trained_tokens": 0,
+"repositories": [ ],
+"metadata": {
+"expected_duration_seconds": 0,
+"cost": 0,
+"cost_currency": "string",
+"train_tokens_per_step": 0,
+"train_tokens": 0,
+"data_tokens": 0,
+"estimated_start_time": 0
+},
+"events": [ ],
+"checkpoints": [ ]
+}
+Models
+Model Management API
+
+List Models
+List all models available to the user.
+
+Authorizations:
+ApiKey
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+get
+/v1/models
+
+Response samples
+200422
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"object": "list",
+"data": [
+{}
+]
+}
+Retrieve Model
+Retrieve a model information.
+
+Authorizations:
+ApiKey
+path Parameters
+model_id
+required
+string (Model Id)
+Example: ft:open-mistral-7b:587a6b29:20240514:7e773925
+The ID of the model to retrieve.
+
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+get
+/v1/models/{model_id}
+
+Response samples
+200422
+Content type
+application/json
+Example
+
+base
+base
+
+Copy
+Expand allCollapse all
+{
+"id": "string",
+"object": "model",
+"created": 0,
+"owned_by": "mistralai",
+"capabilities": {
+"completion_chat": true,
+"completion_fim": false,
+"function_calling": true,
+"fine_tuning": false,
+"vision": false
+},
+"name": "string",
+"description": "string",
+"max_context_length": 32768,
+"aliases": [ ],
+"deprecation": "2019-08-24T14:15:22Z",
+"default_model_temperature": 0,
+"type": "base"
+}
+Delete Model
+Delete a fine-tuned model.
+
+Authorizations:
+ApiKey
+path Parameters
+model_id
+required
+string (Model Id)
+Example: ft:open-mistral-7b:587a6b29:20240514:7e773925
+The ID of the model to delete.
+
+Responses
+200
+Successful Response
+
+422
+Validation Error
+
+
+delete
+/v1/models/{model_id}
+
+Response samples
+200422
+Content type
+application/json
+
+Copy
+{
+"id": "ft:open-mistral-7b:587a6b29:20240514:7e773925",
+"object": "model",
+"deleted": true
+}
+Update Fine Tuned Model
+Update a model name or description.
+
+Authorizations:
+ApiKey
+path Parameters
+model_id
+required
+string (Model Id)
+Example: ft:open-mistral-7b:587a6b29:20240514:7e773925
+The ID of the model to update.
+
+Request Body schema: application/json
+required
+name	
+Name (string) or Name (null) (Name)
+description	
+Description (string) or Description (null) (Description)
+Responses
+200
+OK
+
+
+patch
+/v1/fine_tuning/models/{model_id}
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+{
+"name": "string",
+"description": "string"
+}
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "string",
+"object": "model",
+"created": 0,
+"owned_by": "string",
+"root": "string",
+"archived": true,
+"name": "string",
+"description": "string",
+"capabilities": {
+"completion_chat": true,
+"completion_fim": false,
+"function_calling": false,
+"fine_tuning": false
+},
+"max_context_length": 32768,
+"aliases": [ ],
+"job": "4bbaedb0-902b-4b27-8218-8f40d3470a54"
+}
+Archive Fine Tuned Model
+Archive a fine-tuned model.
+
+Authorizations:
+ApiKey
+path Parameters
+model_id
+required
+string (Model Id)
+Example: ft:open-mistral-7b:587a6b29:20240514:7e773925
+The ID of the model to archive.
+
+Responses
+200
+OK
+
+
+post
+/v1/fine_tuning/models/{model_id}/archive
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+{
+"id": "string",
+"object": "model",
+"archived": true
+}
+Unarchive Fine Tuned Model
+Un-archive a fine-tuned model.
+
+Authorizations:
+ApiKey
+path Parameters
+model_id
+required
+string (Model Id)
+Example: ft:open-mistral-7b:587a6b29:20240514:7e773925
+The ID of the model to unarchive.
+
+Responses
+200
+OK
+
+
+delete
+/v1/fine_tuning/models/{model_id}/archive
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+{
+"id": "string",
+"object": "model",
+"archived": false
+}
+Batch
+Batch API
+
+Get Batch Jobs
+Get a list of batch jobs for your organization and user.
+
+Authorizations:
+ApiKey
+query Parameters
+page	
+integer (Page)
+Default: 0
+page_size	
+integer (Page Size)
+Default: 100
+model	
+Model (string) or Model (null) (Model)
+metadata	
+Metadata (object) or Metadata (null) (Metadata)
+created_after	
+Created After (string) or Created After (null) (Created After)
+created_by_me	
+boolean (Created By Me)
+Default: false
+status	
+BatchJobStatus (string) or null
+Responses
+200
+OK
+
+
+get
+/v1/batch/jobs
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"data": [ ],
+"object": "list",
+"total": 0
+}
+Create Batch Job
+Create a new batch job, it will be queued for processing.
+
+Authorizations:
+ApiKey
+Request Body schema: application/json
+required
+input_files
+required
+Array of strings <uuid> (Input Files) [ items <uuid > ]
+endpoint
+required
+string (ApiEndpoint)
+Enum: "/v1/chat/completions" "/v1/embeddings" "/v1/fim/completions" "/v1/moderations" "/v1/chat/moderations"
+model
+required
+string (Model)
+metadata	
+Metadata (object) or Metadata (null) (Metadata)
+timeout_hours	
+integer (Timeout Hours)
+Default: 24
+Responses
+200
+OK
+
+
+post
+/v1/batch/jobs
+
+Request samples
+Payload
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"input_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"endpoint": "/v1/chat/completions",
+"model": "string",
+"metadata": {
+"property1": "string",
+"property2": "string"
+},
+"timeout_hours": 24
+}
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "string",
+"object": "batch",
+"input_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"metadata": { },
+"endpoint": "string",
+"model": "string",
+"output_file": "c7c9cb17-f818-4ee3-85de-0d2f8954882c",
+"error_file": "6b79e6a4-c3aa-4da1-8fb4-9e2520d26bfa",
+"errors": [
+{}
+],
+"status": "QUEUED",
+"created_at": 0,
+"total_requests": 0,
+"completed_requests": 0,
+"succeeded_requests": 0,
+"failed_requests": 0,
+"started_at": 0,
+"completed_at": 0
+}
+Get Batch Job
+Get a batch job details by its UUID.
+
+Authorizations:
+ApiKey
+path Parameters
+job_id
+required
+string <uuid> (Job Id)
+Responses
+200
+OK
+
+
+get
+/v1/batch/jobs/{job_id}
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "string",
+"object": "batch",
+"input_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"metadata": { },
+"endpoint": "string",
+"model": "string",
+"output_file": "c7c9cb17-f818-4ee3-85de-0d2f8954882c",
+"error_file": "6b79e6a4-c3aa-4da1-8fb4-9e2520d26bfa",
+"errors": [
+{}
+],
+"status": "QUEUED",
+"created_at": 0,
+"total_requests": 0,
+"completed_requests": 0,
+"succeeded_requests": 0,
+"failed_requests": 0,
+"started_at": 0,
+"completed_at": 0
+}
+Cancel Batch Job
+Request the cancellation of a batch job.
+
+Authorizations:
+ApiKey
+path Parameters
+job_id
+required
+string <uuid> (Job Id)
+Responses
+200
+OK
+
+
+post
+/v1/batch/jobs/{job_id}/cancel
+
+Response samples
+200
+Content type
+application/json
+
+Copy
+Expand allCollapse all
+{
+"id": "string",
+"object": "batch",
+"input_files": [
+"497f6eca-6276-4993-bfeb-53cbbbba6f08"
+],
+"metadata": { },
+"endpoint": "string",
+"model": "string",
+"output_file": "c7c9cb17-f818-4ee3-85de-0d2f8954882c",
+"error_file": "6b79e6a4-c3aa-4da1-8fb4-9e2520d26bfa",
+"errors": [
+{}
+],
+"status": "QUEUED",
+"created_at": 0,
+"total_requests": 0,
+"completed_requests": 0,
+"succeeded_requests": 0,
+"failed_requests": 0,
+"started_at": 0,
+"completed_at": 0
+}
+OCR API
+OCR API
+
+OCR
+Authorizations:
+ApiKey
+ HTTP: ApiKey
+HTTP Authorization Scheme: bearer
+Request Body schema: application/json
+required
+model
+required
+Model (string) or Model (null) (Model)
+id	
+string (Id)
+document
+required
+DocumentURLChunk (object) or ImageURLChunk (object) (Document)
+Document to run OCR on
+
+pages	
+Array of Pages (integers) or Pages (null) (Pages)
+Specific pages user wants to process in various formats: single number, range, or list of both. Starts from 0
+
+include_image_base64	
+Include Image Base64 (boolean) or Include Image Base64 (null) (Include Image Base64)
+Include image URLs in response
+
+image_limit	
+Image Limit (integer) or Image Limit (null) (Image Limit)
+Max images to extract
+
+image_min_size	
+Image Min Size (integer) or Image Min Size (null) (Image Min Size)
+Minimum height and width of image to extract
+
+Responses
+200
+Successful Response
+
+422
+Validation Error

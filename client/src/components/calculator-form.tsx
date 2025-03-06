@@ -7,6 +7,7 @@ import { insertSubmissionSchema } from "@shared/schema";
 import type { InsertSubmission } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Check } from "lucide-react";
+import { DocumentUpload } from "./document-upload";
 
 import {
   Form,
@@ -21,8 +22,16 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MultiStepForm, formSteps } from "./multi-step-form";
 
+interface ExtractedData {
+  buildingSize?: number;
+  currentConsumption?: number;
+  projectedConsumption?: number;
+  language?: string;
+}
+
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
+  const [documentLanguage, setDocumentLanguage] = useState<string>("en");
   const { toast } = useToast();
 
   const form = useForm<InsertSubmission>({
@@ -40,9 +49,28 @@ export function CalculatorForm() {
     }
   });
 
+  const handleExtractedData = (data: ExtractedData) => {
+    if (data.language) {
+      setDocumentLanguage(data.language);
+    }
+
+    if (data.buildingSize) {
+      form.setValue("buildingSize", data.buildingSize);
+    }
+    if (data.currentConsumption) {
+      form.setValue("currentConsumption", data.currentConsumption);
+    }
+    if (data.projectedConsumption) {
+      form.setValue("projectedConsumption", data.projectedConsumption);
+    }
+  };
+
   const { mutate, isPending, data: result } = useMutation({
     mutationFn: async (data: InsertSubmission) => {
-      const res = await apiRequest("POST", "/api/calculate", data);
+      const res = await apiRequest("POST", "/api/calculate", {
+        ...data,
+        documentLanguage,
+      });
       return res.json();
     },
     onSuccess: () => {
@@ -140,6 +168,13 @@ export function CalculatorForm() {
 
           {step === 2 && (
             <>
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-2">Upload Energy Certificate</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Upload your energy certificate or renovation plan to automatically fill the form
+                </p>
+                <DocumentUpload onDataExtracted={handleExtractedData} />
+              </div>
               <FormField
                 control={form.control}
                 name="heatingSystem"
@@ -334,6 +369,28 @@ export function CalculatorForm() {
                     {Math.round(((Number(result.currentConsumption) - Number(result.projectedConsumption)) / Number(result.currentConsumption)) * 100)}%)
                   </p>
                 </div>
+              </div>
+            </div>
+            <div className="mt-6 p-6 bg-muted/20 rounded-lg">
+              <h3 className="font-semibold mb-4">10-Year Prognosis</h3>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <p className="text-muted-foreground">Total CO₂ Savings</p>
+                    <p className="text-2xl font-bold">{(Number(result.co2Savings) * 10).toFixed(2)} tons</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Total Carbon Credits</p>
+                    <p className="text-2xl font-bold">{(Number(result.carbonCredits) * 10).toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Total Financial Value</p>
+                    <p className="text-2xl font-bold">€{(Number(result.financialValue) * 10).toFixed(2)}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  * Projections assume consistent savings over 10 years. Actual results may vary based on market conditions and implementation.
+                </p>
               </div>
             </div>
           </div>
