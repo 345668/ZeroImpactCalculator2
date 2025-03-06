@@ -85,6 +85,17 @@ async function processDocumentWithMistral(file: Express.Multer.File) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // GET all submissions
+  app.get("/api/submissions", async (req, res) => {
+    try {
+      const submissions = await storage.getAllSubmissions();
+      res.json(submissions);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      res.status(500).json({ message: "Error fetching submissions" });
+    }
+  });
+
   app.post("/api/calculate", async (req, res) => {
     try {
       const validatedData = insertSubmissionSchema.parse(req.body);
