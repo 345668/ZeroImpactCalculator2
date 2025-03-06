@@ -30,10 +30,10 @@ export function CalculatorForm() {
     resolver: zodResolver(insertSubmissionSchema),
     defaultValues: {
       buildingOwnership: "own",
-      buildingSize: "",
+      buildingSize: 0,
       heatingSystem: "gas",
-      currentConsumption: "",
-      projectedConsumption: "",
+      currentConsumption: 0,
+      projectedConsumption: 0,
       firstName: "",
       lastName: "",
       email: "",

@@ -20,9 +20,9 @@ export const submissions = pgTable("submissions", {
 });
 
 export const insertSubmissionSchema = createInsertSchema(submissions).extend({
-  buildingSize: z.string().transform(val => parseFloat(val)),
-  currentConsumption: z.string().transform(val => parseFloat(val)),
-  projectedConsumption: z.string().transform(val => parseFloat(val)),
+  buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
+  currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
+  projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
   email: z.string().email("Please enter a valid email address"),
   acceptedTerms: z.literal("true", {
     errorMap: () => ({ message: "You must accept the terms and conditions" })
