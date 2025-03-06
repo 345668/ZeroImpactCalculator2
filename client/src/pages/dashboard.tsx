@@ -3,8 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend, LineChart, Line } from "recharts";
-import { Separator } from "@/components/ui/separator";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } from "recharts";
 import { BarChart2, Building2, Coins, Factory } from "lucide-react";
 import type { Submission } from "@shared/schema";
 
@@ -37,9 +36,9 @@ export default function Dashboard() {
 
   // Chart data
   const chartData = submissions
-    .sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime())
+    .sort((a, b) => (a.submittedAt || "").localeCompare(b.submittedAt || ""))
     .map(submission => ({
-      date: new Date(submission.submittedAt).toLocaleDateString(),
+      date: submission.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : "",
       co2Savings: Number(submission.co2Savings),
       financialValue: Number(submission.financialValue),
       carbonCredits: Number(submission.carbonCredits),
@@ -104,13 +103,12 @@ export default function Dashboard() {
             <CardTitle>CO₂ Savings Over Time</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <ChartContainer className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Legend />
+                  <ChartTooltip />
                   <Line 
                     type="monotone" 
                     dataKey="co2Savings" 
@@ -120,7 +118,7 @@ export default function Dashboard() {
                   />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
+            </ChartContainer>
           </CardContent>
         </Card>
 
@@ -129,13 +127,12 @@ export default function Dashboard() {
             <CardTitle>Financial Value Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <ChartContainer className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip content={<ChartTooltipContent />} />
-                  <Legend />
+                  <ChartTooltip />
                   <Bar 
                     dataKey="financialValue" 
                     name="Financial Value (€)"
@@ -144,7 +141,7 @@ export default function Dashboard() {
                   />
                 </BarChart>
               </ResponsiveContainer>
-            </div>
+            </ChartContainer>
           </CardContent>
         </Card>
       </div>
@@ -168,7 +165,7 @@ export default function Dashboard() {
             <TableBody>
               {submissions?.slice(0, 5).map((submission) => (
                 <TableRow key={submission.id}>
-                  <TableCell>{new Date(submission.submittedAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{submission.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : "N/A"}</TableCell>
                   <TableCell>{submission.buildingSize} m²</TableCell>
                   <TableCell>
                     {(((Number(submission.currentConsumption) - Number(submission.projectedConsumption)) / Number(submission.currentConsumption)) * 100).toFixed(1)}%
