@@ -25,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
   const { toast } = useToast();
-  
+
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
     defaultValues: {
@@ -275,15 +275,15 @@ export function CalculatorForm() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               <div>
                 <h3 className="text-lg font-semibold">CO2 Savings</h3>
-                <p className="text-2xl font-bold">{result.co2Savings.toFixed(2)} tons/year</p>
+                <p className="text-2xl font-bold">{Number(result.co2Savings)} tons/year</p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Carbon Credits</h3>
-                <p className="text-2xl font-bold">{result.carbonCredits.toFixed(2)} credits</p>
+                <p className="text-2xl font-bold">{Number(result.carbonCredits)} credits</p>
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Financial Value</h3>
-                <p className="text-2xl font-bold">€{result.financialValue.toFixed(2)}</p>
+                <p className="text-2xl font-bold">€{Number(result.financialValue)}</p>
               </div>
             </div>
           </div>
