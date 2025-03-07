@@ -96,7 +96,7 @@ export function CalculatorForm() {
     },
     onSuccess: (data) => {
       // Navigate to results page with the calculation data
-      setLocation("/results", { 
+      setLocation("/results", {
         state: { result: data }
       });
     },
@@ -124,7 +124,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 3}
+          isLastStep={step === 5} // Updated step count
           isSubmitting={isPending}
         >
           {step === 1 && (
@@ -203,78 +203,58 @@ export function CalculatorForm() {
           )}
 
           {step === 2 && (
-            <>
-              <FormField
-                control={form.control}
-                name="heatingSystem"
-                render={({ field }) => (
-                  <FormItem className="space-y-4">
-                    <FormLabel>What is your current heating system?</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-                      >
-                        {["gas", "oil", "pellet", "other"].map((value) => (
-                          <FormItem
-                            key={value}
-                            className="relative flex items-center justify-between rounded-lg border-2 border-muted p-4 hover:border-primary"
-                          >
-                            <FormControl>
-                              <RadioGroupItem value={value} className="absolute right-4" />
-                            </FormControl>
-                            <FormLabel className="text-base font-semibold capitalize">
-                              {value}
-                            </FormLabel>
-                          </FormItem>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className="space-y-6">
               <FormField
                 control={form.control}
                 name="currentConsumption"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>What is your current annual energy consumption (kWh/year)?</FormLabel>
+                    <FormLabel className="text-base mb-4">
+                      What is your current annual energy consumption (excluding solar PV)?
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Enter current consumption"
+                        placeholder="Current Consumption (kWh/year)"
                         {...field}
+                        value={field.value || ''}
+                        className="text-lg p-6"
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </div>
+          )}
 
+          {step === 3 && (
+            <div className="space-y-6">
               <FormField
                 control={form.control}
                 name="projectedConsumption"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>What is your projected annual energy consumption (kWh/year)?</FormLabel>
+                    <FormLabel className="text-base mb-4">
+                      What is your projected annual energy consumption after improvements?
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Enter projected consumption"
+                        placeholder="Projected Consumption (kWh/year)"
                         {...field}
+                        value={field.value || ''}
+                        className="text-lg p-6"
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            </>
+            </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <>
               <FormField
                 control={form.control}
