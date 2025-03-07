@@ -6,7 +6,14 @@ export async function extractTextFromDocument(file: Express.Multer.File): Promis
     let text = '';
     console.log('Processing file type:', file.mimetype);
 
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype === 'application/pdf') {
+      // Handle PDF
+      console.log('Processing PDF file');
+      const dataBuffer = Buffer.from(file.buffer);
+      const pdfData = await pdfParse(dataBuffer);
+      text = pdfData.text;
+      console.log('PDF text extraction successful');
+    } else if (file.mimetype.startsWith('image/')) {
       // Handle images using Tesseract
       console.log('Processing image file with Tesseract');
       const worker = await createWorker();
@@ -15,7 +22,7 @@ export async function extractTextFromDocument(file: Express.Multer.File): Promis
       text = extractedText;
       console.log('Image text extraction successful');
     } else {
-      throw new Error('Unsupported file type. Please upload an image file.');
+      throw new Error('Unsupported file type. Please upload a PDF or image file.');
     }
 
     if (!text || text.trim().length === 0) {
@@ -71,7 +78,7 @@ export async function processWithMistral(text: string) {
 
     return {
       ...result,
-      language: 'en' // Default to English for now
+      language: 'de' // Since the documents appear to be in German
     };
   } catch (error) {
     console.error('Error processing with Mistral:', error);

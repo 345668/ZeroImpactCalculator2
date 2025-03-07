@@ -9,7 +9,15 @@ import { extractTextFromDocument, processWithMistral } from "./utils/document-pr
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (_req, file, cb) => {
+    // Accept only PDFs and images
+    if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF and image files are allowed'));
+    }
+  }
 });
 
 async function processDocument(file: Express.Multer.File) {
@@ -34,20 +42,7 @@ async function processDocument(file: Express.Multer.File) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  console.log('Starting route registration...'); // Debug log
-
-  // GET all submissions
-  app.get("/api/submissions", async (req, res) => {
-    try {
-      console.log('Fetching all submissions');
-      const submissions = await storage.getAllSubmissions();
-      console.log('Found submissions:', submissions.length);
-      res.json(submissions);
-    } catch (error) {
-      console.error('Error fetching submissions:', error);
-      res.status(500).json({ message: "Error fetching submissions" });
-    }
-  });
+  console.log('Starting route registration...');
 
   // Document upload endpoint
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
@@ -76,19 +71,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calculate and store submission
+  // Calculate endpoint
   app.post("/api/calculate", async (req, res) => {
     try {
       console.log('Received calculation request:', req.body);
-
-      // Validate the input data
       const validatedData = insertSubmissionSchema.parse(req.body);
       console.log('Validation successful:', validatedData);
-
-      // Create the submission
       const result = await storage.createSubmission(validatedData);
       console.log('Submission created:', result);
-
       res.json(result);
     } catch (error) {
       console.error('Calculation error:', error);
@@ -104,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  console.log('Route registration completed successfully'); // Debug log
+  console.log('Route registration completed successfully');
   const httpServer = createServer(app);
   return httpServer;
 }
