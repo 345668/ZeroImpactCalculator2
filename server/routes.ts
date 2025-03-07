@@ -5,7 +5,8 @@ import { storage } from "./storage";
 import { insertSubmissionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage";
-import { extractTextFromDocument, processWithMistral } from "./utils/document-processor";
+import { extractTextFromDocument } from "./utils/document-processor";
+import { calculateWithOpenAI } from "./utils/openai-calculator";
 import { analyzeDocumentWithClaude } from "./utils/claude-ai";
 import { generatePDFReport } from "./utils/pdf-generator";
 import { sendReportEmail } from "./utils/email-service";
@@ -20,19 +21,19 @@ async function processDocument(file: Express.Multer.File) {
   try {
     console.log('Starting document processing...');
 
-    // Extract text from document
+    // Extract text from document using OCR
     console.log('Extracting text from document...');
     const extractedText = await extractTextFromDocument(file);
     console.log('Text extracted successfully');
 
-    // Process with Mistral AI for basic info
-    console.log('Processing with Mistral AI...');
-    const mistralData = await processWithMistral(extractedText);
-    console.log('Mistral processing complete:', mistralData);
+    // Process with OpenAI for initial calculations
+    console.log('Processing with OpenAI...');
+    const calculatedData = await calculateWithOpenAI(extractedText);
+    console.log('OpenAI processing complete:', calculatedData);
 
-    // Process with Claude AI for detailed analysis
-    console.log('Processing with Claude AI...');
-    const claudeAnalysis = await analyzeDocumentWithClaude(extractedText);
+    // Process with Claude AI for detailed analysis and reporting
+    console.log('Processing with Claude AI for detailed report...');
+    const detailedAnalysis = await analyzeDocumentWithClaude(extractedText);
     console.log('Claude AI analysis complete');
 
     // Upload to Azure Blob Storage
@@ -41,8 +42,8 @@ async function processDocument(file: Express.Multer.File) {
     console.log('File uploaded successfully');
 
     return {
-      extractedData: mistralData,
-      detailedAnalysis: claudeAnalysis,
+      extractedData: calculatedData,
+      detailedAnalysis: detailedAnalysis,
       fileUrl
     };
   } catch (error) {
