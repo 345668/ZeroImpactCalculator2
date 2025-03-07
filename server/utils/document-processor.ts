@@ -1,5 +1,5 @@
 import { createWorker } from 'tesseract.js';
-import * as pdf from 'pdf-parse/lib/pdf-parse.js';
+import * as pdfParse from 'pdf-parse/lib/pdf-parse.js';
 
 export async function extractTextFromDocument(file: Express.Multer.File): Promise<string> {
   try {
@@ -9,7 +9,8 @@ export async function extractTextFromDocument(file: Express.Multer.File): Promis
     if (file.mimetype === 'application/pdf') {
       // Handle PDF
       console.log('Processing PDF file');
-      const pdfData = await pdf(file.buffer);
+      const dataBuffer = file.buffer;
+      const pdfData = await pdfParse(dataBuffer);
       text = pdfData.text;
     } else if (file.mimetype.startsWith('image/')) {
       // Handle images using Tesseract
@@ -37,7 +38,6 @@ export async function extractTextFromDocument(file: Express.Multer.File): Promis
 export async function processWithMistral(text: string) {
   try {
     console.log('Starting Mistral AI processing');
-    // First call: Chat completion to analyze the document
     const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
