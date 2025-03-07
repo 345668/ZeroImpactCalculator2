@@ -20,8 +20,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
-import { MultiStepForm, formSteps } from "./multi-step-form";
+import { MultiStepForm, formSteps as originalFormSteps } from "./multi-step-form";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+
 
 interface ExtractedData {
   buildingSize?: number;
@@ -30,6 +32,33 @@ interface ExtractedData {
   language?: string;
   heatingSystem?: string;
 }
+
+export const formSteps = [
+  {
+    title: "Building Information",
+    description: "Tell us about your building"
+  },
+  {
+    title: "Current Energy Consumption",
+    description: "Enter your current energy usage"
+  },
+  {
+    title: "Projected Energy Consumption",
+    description: "Enter your expected energy usage after improvements"
+  },
+  {
+    title: "Results Analysis",
+    description: "Review your potential savings"
+  },
+  {
+    title: "Personal Information",
+    description: "Tell us about yourself"
+  },
+  {
+    title: "Review & Submit",
+    description: "Review your information and submit"
+  }
+];
 
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
@@ -72,7 +101,7 @@ export function CalculatorForm() {
       form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
     }
     setIsDocumentUploaded(true);
-    nextStep(); 
+    nextStep();
   };
 
   const { mutate, isPending } = useMutation({
@@ -116,6 +145,19 @@ export function CalculatorForm() {
   const nextStep = () => setStep(step + 1);
   const previousStep = () => setStep(step - 1);
 
+  function calculateCO2Savings(data: any): number {
+    const savingsKwh = data.currentConsumption - data.projectedConsumption;
+    return savingsKwh * 0.0002;
+  }
+
+  function calculateCarbonCredits(data: any): number {
+    return calculateCO2Savings(data);
+  }
+
+  function calculateFinancialValue(data: any): number {
+    return calculateCarbonCredits(data) * 50;
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -124,7 +166,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 5} 
+          isLastStep={step === 6}
           isSubmitting={isPending}
         >
           {step === 1 && (
@@ -255,6 +297,95 @@ export function CalculatorForm() {
           )}
 
           {step === 4 && (
+            <div className="space-y-6">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-2">Your Carbon Savings Results</h2>
+                <p className="text-muted-foreground">Here's the potential impact of your energy efficiency improvements</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card className="p-6 bg-primary/5">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="rounded-full bg-green-100 p-3">
+                      <Check className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
+                  <div className="text-3xl text-center font-bold mb-1">
+                    {calculateCO2Savings({
+                      currentConsumption: form.getValues("currentConsumption"),
+                      projectedConsumption: form.getValues("projectedConsumption")
+                    }).toFixed(2)}
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">Tons of CO₂ per year</p>
+                </Card>
+
+                <Card className="p-6 bg-primary/5">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="rounded-full bg-green-100 p-3">
+                      <Check className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
+                  <div className="text-3xl text-center font-bold mb-1">
+                    {calculateCarbonCredits({
+                      currentConsumption: form.getValues("currentConsumption"),
+                      projectedConsumption: form.getValues("projectedConsumption")
+                    }).toFixed(2)}
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
+                </Card>
+
+                <Card className="p-6 bg-primary/5">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="rounded-full bg-green-100 p-3">
+                      <Check className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-center font-semibold mb-1">Financial Value</h3>
+                  <div className="text-3xl text-center font-bold mb-1">
+                    €{calculateFinancialValue({
+                      currentConsumption: form.getValues("currentConsumption"),
+                      projectedConsumption: form.getValues("projectedConsumption")
+                    }).toFixed(2)}
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">Potential market value</p>
+                </Card>
+              </div>
+
+              <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">Building Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ownership Type</p>
+                    <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Building Size</p>
+                    <p className="font-medium">{form.getValues("buildingSize")} m²</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Heating System</p>
+                    <p className="font-medium capitalize">{form.getValues("heatingSystem")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
+                    <p className="font-medium">
+                      {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center mt-8">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Continue to provide your contact information and learn how to monetize your carbon credits.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
             <>
               <FormField
                 control={form.control}
