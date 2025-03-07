@@ -52,46 +52,72 @@ export function CalculatorForm() {
   });
 
   const handleExtractedData = (data: any) => {
-    console.log('Extracted data:', data);
-    if (data.building_size) {
-      const size = Number(data.building_size);
-      if (!isNaN(size)) {
-        form.setValue("buildingSize", size.toString());
+    console.log('Received extracted data:', data);
+
+    try {
+      // Handle building size
+      if (typeof data.building_size !== 'undefined') {
+        const size = Number(data.building_size);
+        if (!isNaN(size)) {
+          console.log('Setting building size:', size);
+          form.setValue("buildingSize", size.toString(), { shouldValidate: true });
+        }
       }
-    }
 
-    if (data.current_consumption) {
-      const consumption = Number(data.current_consumption);
-      if (!isNaN(consumption)) {
-        form.setValue("currentConsumption", consumption.toString());
+      // Handle current consumption
+      if (typeof data.current_consumption !== 'undefined') {
+        const consumption = Number(data.current_consumption);
+        if (!isNaN(consumption)) {
+          console.log('Setting current consumption:', consumption);
+          form.setValue("currentConsumption", consumption.toString(), { shouldValidate: true });
+        }
       }
-    }
 
-    if (data.projected_consumption) {
-      const projected = Number(data.projected_consumption);
-      if (!isNaN(projected)) {
-        form.setValue("projectedConsumption", projected.toString());
+      // Handle projected consumption
+      if (typeof data.projected_consumption !== 'undefined') {
+        const projected = Number(data.projected_consumption);
+        if (!isNaN(projected)) {
+          console.log('Setting projected consumption:', projected);
+          form.setValue("projectedConsumption", projected.toString(), { shouldValidate: true });
+        }
       }
+
+      // Handle heating system type
+      if (data.heating_system_type) {
+        let heatingType = 'other';
+        const type = data.heating_system_type.toLowerCase();
+        if (type.includes('gas')) heatingType = 'gas';
+        else if (type.includes('oil')) heatingType = 'oil';
+        else if (type.includes('electric')) heatingType = 'electric';
+        console.log('Setting heating type:', heatingType);
+        form.setValue("heatingSystem", heatingType, { shouldValidate: true });
+      }
+
+      // Set building ownership
+      form.setValue("buildingOwnership", "own", { shouldValidate: true });
+
+      // Handle consultant information if present
+      if (data.consultant_name) form.setValue("consultantName", data.consultant_name);
+      if (data.consultant_company) form.setValue("consultantCompany", data.consultant_company);
+      if (data.consultant_id) form.setValue("consultantId", data.consultant_id);
+      if (data.consultant_bafa_number) form.setValue("consultantBafaNumber", data.consultant_bafa_number);
+
+      setIsDocumentUploaded(true);
+
+      // Force form update
+      form.trigger();
+
+      console.log('Current form values:', form.getValues());
+
+      nextStep();
+    } catch (error) {
+      console.error('Error handling extracted data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to process document data",
+        variant: "destructive",
+      });
     }
-
-    if (data.heating_system_type) {
-      let heatingType = 'other';
-      const type = data.heating_system_type.toLowerCase();
-      if (type.includes('gas')) heatingType = 'gas';
-      else if (type.includes('oil')) heatingType = 'oil';
-      else if (type.includes('electric')) heatingType = 'electric';
-      form.setValue("heatingSystem", heatingType);
-    }
-
-    // Set default values and consultant info if available
-    form.setValue("buildingOwnership", "own");
-    if (data.consultant_name) form.setValue("consultantName", data.consultant_name);
-    if (data.consultant_company) form.setValue("consultantCompany", data.consultant_company);
-    if (data.consultant_id) form.setValue("consultantId", data.consultant_id);
-    if (data.consultant_bafa_number) form.setValue("consultantBafaNumber", data.consultant_bafa_number);
-
-    setIsDocumentUploaded(true);
-    nextStep();
   };
 
   const calculateResults = async () => {
