@@ -85,7 +85,7 @@ export async function sendReportEmail(submission: any) {
 
   const msg = {
     to: submission.email,
-    from: 'sandsneptune@gmail.com',
+    from: 'pmm@sands-neptune.de',
     subject: 'Your Carbon Credit Calculation Report',
     text: emailContent,
     html: emailContent.replace(/\n/g, '<br>').replace(/\s{2,}/g, '&nbsp;&nbsp;')
