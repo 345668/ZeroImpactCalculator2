@@ -11,6 +11,11 @@ interface DocumentUploadProps {
     currentConsumption?: number;
     projectedConsumption?: number;
     language?: string;
+    heatingSystem?: string;
+    consultantName?: string;
+    consultantCompany?: string;
+    consultantId?: string;
+    consultantBafaNumber?: string;
   }) => void;
 }
 
@@ -43,6 +48,12 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
         buildingSize: data.extractedData?.building_size || undefined,
         currentConsumption: data.extractedData?.current_consumption || undefined,
         projectedConsumption: data.extractedData?.projected_consumption || undefined,
+        heatingSystem: data.extractedData?.heating_system_type || undefined,
+        // Add energy consultant information
+        consultantName: data.extractedData?.consultant_name || undefined,
+        consultantCompany: data.extractedData?.consultant_company || undefined,
+        consultantId: data.extractedData?.consultant_id || undefined,
+        consultantBafaNumber: data.extractedData?.consultant_bafa_number || undefined,
       };
 
       onDataExtracted(extractedData);

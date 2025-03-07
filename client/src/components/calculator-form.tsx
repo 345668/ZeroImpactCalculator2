@@ -31,6 +31,10 @@ interface ExtractedData {
   projectedConsumption?: number;
   language?: string;
   heatingSystem?: string;
+  consultantName?: string;
+  consultantCompany?: string;
+  consultantId?: string;
+  consultantBafaNumber?: string;
 }
 
 export const formSteps = [
@@ -79,7 +83,11 @@ export function CalculatorForm() {
       lastName: "",
       email: "",
       acceptedTerms: false,
-      gdprConsent: false
+      gdprConsent: false,
+      consultantName: "", // Add new fields
+      consultantCompany: "",
+      consultantId: "",
+      consultantBafaNumber: ""
     }
   });
 
@@ -99,6 +107,19 @@ export function CalculatorForm() {
     }
     if (data.heatingSystem) {
       form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
+    }
+    // Set energy consultant information if available
+    if (data.consultantName) {
+      form.setValue("consultantName", data.consultantName);
+    }
+    if (data.consultantCompany) {
+      form.setValue("consultantCompany", data.consultantCompany);
+    }
+    if (data.consultantId) {
+      form.setValue("consultantId", data.consultantId);
+    }
+    if (data.consultantBafaNumber) {
+      form.setValue("consultantBafaNumber", data.consultantBafaNumber);
     }
     setIsDocumentUploaded(true);
     nextStep();
