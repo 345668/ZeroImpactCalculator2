@@ -11,10 +11,37 @@ export interface IStorage {
 
 export class DbStorage implements IStorage {
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
-    // Calculate CO2 savings based on consumption difference
-    const consumptionDiff = Number(insertSubmission.currentConsumption) - Number(insertSubmission.projectedConsumption);
-    const co2Savings = Number((consumptionDiff * 0.2).toFixed(2)); // Simplified CO2 calculation factor
-    const carbonCredits = co2Savings; // 1:1 ratio for this example
+    // Calculate CO2 savings using the energy consumption method
+    const getEmissionFactor = (heatingSystem: string): number => {
+      switch (heatingSystem.toLowerCase()) {
+        case 'oil':
+        case 'oil heating':
+          return 0.266; // kg CO₂/kWh (2024)
+        case 'gas':
+        case 'gas-nt':
+        case 'natural gas':
+          return 0.202; // kg CO₂/kWh (2024)
+        case 'electricity':
+        case 'electric':
+          return 0.343; // kg CO₂/kWh (2024)
+        case 'green electricity':
+          return 0; // kg CO₂/kWh
+        default:
+          return 0.202; // Default to natural gas if unknown
+      }
+    };
+
+    const currentConsumption = Number(insertSubmission.currentConsumption);
+    const projectedConsumption = Number(insertSubmission.projectedConsumption);
+    const emissionFactor = getEmissionFactor(insertSubmission.heatingSystem);
+
+    // Calculate emissions in kg CO2
+    const currentEmissions = currentConsumption * emissionFactor;
+    const projectedEmissions = projectedConsumption * emissionFactor;
+
+    // Convert to tons CO2
+    const co2Savings = Number(((currentEmissions - projectedEmissions) / 1000).toFixed(2));
+    const carbonCredits = co2Savings; // 1:1 ratio
     const financialValue = Number((carbonCredits * 50).toFixed(2)); // €50 per credit
 
     const submission = await db.insert(submissions).values({

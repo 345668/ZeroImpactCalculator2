@@ -146,10 +146,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 // Calculation functions
 function calculateCO2Savings(data: any): number {
-  // Calculate CO2 savings based on energy consumption reduction
-  const savingsKwh = data.currentConsumption - data.projectedConsumption;
-  // Using average CO2 emissions per kWh (0.0002 tons CO2 per kWh)
-  return savingsKwh * 0.0002;
+  // Method 1: Energy consumption based calculation
+  const currentConsumption = Number(data.currentConsumption); // kWh/year
+  const projectedConsumption = Number(data.projectedConsumption); // kWh/year
+
+  // Get emission factor based on heating system
+  const getEmissionFactor = (heatingSystem: string): number => {
+    switch (heatingSystem.toLowerCase()) {
+      case 'oil':
+      case 'oil heating':
+        return 0.266; // kg CO₂/kWh (2024)
+      case 'gas':
+      case 'gas-nt':
+      case 'natural gas':
+        return 0.202; // kg CO₂/kWh (2024)
+      case 'electricity':
+      case 'electric':
+        return 0.343; // kg CO₂/kWh (2024)
+      case 'green electricity':
+        return 0; // kg CO₂/kWh
+      default:
+        return 0.202; // Default to natural gas if unknown
+    }
+  };
+
+  const emissionFactor = getEmissionFactor(data.heatingSystem);
+
+  // Calculate current and future emissions in kg CO2
+  const currentEmissions = currentConsumption * emissionFactor;
+  const projectedEmissions = projectedConsumption * emissionFactor;
+
+  // Convert kg to tons
+  const savingsInTons = (currentEmissions - projectedEmissions) / 1000;
+
+  return Number(savingsInTons.toFixed(2));
 }
 
 function calculateCarbonCredits(data: any): number {
@@ -158,6 +188,6 @@ function calculateCarbonCredits(data: any): number {
 }
 
 function calculateFinancialValue(data: any): number {
-  // Assuming €50 per carbon credit
+  // Each carbon credit (1 ton CO₂) is worth approximately 50 EUR
   return calculateCarbonCredits(data) * 50;
 }
