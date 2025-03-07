@@ -48,6 +48,13 @@ export function ResultsPage() {
     }
   };
 
+  // Ensure numeric values
+  const co2Savings = Number(result.co2Savings);
+  const carbonCredits = Number(result.carbonCredits);
+  const financialValue = Number(result.financialValue);
+  const currentConsumption = Number(result.currentConsumption);
+  const projectedConsumption = Number(result.projectedConsumption);
+
   return (
     <div className="container max-w-4xl mx-auto py-8 px-4">
       <h2 className="text-2xl font-semibold text-center">Your Carbon Savings Results</h2>
@@ -61,7 +68,7 @@ export function ResultsPage() {
             <Check className="w-4 h-4 text-primary" />
           </div>
           <h3 className="text-primary font-semibold mb-2">CO₂ Savings</h3>
-          <p className="text-3xl font-bold">{result.co2Savings.toFixed(2)}</p>
+          <p className="text-3xl font-bold">{co2Savings.toFixed(2)}</p>
           <p className="text-sm text-muted-foreground">Tons of CO₂ per year</p>
         </div>
 
@@ -70,7 +77,7 @@ export function ResultsPage() {
             <Check className="w-4 h-4 text-primary" />
           </div>
           <h3 className="text-primary font-semibold mb-2">Carbon Credits</h3>
-          <p className="text-3xl font-bold">{result.carbonCredits.toFixed(2)}</p>
+          <p className="text-3xl font-bold">{carbonCredits.toFixed(2)}</p>
           <p className="text-sm text-muted-foreground">Credits (1:1 with CO₂)</p>
         </div>
 
@@ -79,7 +86,7 @@ export function ResultsPage() {
             <Check className="w-4 h-4 text-primary" />
           </div>
           <h3 className="text-primary font-semibold mb-2">Financial Value</h3>
-          <p className="text-3xl font-bold">€{result.financialValue.toFixed(2)}</p>
+          <p className="text-3xl font-bold">€{financialValue.toFixed(2)}</p>
           <p className="text-sm text-muted-foreground">Potential market value</p>
         </div>
       </div>
@@ -102,8 +109,8 @@ export function ResultsPage() {
           <div>
             <p className="text-muted-foreground">Energy Consumption Reduction</p>
             <p className="font-medium">
-              {result.currentConsumption - result.projectedConsumption} kWh/year (
-              {Math.round(((result.currentConsumption - result.projectedConsumption) / result.currentConsumption) * 100)}
+              {currentConsumption - projectedConsumption} kWh/year (
+              {Math.round(((currentConsumption - projectedConsumption) / currentConsumption) * 100)}
               %)
             </p>
           </div>
