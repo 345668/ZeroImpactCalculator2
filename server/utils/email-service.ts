@@ -20,10 +20,7 @@ export async function sendReportEmail(submission: any) {
 
   const msg = {
     to: submission.email,
-    from: {
-      email: 'reports@radical-zero.com',
-      name: 'Radical Zero'
-    },
+    from: 'noreply@radical-zero.repl.co', // Using Replit domain as sender
     subject: 'Your Carbon Credit Calculation Report',
     html: `
       <h1>Your Carbon Savings Report</h1>
@@ -54,12 +51,16 @@ export async function sendReportEmail(submission: any) {
     await sgMail.send(msg);
     console.log('Email sent successfully to:', submission.email);
     return true;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error sending email:', error);
-    if (error.response) {
-      console.error('SendGrid API error:', error.response.body);
-      throw new Error(`Failed to send email: ${error.response.body.errors?.[0]?.message || 'Unknown error'}`);
+
+    // Check if it's a SendGrid API error with response body
+    if (error?.response?.body) {
+      const errorMessage = error.response.body.errors?.[0]?.message || 'Unknown SendGrid error';
+      throw new Error(`Failed to send email: ${errorMessage}`);
     }
-    throw error;
+
+    // Generic error
+    throw new Error('Failed to send email: Service temporarily unavailable');
   }
 }
