@@ -43,73 +43,79 @@ export async function sendReportEmail(submission: any) {
     const reductionPercentage = ((consumptionDiff / data.currentConsumption) * 100).toFixed(1);
 
     const emailParts = [
-      `Herr ${data.lastName}, ${data.firstName},\n`,
+      `Herr ${data.lastName}, ${data.firstName}`,
+      '',
       'CARBON_CREDIT_CALCULATION_REPORT',
       '-----------------------------------',
-      `DATE_ASSESSED: ${getCurrentDate()}\n`,
+      `DATE_ASSESSED: ${getCurrentDate()}`,
+      '',
       'BUILDING_DATA',
       '-----------------------------------',
       'BUILDING_TYPE: Single-family house',
       `LOCATION: ${data.address}`,
       `AREA_SQM: ${data.buildingSize}`,
-      `HEATING_SYSTEM: ${data.heatingSystem}\n`,
+      `HEATING_SYSTEM: ${data.heatingSystem}`,
+      '',
       'EMISSIONS_DATA',
       '-----------------------------------',
       `CURRENT_ENERGY_CONSUMPTION_KWH: ${formatNumber(data.currentConsumption)}`,
       `FUTURE_ENERGY_CONSUMPTION_KWH: ${formatNumber(data.projectedConsumption)}`,
-      `ENERGY_REDUCTION: ${formatNumber(consumptionDiff)} kWh/year (${reductionPercentage}%)\n`,
+      `ENERGY_REDUCTION: ${formatNumber(consumptionDiff)} kWh/year (${reductionPercentage}%)`,
+      '',
       'CARBON_CREDITS (10-YEAR PROJECTION)',
       '-----------------------------------',
       `ANNUAL_REDUCTION_KG: ${formatNumber(data.co2Savings * 1000)}`,
       `ANNUAL_CARBON_CREDITS_TONS: ${formatNumber(data.co2Savings)}`,
       'CREDITING_PERIOD_YEARS: 10',
-      `LIFETIME_CARBON_CREDITS_TONS: ${formatNumber(data.co2Savings * 10)}\n`,
+      `LIFETIME_CARBON_CREDITS_TONS: ${formatNumber(data.co2Savings * 10)}`,
+      '',
       'FINANCIAL_VALUE',
       '-----------------------------------',
       'CARBON_PRICE_EUR_PER_TON: 50',
       `ANNUAL_VALUE_EUR: ${formatNumber(data.financialValue)}`,
-      `LIFETIME_VALUE_EUR: ${formatNumber(data.financialValue * 10)}\n`,
+      `LIFETIME_VALUE_EUR: ${formatNumber(data.financialValue * 10)}`,
+      '',
       'METHOD_NOTES',
       '-----------------------------------',
       'CALCULATION_METHOD: Direct CO2 emission values',
       'CONFIDENCE_LEVEL: High',
       'EMISSION_FACTOR_CURRENT: 0.202 kg CO₂/kWh (Natural gas)',
-      'EMISSION_FACTOR_FUTURE: 0.343 kg CO₂/kWh (Electricity mix)\n',
+      'EMISSION_FACTOR_FUTURE: 0.343 kg CO₂/kWh (Electricity mix)',
+      '',
       'Mit freundlichen Grüssen',
-      'Philippe M Masindet\n',
+      'Philippe M Masindet',
+      '',
       'Philippe Maitey Masindet',
-      'CTO Radical Zero GmbH\n',
+      'CTO Radical Zero GmbH',
+      '',
       'pmm@radical-zero.com',
-      'Tel: +491746813185\n',
+      'Tel: +491746813185',
+      '',
       'Radical Zero GmbH',
       'Local Carbon Offset Supply',
       'Co/Q:ARC',
       'Danziger Straße 145',
-      '10407 Berlin\n',
+      '10407 Berlin',
+      '',
       'Amtsgericht Charlottenburg (HRB 255861 B)'
     ];
 
     const plainText = emailParts.join('\n');
     const htmlContent = emailParts
-      .map(line => line.trim())
-      .map(line => `<div style="font-family: monospace; white-space: pre;">${line}</div>`)
+      .map(line => {
+        if (line === '') return '<br>';
+        return `<div style="margin-bottom: 4px;">${line}</div>`;
+      })
       .join('');
 
-    const msg = {
+    // Create a JSON-safe email message object
+    const msg = JSON.parse(JSON.stringify({
       to: data.email,
       from: 'pmm@sands-neptune.de',
       subject: 'Your Carbon Credit Calculation Report',
       text: plainText,
-      html: `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-</head>
-<body style="font-family: monospace; white-space: pre-wrap;">
-  ${htmlContent}
-</body>
-</html>`
-    };
+      html: `<div style="font-family: monospace; white-space: pre-wrap;">${htmlContent}</div>`
+    }));
 
     await sgMail.send(msg);
     console.log('Email sent successfully to:', data.email);
