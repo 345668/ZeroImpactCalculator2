@@ -77,17 +77,25 @@ export function CalculatorForm() {
       const response = await fetch("/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          buildingOwnership: data.buildingOwnership,
+          buildingSize: data.buildingSize,
+          heatingSystem: data.heatingSystem,
+          currentConsumption: data.currentConsumption,
+          projectedConsumption: data.projectedConsumption,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to calculate results");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to calculate results");
       }
 
       const results = await response.json();
       setInterimResults(results);
       nextStep();
     } catch (error) {
+      console.error('Calculation error:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to calculate results",

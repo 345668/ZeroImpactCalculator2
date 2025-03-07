@@ -35,6 +35,16 @@ export const submissions = pgTable("submissions", {
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
+// Schema for calculation only
+export const calculationSchema = z.object({
+  buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
+  currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
+  projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
+  buildingOwnership: z.string(),
+  heatingSystem: z.string(),
+});
+
+// Full submission schema
 export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
   currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
@@ -66,3 +76,4 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
 
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type Submission = typeof submissions.$inferSelect;
+export type CalculationInput = z.infer<typeof calculationSchema>;
