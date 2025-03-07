@@ -51,7 +51,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET all submissions
   app.get("/api/submissions", async (req, res) => {
     try {
+      console.log('Fetching all submissions');
       const submissions = await storage.getAllSubmissions();
+      console.log('Found submissions:', submissions.length);
       res.json(submissions);
     } catch (error) {
       console.error('Error fetching submissions:', error);
@@ -90,30 +92,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/calculate", async (req, res) => {
     try {
       console.log('Received calculation request:', req.body);
-      const validatedData = insertSubmissionSchema.parse({
-        ...req.body,
-        acceptedTerms: req.body.acceptedTerms === true || req.body.acceptedTerms === "true"
-      });
 
-      // Convert boolean to string for database storage
+      // Convert boolean strings to actual booleans
+      const formData = {
+        ...req.body,
+        acceptedTerms: req.body.acceptedTerms === true || req.body.acceptedTerms === "true",
+        gdprConsent: req.body.gdprConsent === true || req.body.gdprConsent === "true"
+      };
+
+      console.log('Validating form data:', formData);
+      const validatedData = insertSubmissionSchema.parse(formData);
+      console.log('Validation successful:', validatedData);
+
       const submissionData = {
         ...validatedData,
         acceptedTerms: validatedData.acceptedTerms.toString(),
-        // Add calculated fields
-        co2Savings: calculateCO2Savings(validatedData),
-        carbonCredits: calculateCarbonCredits(validatedData),
-        financialValue: calculateFinancialValue(validatedData)
+        gdprConsent: validatedData.gdprConsent.toString(),
       };
 
+      console.log('Creating submission with data:', submissionData);
       const result = await storage.createSubmission(submissionData);
+      console.log('Submission created:', result);
+
       res.json(result);
     } catch (error) {
       console.error('Calculation error:', error);
-      if (error instanceof Error) {
+      if (error.name === "ZodError") {
         const validationError = fromZodError(error);
         res.status(400).json({ message: validationError.message });
       } else {
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({ 
+          message: "Internal server error",
+          error: error instanceof Error ? error.message : "Unknown error"
+        });
       }
     }
   });

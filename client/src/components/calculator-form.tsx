@@ -166,8 +166,17 @@ export function CalculatorForm() {
   });
 
   const onSubmit = (data: InsertSubmission) => {
-    console.log('Submitting form data:', data); // Debug log
-    mutate(data);
+    console.log('Form submission started:', data); // Debug log
+
+    // Convert boolean values to strings
+    const submissionData = {
+      ...data,
+      acceptedTerms: String(data.acceptedTerms),
+      gdprConsent: String(data.gdprConsent)
+    };
+
+    console.log('Processed submission data:', submissionData); // Debug log
+    mutate(submissionData);
   };
 
   const nextStep = () => setStep(step + 1);
@@ -512,6 +521,23 @@ export function CalculatorForm() {
                   </FormItem>
                 )}
               />
+              <div className="flex justify-between mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={previousStep}
+                  className="px-6"
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  className="px-6 bg-[#4CAF50] hover:bg-[#45a049]"
+                  disabled={isPending}
+                >
+                  {isPending ? "Submitting..." : "Submit Data"}
+                </Button>
+              </div>
             </>
           )}
           {step === 6 && (

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Tooltip } from "recharts";
-import { BarChart2, Building2, Coins, Factory, FileDown, Calendar } from "lucide-react";
+import { BarChart2, Building2, Coins, Factory, FileDown, Calendar, RefreshCw } from "lucide-react";
 import type { Submission } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
 
 // Add chart configuration
 const chartConfig = {
@@ -36,13 +37,46 @@ const chartConfig = {
 };
 
 export default function Dashboard() {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [timeRange, setTimeRange] = useState("all");
 
-  // Fetch all submissions
-  const { data: submissions = [], isLoading } = useQuery<Submission[]>({
+  // Enhanced query with error handling
+  const { data: submissions = [], isLoading, error } = useQuery<Submission[]>({
     queryKey: ["/api/submissions"],
-    retry: false,
+    retry: 3,
+    staleTime: 30000, // Consider data stale after 30 seconds
+    onError: (error) => {
+      console.error('Error fetching submissions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data. Please try refreshing.",
+        variant: "destructive",
+      });
+    }
   });
+
+  // Add refresh function
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
+      toast({
+        title: "Success",
+        description: "Dashboard data refreshed successfully",
+      });
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to refresh dashboard data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Filter submissions based on time range
   const filteredSubmissions = submissions.filter(submission => {
@@ -105,27 +139,50 @@ export default function Dashboard() {
       energyReduction: Number(submission.currentConsumption) - Number(submission.projectedConsumption),
     }));
 
-  if (isLoading) {
-    return <div className="p-6">Loading analytics...</div>;
-  }
-
+  // Add refresh button in the header
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-        <Select value={timeRange} onValueChange={setTimeRange}>
-          <SelectTrigger className="w-[180px]">
-            <Calendar className="w-4 h-4 mr-2" />
-            <SelectValue placeholder="Select time range" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Time</SelectItem>
-            <SelectItem value="week">Last Week</SelectItem>
-            <SelectItem value="month">Last Month</SelectItem>
-            <SelectItem value="year">Last Year</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+            {isRefreshing ? "Refreshing..." : "Refresh Data"}
+          </Button>
+          <Select value={timeRange} onValueChange={setTimeRange}>
+            <SelectTrigger className="w-[180px]">
+              <Calendar className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Select time range" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Time</SelectItem>
+              <SelectItem value="week">Last Week</SelectItem>
+              <SelectItem value="month">Last Month</SelectItem>
+              <SelectItem value="year">Last Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
+
+      {/* Show loading state */}
+      {isLoading && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Loading dashboard data...</p>
+        </div>
+      )}
+
+      {/* Show error state */}
+      {error && (
+        <div className="text-center py-8">
+          <p className="text-destructive">Error loading dashboard data. Please try refreshing.</p>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
@@ -185,7 +242,6 @@ export default function Dashboard() {
             <CardTitle>CO₂ Savings Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Update ChartContainer usage */}
             <ChartContainer className="h-[300px]" config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
@@ -210,7 +266,6 @@ export default function Dashboard() {
             <CardTitle>Energy Reduction Analysis</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Update ChartContainer usage */}
             <ChartContainer className="h-[300px]" config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
