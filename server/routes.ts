@@ -92,7 +92,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Received calculation request:', req.body);
       const validatedData = insertSubmissionSchema.parse(req.body);
       console.log('Validation successful:', validatedData);
-      const result = await storage.createSubmission(validatedData);
+
+      // Calculate annual savings
+      const consumptionDiff = Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption);
+      const annualCO2Savings = Number((consumptionDiff * 0.2).toFixed(2)); // tons of CO2 per year
+
+      // Project over 10 years
+      const co2Savings = (annualCO2Savings * 10).toString(); // 10 year projection
+      const carbonCredits = co2Savings; // 1:1 ratio with CO2 savings
+      const financialValue = (Number(carbonCredits) * 50).toString(); // €50 per credit
+
+      // Add calculations to the submission data
+      const submissionData = {
+        ...validatedData,
+        co2Savings,
+        carbonCredits,
+        financialValue
+      };
+
+      const result = await storage.createSubmission(submissionData);
       console.log('Submission created:', result);
       res.json(result);
     } catch (error) {
@@ -121,22 +139,4 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Route registration completed successfully');
   const httpServer = createServer(app);
   return httpServer;
-}
-
-// Calculation functions
-function calculateCO2Savings(data: any): number {
-  // Calculate CO2 savings based on energy consumption reduction
-  const savingsKwh = data.currentConsumption - data.projectedConsumption;
-  // Using average CO2 emissions per kWh (0.0002 tons CO2 per kWh)
-  return savingsKwh * 0.0002;
-}
-
-function calculateCarbonCredits(data: any): number {
-  // 1:1 ratio with CO2 savings
-  return calculateCO2Savings(data);
-}
-
-function calculateFinancialValue(data: any): number {
-  // Assuming €50 per carbon credit
-  return calculateCarbonCredits(data) * 50;
 }
