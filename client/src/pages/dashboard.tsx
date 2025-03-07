@@ -15,6 +15,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Add chart configuration
+const chartConfig = {
+  theme: {
+    background: "transparent",
+    axis: {
+      domain: {
+        line: {
+          stroke: "hsl(var(--border))",
+        },
+      },
+    },
+    grid: {
+      line: {
+        stroke: "hsl(var(--border))",
+        strokeWidth: 1,
+      },
+    },
+  },
+};
+
 export default function Dashboard() {
   const [timeRange, setTimeRange] = useState("all");
 
@@ -165,7 +185,8 @@ export default function Dashboard() {
             <CardTitle>CO₂ Savings Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="h-[300px]">
+            {/* Update ChartContainer usage */}
+            <ChartContainer className="h-[300px]" config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
                   <XAxis dataKey="date" />
@@ -189,7 +210,8 @@ export default function Dashboard() {
             <CardTitle>Energy Reduction Analysis</CardTitle>
           </CardHeader>
           <CardContent>
-            <ChartContainer className="h-[300px]">
+            {/* Update ChartContainer usage */}
+            <ChartContainer className="h-[300px]" config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <XAxis dataKey="date" />
