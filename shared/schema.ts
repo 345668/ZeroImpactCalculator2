@@ -2,50 +2,38 @@ import { pgTable, text, serial, numeric, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Step 1-4: Building and Energy Information Schema
+export const calculationSchema = z.object({
+  buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
+  currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
+  projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
+  buildingOwnership: z.enum(["own", "rent"]),
+  heatingSystem: z.enum(["gas", "oil", "electric", "other"]),
+});
+
+// Keep the database table definition
 export const submissions = pgTable("submissions", {
   id: serial("id").primaryKey(),
-  // Building Information (Step 1)
   buildingOwnership: text("building_ownership").notNull(),
   buildingSize: numeric("building_size").notNull(),
-
-  // Energy Information (Steps 2-3)
   currentConsumption: numeric("current_consumption").notNull(),
   projectedConsumption: numeric("projected_consumption").notNull(),
-
-  // Heating System (Step 4)
   heatingSystem: text("heating_system").notNull(),
-
-  // Calculation Results (Step 5)
   co2Savings: numeric("co2_savings").notNull(),
   carbonCredits: numeric("carbon_credits").notNull(),
   financialValue: numeric("financial_value").notNull(),
-
-  // Contact Information (Step 6)
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
   email: text("email").notNull(),
   address: text("address").notNull(),
   acceptedTerms: text("accepted_terms").notNull(),
   acceptedGDPR: text("accepted_gdpr").notNull(),
-
-  // Energy Consultant Details (Step 7)
   consultantName: text("consultant_name").notNull(),
   consultantCompany: text("consultant_company").notNull(),
   consultantId: text("consultant_id").notNull(),
   consultantBafaNumber: text("consultant_bafa_number").notNull(),
-
-  // Additional Fields
   fileUrl: text("file_url"),
   submittedAt: timestamp("submitted_at").defaultNow(),
-});
-
-// Step 1-4: Building and Energy Information Schema
-export const calculationSchema = z.object({
-  buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
-  currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
-  projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
-  buildingOwnership: z.string(),
-  heatingSystem: z.string(),
 });
 
 // Step 6: Contact Information Schema

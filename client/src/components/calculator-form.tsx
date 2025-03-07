@@ -52,36 +52,41 @@ export function CalculatorForm() {
   });
 
   const handleExtractedData = (data: any) => {
+    console.log('Extracted data:', data);
+    if (data.building_size) {
+      form.setValue("buildingSize", Number(data.building_size));
+    }
+    if (data.current_consumption) {
+      form.setValue("currentConsumption", Number(data.current_consumption));
+    }
+    if (data.projected_consumption) {
+      form.setValue("projectedConsumption", Number(data.projected_consumption));
+    }
+    if (data.heating_system_type) {
+      // Map "Gas-NT" to "gas"
+      const heatingType = data.heating_system_type.toLowerCase().startsWith('gas') ? 'gas' : data.heating_system_type.toLowerCase();
+      form.setValue("heatingSystem", heatingType);
+    }
     if (data.language) {
       setDocumentLanguage(data.language);
-    }
-    if (data.buildingSize) {
-      form.setValue("buildingSize", data.buildingSize);
-    }
-    if (data.currentConsumption) {
-      form.setValue("currentConsumption", data.currentConsumption);
-    }
-    if (data.projectedConsumption) {
-      form.setValue("projectedConsumption", data.projectedConsumption);
-    }
-    if (data.heatingSystem) {
-      form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
     }
     setIsDocumentUploaded(true);
     nextStep();
   };
 
   const calculateResults = async () => {
-    const data = form.getValues();
     try {
-      // Only validate calculation-related fields
-      const calculationData = await calculationSchema.parseAsync({
-        buildingOwnership: data.buildingOwnership,
+      const data = form.getValues();
+      // Only include calculation-relevant fields
+      const calculationData = {
         buildingSize: data.buildingSize,
-        heatingSystem: data.heatingSystem,
         currentConsumption: data.currentConsumption,
         projectedConsumption: data.projectedConsumption,
-      });
+        buildingOwnership: data.buildingOwnership,
+        heatingSystem: data.heatingSystem,
+      };
+
+      console.log('Calculation data:', calculationData);
 
       const response = await fetch("/api/calculate", {
         method: "POST",
@@ -148,47 +153,10 @@ export function CalculatorForm() {
   const previousStep = () => setStep(step - 1);
 
   const handleNext = async () => {
-    const values = form.getValues();
-
-    try {
-      switch (step) {
-        case 1:
-          await calculationSchema.pick({
-            buildingSize: true,
-            buildingOwnership: true
-          }).parseAsync(values);
-          nextStep();
-          break;
-        case 2:
-          await calculationSchema.pick({
-            currentConsumption: true
-          }).parseAsync(values);
-          nextStep();
-          break;
-        case 3:
-          await calculationSchema.pick({
-            projectedConsumption: true
-          }).parseAsync(values);
-          nextStep();
-          break;
-        case 4:
-          await calculationSchema.pick({
-            heatingSystem: true
-          }).parseAsync(values);
-          await calculateResults();
-          break;
-        default:
-          nextStep();
-          break;
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        toast({
-          title: "Validation Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      }
+    if (step === 4) {
+      await calculateResults();
+    } else {
+      nextStep();
     }
   };
 
