@@ -79,8 +79,8 @@ export function MultiStepForm({
             disabled={isSubmitting}
           >
             {isLastStep 
-              ? (isSubmitting ? "Calculating..." : "See Results") 
-              : "Continue"}
+              ? (isSubmitting ? "Submitting..." : "Submit") 
+              : currentStep === 4 ? "Continue" : "Next"}
           </Button>
         </div>
       </CardContent>
@@ -102,11 +102,11 @@ export const formSteps: Step[] = [
     description: "Enter your expected energy usage after improvements"
   },
   {
-    title: "Personal Information",
-    description: "Tell us about yourself"
+    title: "Review Results",
+    description: "See your potential savings"
   },
   {
-    title: "Review & Submit",
-    description: "Review your information and submit"
+    title: "Contact Information",
+    description: "Tell us how to reach you"
   }
 ];

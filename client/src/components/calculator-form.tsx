@@ -37,6 +37,7 @@ export function CalculatorForm() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
+  const [interimResults, setInterimResults] = useState<any>(null);
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -79,6 +80,31 @@ export function CalculatorForm() {
     nextStep();
   };
 
+  const calculateResults = async () => {
+    const data = form.getValues();
+    try {
+      const response = await fetch("/api/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to calculate results");
+      }
+
+      const results = await response.json();
+      setInterimResults(results);
+      nextStep();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to calculate results",
+        variant: "destructive",
+      });
+    }
+  };
+
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: InsertSubmission) => {
       const response = await fetch("/api/calculate", {
@@ -99,9 +125,8 @@ export function CalculatorForm() {
     onSuccess: (data) => {
       toast({
         title: "Success!",
-        description: "Calculation completed successfully.",
+        description: "Your information has been submitted successfully.",
       });
-      // Navigate to results page with the calculation data
       navigate("/results", { replace: true, state: { result: data } });
     },
     onError: (error: Error) => {
@@ -127,7 +152,7 @@ export function CalculatorForm() {
         <MultiStepForm
           currentStep={step}
           steps={formSteps}
-          onNext={nextStep}
+          onNext={step === 3 ? calculateResults : nextStep}
           onPrevious={previousStep}
           isLastStep={step === formSteps.length}
           isSubmitting={isPending}
@@ -259,8 +284,15 @@ export function CalculatorForm() {
             </div>
           )}
 
-          {step === 4 && (
-            <>
+          {step === 4 && interimResults && (
+            <div>
+              {/* Placeholder for Interim Results Component */}
+              <pre>{JSON.stringify(interimResults, null, 2)}</pre>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-6">
               <FormField
                 control={form.control}
                 name="firstName"
@@ -294,7 +326,7 @@ export function CalculatorForm() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>Email Address</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
                     </FormControl>
@@ -307,23 +339,38 @@ export function CalculatorForm() {
                 control={form.control}
                 name="acceptedTerms"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        I accept the terms and conditions and agree that Radical Zero can contact me via email
-                      </FormLabel>
-                      <FormMessage />
+                  <FormItem className="flex flex-col space-y-4">
+                    <div className="flex items-start space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          I accept the <a href="/terms" className="text-primary hover:underline">terms and conditions</a>
+                        </FormLabel>
+                      </div>
                     </div>
+                    <div className="flex items-start space-x-3">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>
+                          I understand and agree that my personal data will be processed in accordance with the <a href="/privacy" className="text-primary hover:underline">GDPR privacy policy</a>. This includes storing my information securely and using it to contact me about my carbon credit potential.
+                        </FormLabel>
+                      </div>
+                    </div>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-            </>
+            </div>
           )}
         </MultiStepForm>
       </form>
