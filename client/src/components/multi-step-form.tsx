@@ -61,7 +61,7 @@ export function MultiStepForm({
 
         {/* Navigation buttons */}
         <div className="flex justify-between mt-6">
-          {currentStep > 1 && (
+          {currentStep > 1 && currentStep < steps.length && (
             <Button
               type="button"
               variant="outline"
@@ -72,16 +72,18 @@ export function MultiStepForm({
             </Button>
           )}
 
-          <Button
-            type={isLastStep ? "submit" : "button"}
-            onClick={!isLastStep ? onNext : undefined}
-            className="px-6 ml-auto bg-[#4CAF50] hover:bg-[#45a049]"
-            disabled={isSubmitting}
-          >
-            {isLastStep 
-              ? (isSubmitting ? "Calculating..." : "See Results") 
-              : "Continue"}
-          </Button>
+          {currentStep < steps.length && (
+            <Button
+              type={isLastStep ? "submit" : "button"}
+              onClick={!isLastStep ? onNext : undefined}
+              className="px-6 ml-auto bg-[#4CAF50] hover:bg-[#45a049]"
+              disabled={isSubmitting}
+            >
+              {isLastStep
+                ? isSubmitting ? "Sending..." : "Receive Email"
+                : "Continue"}
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

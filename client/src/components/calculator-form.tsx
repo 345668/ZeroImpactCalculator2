@@ -472,6 +472,37 @@ export function CalculatorForm() {
               />
             </>
           )}
+          {step === 6 && (
+            <div className="text-center space-y-6">
+              <img
+                src="/logo.png"
+                alt="Radical-Zero Logo"
+                className="mx-auto w-32 h-32 mb-8"
+              />
+
+              <div className="rounded-full bg-blue-100 w-16 h-16 mx-auto flex items-center justify-center mb-8">
+                <Check className="w-8 h-8 text-blue-500" />
+              </div>
+
+              <h2 className="text-2xl font-bold mb-2">Submission Successful!</h2>
+
+              <p className="text-gray-600 max-w-md mx-auto">
+                Thank you for your interest in carbon credits. A Radical-Zero representative
+                will contact you soon with more information about your potential carbon savings.
+              </p>
+
+              <div className="flex justify-center gap-4 mt-8">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => window.location.href = '/'}
+                  className="px-6"
+                >
+                  Back to Home
+                </Button>
+              </div>
+            </div>
+          )}
         </MultiStepForm>
       </form>
     </Form>
