@@ -49,7 +49,8 @@ export function CalculatorForm() {
       firstName: "",
       lastName: "",
       email: "",
-      acceptedTerms: false
+      acceptedTerms: false,
+      gdprConsent: false
     }
   });
 
@@ -71,7 +72,7 @@ export function CalculatorForm() {
       form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
     }
     setIsDocumentUploaded(true);
-    nextStep(); // Automatically move to next step after successful document upload
+    nextStep(); 
   };
 
   const { mutate, isPending } = useMutation({
@@ -95,7 +96,6 @@ export function CalculatorForm() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Navigate to results page with the calculation data
       setLocation("/results", {
         state: { result: data }
       });
@@ -124,7 +124,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 5} // Updated step count
+          isLastStep={step === 5} 
           isSubmitting={isPending}
         >
           {step === 1 && (
@@ -312,6 +312,27 @@ export function CalculatorForm() {
                     <div className="space-y-1 leading-none">
                       <FormLabel>
                         I accept the terms and conditions and agree that Radical Zero can contact me via email
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="gdprConsent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        I consent to the processing of my personal data in accordance with GDPR regulations
                       </FormLabel>
                       <FormMessage />
                     </div>
