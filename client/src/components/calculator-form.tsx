@@ -119,7 +119,7 @@ export function CalculatorForm() {
         title: "Success!",
         description: "Your information has been submitted successfully.",
       });
-      navigate("/results", { replace: true, state: { result: data } });
+      navigate("/success", { replace: true });
     },
     onError: (error: Error) => {
       toast({
@@ -324,6 +324,7 @@ export function CalculatorForm() {
 
           {step === 5 && (
             <div className="space-y-6">
+              <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
               <FormField
                 control={form.control}
                 name="firstName"
