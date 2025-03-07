@@ -4,6 +4,7 @@ export interface IStorage {
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmissionByEmail(email: string): Promise<Submission | undefined>;
   getAllSubmissions(): Promise<Submission[]>;
+  getSubmissionById(id: number): Promise<Submission | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -47,6 +48,10 @@ export class MemStorage implements IStorage {
 
   async getAllSubmissions(): Promise<Submission[]> {
     return Array.from(this.submissions.values());
+  }
+
+  async getSubmissionById(id: number): Promise<Submission | undefined> {
+    return this.submissions.get(id);
   }
 }
 

@@ -4,8 +4,9 @@ import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line } from "recharts";
-import { BarChart2, Building2, Coins, Factory } from "lucide-react";
+import { BarChart2, Building2, Coins, Factory, FileDown } from "lucide-react";
 import type { Submission } from "@shared/schema";
+import { Button } from "@/components/ui/button";
 
 export default function Dashboard() {
   // Fetch all submissions
@@ -128,11 +129,11 @@ export default function Dashboard() {
                   <XAxis dataKey="date" />
                   <YAxis />
                   <ChartTooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="co2Savings" 
+                  <Line
+                    type="monotone"
+                    dataKey="co2Savings"
                     name="CO₂ Savings (tons)"
-                    stroke="hsl(var(--primary))" 
+                    stroke="hsl(var(--primary))"
                     strokeWidth={2}
                   />
                 </LineChart>
@@ -152,11 +153,11 @@ export default function Dashboard() {
                   <XAxis dataKey="date" />
                   <YAxis />
                   <ChartTooltip />
-                  <Bar 
-                    dataKey="financialValue" 
+                  <Bar
+                    dataKey="financialValue"
                     name="Financial Value (€)"
-                    fill="hsl(var(--primary))" 
-                    radius={[4, 4, 0, 0]} 
+                    fill="hsl(var(--primary))"
+                    radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -179,6 +180,7 @@ export default function Dashboard() {
                 <TableHead>CO₂ Savings</TableHead>
                 <TableHead>Carbon Credits</TableHead>
                 <TableHead>Financial Value</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -192,6 +194,16 @@ export default function Dashboard() {
                   <TableCell>{Number(submission.co2Savings).toFixed(2)} tons</TableCell>
                   <TableCell>{Number(submission.carbonCredits).toFixed(2)}</TableCell>
                   <TableCell>€{Number(submission.financialValue).toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(`/api/submissions/${submission.id}/report`, '_blank')}
+                    >
+                      <FileDown className="h-4 w-4 mr-1" />
+                      Report
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

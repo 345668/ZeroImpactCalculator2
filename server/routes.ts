@@ -7,6 +7,7 @@ import { fromZodError } from "zod-validation-error";
 import FormData from "form-data";
 import fetch from "node-fetch";
 import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage";
+import { generatePDFReport } from "./utils/pdf-generator";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -139,10 +140,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Document processing error:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error processing document",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Add this new endpoint inside registerRoutes function
+  app.get("/api/submissions/:id/report", async (req, res) => {
+    try {
+      const submission = await storage.getSubmissionById(parseInt(req.params.id));
+
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      const pdfBuffer = await generatePDFReport(submission);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=carbon-credits-report-${submission.id}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error('Error generating PDF report:', error);
+      res.status(500).json({ message: "Error generating PDF report" });
     }
   });
 
