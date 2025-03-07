@@ -1,5 +1,5 @@
 import { submissions, type Submission, type InsertSubmission } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { db } from "./db";
 
 export interface IStorage {
@@ -17,13 +17,26 @@ export class DbStorage implements IStorage {
     const carbonCredits = co2Savings; // 1:1 ratio for this example
     const financialValue = Number((carbonCredits * 50).toFixed(2)); // €50 per credit
 
+    // Check for existing submissions from the same person
+    const existingSubmissions = await db
+      .select()
+      .from(submissions)
+      .where(
+        and(
+          eq(submissions.firstName, insertSubmission.firstName),
+          eq(submissions.lastName, insertSubmission.lastName)
+        )
+      )
+      .orderBy(desc(submissions.submittedAt));
+
+    // Create new submission while preserving history
     const submission = await db.insert(submissions).values({
       ...insertSubmission,
       co2Savings: co2Savings.toString(),
       carbonCredits: carbonCredits.toString(),
       financialValue: financialValue.toString(),
       acceptedTerms: insertSubmission.acceptedTerms.toString(),
-      gdprConsent: insertSubmission.gdprConsent.toString(), // Add GDPR consent
+      gdprConsent: insertSubmission.gdprConsent.toString(),
       submittedAt: new Date()
     }).returning();
 
@@ -31,16 +44,26 @@ export class DbStorage implements IStorage {
   }
 
   async getSubmissionByEmail(email: string): Promise<Submission | undefined> {
-    const result = await db.select().from(submissions).where(eq(submissions.email, email));
+    const result = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.email, email))
+      .orderBy(desc(submissions.submittedAt));
     return result[0];
   }
 
   async getAllSubmissions(): Promise<Submission[]> {
-    return db.select().from(submissions);
+    return db
+      .select()
+      .from(submissions)
+      .orderBy(desc(submissions.submittedAt));
   }
 
   async getSubmissionById(id: number): Promise<Submission | undefined> {
-    const result = await db.select().from(submissions).where(eq(submissions.id, id));
+    const result = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.id, id));
     return result[0];
   }
 }
