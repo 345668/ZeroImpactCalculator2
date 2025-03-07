@@ -18,86 +18,89 @@ function getCurrentDate(): string {
   });
 }
 
+function sanitizeSubmissionData(submission: any) {
+  return {
+    firstName: String(submission.firstName || ''),
+    lastName: String(submission.lastName || ''),
+    email: String(submission.email || ''),
+    address: String(submission.address || ''),
+    buildingSize: Number(submission.buildingSize || 0),
+    heatingSystem: String(submission.heatingSystem || ''),
+    currentConsumption: Number(submission.currentConsumption || 0),
+    projectedConsumption: Number(submission.projectedConsumption || 0),
+    co2Savings: Number(submission.co2Savings || 0),
+    carbonCredits: Number(submission.carbonCredits || 0),
+    financialValue: Number(submission.financialValue || 0)
+  };
+}
+
 export async function sendReportEmail(submission: any) {
   try {
-    // Ensure numeric values
-    const co2Savings = Number(submission.co2Savings);
-    const carbonCredits = Number(submission.carbonCredits);
-    const financialValue = Number(submission.financialValue);
-    const currentConsumption = Number(submission.currentConsumption);
-    const projectedConsumption = Number(submission.projectedConsumption);
+    const data = sanitizeSubmissionData(submission);
 
     // Calculate consumption difference and percentage
-    const consumptionDiff = currentConsumption - projectedConsumption;
-    const reductionPercentage = ((consumptionDiff / currentConsumption) * 100).toFixed(1);
+    const consumptionDiff = data.currentConsumption - data.projectedConsumption;
+    const reductionPercentage = ((consumptionDiff / data.currentConsumption) * 100).toFixed(1);
 
-    const emailContent = `
-Herr ${submission.lastName}, ${submission.firstName},
+    const emailParts = [
+      `Herr ${data.lastName}, ${data.firstName},\n`,
+      'CARBON_CREDIT_CALCULATION_REPORT',
+      '-----------------------------------',
+      `DATE_ASSESSED: ${getCurrentDate()}\n`,
+      'BUILDING_DATA',
+      '-----------------------------------',
+      'BUILDING_TYPE: Single-family house',
+      `LOCATION: ${data.address}`,
+      `AREA_SQM: ${data.buildingSize}`,
+      `HEATING_SYSTEM: ${data.heatingSystem}\n`,
+      'EMISSIONS_DATA',
+      '-----------------------------------',
+      `CURRENT_ENERGY_CONSUMPTION_KWH: ${formatNumber(data.currentConsumption)}`,
+      `FUTURE_ENERGY_CONSUMPTION_KWH: ${formatNumber(data.projectedConsumption)}`,
+      `ENERGY_REDUCTION: ${formatNumber(consumptionDiff)} kWh/year (${reductionPercentage}%)\n`,
+      'CARBON_CREDITS (10-YEAR PROJECTION)',
+      '-----------------------------------',
+      `ANNUAL_REDUCTION_KG: ${formatNumber(data.co2Savings * 1000)}`,
+      `ANNUAL_CARBON_CREDITS_TONS: ${formatNumber(data.co2Savings)}`,
+      'CREDITING_PERIOD_YEARS: 10',
+      `LIFETIME_CARBON_CREDITS_TONS: ${formatNumber(data.co2Savings * 10)}\n`,
+      'FINANCIAL_VALUE',
+      '-----------------------------------',
+      'CARBON_PRICE_EUR_PER_TON: 50',
+      `ANNUAL_VALUE_EUR: ${formatNumber(data.financialValue)}`,
+      `LIFETIME_VALUE_EUR: ${formatNumber(data.financialValue * 10)}\n`,
+      'METHOD_NOTES',
+      '-----------------------------------',
+      'CALCULATION_METHOD: Direct CO2 emission values',
+      'CONFIDENCE_LEVEL: High',
+      'EMISSION_FACTOR_CURRENT: 0.202 kg CO₂/kWh (Natural gas)',
+      'EMISSION_FACTOR_FUTURE: 0.343 kg CO₂/kWh (Electricity mix)\n',
+      'Mit freundlichen Grüssen',
+      'Philippe M Masindet\n',
+      'Philippe Maitey Masindet',
+      'CTO Radical Zero GmbH\n',
+      'pmm@radical-zero.com',
+      'Tel: +491746813185\n',
+      'Radical Zero GmbH',
+      'Local Carbon Offset Supply',
+      'Co/Q:ARC',
+      'Danziger Straße 145',
+      '10407 Berlin\n',
+      'Amtsgericht Charlottenburg (HRB 255861 B)'
+    ];
 
-CARBON_CREDIT_CALCULATION_REPORT
------------------------------------
-DATE_ASSESSED: ${getCurrentDate()}
-
-BUILDING_DATA
------------------------------------
-BUILDING_TYPE: Single-family house
-LOCATION: ${submission.address}
-AREA_SQM: ${submission.buildingSize}
-HEATING_SYSTEM: ${submission.heatingSystem}
-
-EMISSIONS_DATA
------------------------------------
-CURRENT_ENERGY_CONSUMPTION_KWH: ${formatNumber(currentConsumption)}
-FUTURE_ENERGY_CONSUMPTION_KWH: ${formatNumber(projectedConsumption)}
-ENERGY_REDUCTION: ${formatNumber(consumptionDiff)} kWh/year (${reductionPercentage}%)
-
-CARBON_CREDITS (10-YEAR PROJECTION)
------------------------------------
-ANNUAL_REDUCTION_KG: ${formatNumber(co2Savings * 1000)}
-ANNUAL_CARBON_CREDITS_TONS: ${formatNumber(co2Savings)}
-CREDITING_PERIOD_YEARS: 10
-LIFETIME_CARBON_CREDITS_TONS: ${formatNumber(co2Savings * 10)}
-
-FINANCIAL_VALUE
------------------------------------
-CARBON_PRICE_EUR_PER_TON: 50
-ANNUAL_VALUE_EUR: ${formatNumber(financialValue)}
-LIFETIME_VALUE_EUR: ${formatNumber(financialValue * 10)}
-
-METHOD_NOTES
------------------------------------
-CALCULATION_METHOD: Direct CO2 emission values
-CONFIDENCE_LEVEL: High
-EMISSION_FACTOR_CURRENT: 0.202 kg CO₂/kWh (Natural gas)
-EMISSION_FACTOR_FUTURE: 0.343 kg CO₂/kWh (Electricity mix)
-
-Mit freundlichen Grüssen
-Philippe M Masindet
-
-Philippe Maitey Masindet
-CTO Radical Zero GmbH
-
-pmm@radical-zero.com
-Tel: +491746813185
-
-Radical Zero GmbH
-Local Carbon Offset Supply
-Co/Q:ARC
-Danziger Straße 145
-10407 Berlin
-
-Amtsgericht Charlottenburg (HRB 255861 B)`;
+    const emailContent = emailParts.join('\n');
 
     const msg = {
-      to: submission.email,
+      to: data.email,
       from: 'pmm@sands-neptune.de',
       subject: 'Your Carbon Credit Calculation Report',
       text: emailContent,
-      html: emailContent.split('\n').map(line => `<div>${line}</div>`).join('')
+      html: emailParts.map(line => `<div>${line}</div>`).join('')
     };
 
     await sgMail.send(msg);
-    console.log('Email sent successfully to:', submission.email);
+    console.log('Email sent successfully to:', data.email);
     return true;
   } catch (error: any) {
     console.error('Error sending email:', error);
