@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { insertSubmissionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor";
+import { sendReportEmail } from "./utils/email-service";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -81,6 +82,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Document processing error:', error);
       res.status(500).json({
         message: "Error processing document",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Send report email endpoint
+  app.post("/api/send-report", async (req, res) => {
+    try {
+      const submissionId = Number(req.body.submissionId);
+      console.log('Sending report email for submission:', submissionId);
+
+      const submission = await storage.getSubmissionById(submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      await sendReportEmail(submission);
+      res.json({ message: "Report email sent successfully" });
+    } catch (error) {
+      console.error('Error sending report email:', error);
+      res.status(500).json({
+        message: "Error sending report email",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
