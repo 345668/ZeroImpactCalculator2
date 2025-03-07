@@ -6,6 +6,7 @@ import { insertSubmissionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import FormData from "form-data";
 import fetch from "node-fetch";
+import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -74,9 +75,13 @@ async function processDocumentWithMistral(file: Express.Multer.File) {
     const langData = await langResponse.json();
     const language = langData.choices[0].message.content.trim().toLowerCase();
 
+    // Upload file to Azure Blob Storage
+    const fileUrl = await uploadFileToBlobStorage(file);
+
     return {
       language,
       extractedData: JSON.parse(extractedData),
+      fileUrl
     };
   } catch (error) {
     console.error('Document processing error:', error);
@@ -85,6 +90,9 @@ async function processDocumentWithMistral(file: Express.Multer.File) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Ensure Azure Storage container exists
+  await ensureContainerExists();
+
   // GET all submissions
   app.get("/api/submissions", async (req, res) => {
     try {

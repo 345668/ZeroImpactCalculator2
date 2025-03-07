@@ -17,7 +17,7 @@ export class MemStorage implements IStorage {
 
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
     // Calculate CO2 savings based on consumption difference
-    const consumptionDiff = insertSubmission.currentConsumption - insertSubmission.projectedConsumption;
+    const consumptionDiff = Number(insertSubmission.currentConsumption) - Number(insertSubmission.projectedConsumption);
     const co2Savings = Number((consumptionDiff * 0.2).toFixed(2)); // Simplified CO2 calculation factor
     const carbonCredits = co2Savings; // 1:1 ratio for this example
     const financialValue = Number((carbonCredits * 50).toFixed(2)); // €50 per credit
@@ -25,10 +25,14 @@ export class MemStorage implements IStorage {
     const submission: Submission = {
       id: this.currentId++,
       ...insertSubmission,
-      co2Savings: co2Savings.toString(), // Convert to string for storage
+      buildingSize: insertSubmission.buildingSize.toString(),
+      currentConsumption: insertSubmission.currentConsumption.toString(),
+      projectedConsumption: insertSubmission.projectedConsumption.toString(),
+      co2Savings: co2Savings.toString(),
       carbonCredits: carbonCredits.toString(),
       financialValue: financialValue.toString(),
-      submittedAt: new Date()
+      submittedAt: new Date(),
+      fileUrl: insertSubmission.fileUrl || null
     };
 
     this.submissions.set(submission.id, submission);

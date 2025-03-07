@@ -16,6 +16,7 @@ export const submissions = pgTable("submissions", {
   co2Savings: numeric("co2_savings").notNull(),
   carbonCredits: numeric("carbon_credits").notNull(),
   financialValue: numeric("financial_value").notNull(),
+  fileUrl: text("file_url"),
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
@@ -26,7 +27,8 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   email: z.string().email("Please enter a valid email address"),
   acceptedTerms: z.literal("true", {
     errorMap: () => ({ message: "You must accept the terms and conditions" })
-  })
+  }),
+  fileUrl: z.string().optional()
 }).omit({ 
   id: true, 
   submittedAt: true,
