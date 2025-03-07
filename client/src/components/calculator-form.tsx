@@ -4,9 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { Check } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
+import { InterimResults } from "./interim-results";
 
 // Import necessary UI components
 import {
@@ -22,14 +22,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MultiStepForm, formSteps } from "./multi-step-form";
 import { Button } from "@/components/ui/button";
-
-interface ExtractedData {
-  buildingSize?: number;
-  currentConsumption?: number;
-  projectedConsumption?: number;
-  language?: string;
-  heatingSystem?: string;
-}
 
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
@@ -59,7 +51,7 @@ export function CalculatorForm() {
     }
   });
 
-  const handleExtractedData = (data: ExtractedData) => {
+  const handleExtractedData = (data: any) => {
     console.log('Received extracted data:', data);
     if (data.language) {
       setDocumentLanguage(data.language);
@@ -145,6 +137,45 @@ export function CalculatorForm() {
 
   const nextStep = () => setStep(step + 1);
   const previousStep = () => setStep(step - 1);
+
+  const handleSendEmail = async () => {
+    if (!form.getValues("email")) {
+      toast({
+        title: "Error",
+        description: "Please provide your email address first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: form.getValues("email"),
+          results: interimResults,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send email");
+      }
+
+      toast({
+        title: "Success",
+        description: "Results have been sent to your email",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to send email",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Form {...form}>
@@ -285,10 +316,10 @@ export function CalculatorForm() {
           )}
 
           {step === 4 && interimResults && (
-            <div>
-              {/* Placeholder for Interim Results Component */}
-              <pre>{JSON.stringify(interimResults, null, 2)}</pre>
-            </div>
+            <InterimResults
+              data={interimResults}
+              onSendEmail={handleSendEmail}
+            />
           )}
 
           {step === 5 && (

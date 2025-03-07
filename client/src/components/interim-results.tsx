@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface InterimResultsProps {
   data: {
@@ -11,9 +12,10 @@ interface InterimResultsProps {
     buildingOwnership: string;
     heatingSystem: string;
   };
+  onSendEmail?: () => void;
 }
 
-export function InterimResults({ data }: InterimResultsProps) {
+export function InterimResults({ data, onSendEmail }: InterimResultsProps) {
   // Format numbers with commas
   const formatNumber = (num: number) => {
     return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
@@ -79,6 +81,17 @@ export function InterimResults({ data }: InterimResultsProps) {
             </p>
           </div>
         </div>
+      </div>
+
+      <div className="flex justify-center gap-4 mt-8">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onSendEmail}
+          className="w-full md:w-auto"
+        >
+          Send Results via Email
+        </Button>
       </div>
 
       <p className="text-center text-sm text-muted-foreground mt-6">
