@@ -49,7 +49,12 @@ export function CalculatorForm() {
       firstName: "",
       lastName: "",
       email: "",
-      acceptedTerms: false
+      acceptedTerms: false,
+      consultantName: "",
+      consultantCompany: "",
+      consultantId: "",
+      consultantBafaNumber: "",
+      address: ""
     }
   });
 
@@ -71,7 +76,7 @@ export function CalculatorForm() {
       form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
     }
     setIsDocumentUploaded(true);
-    nextStep(); // Automatically move to next step after successful document upload
+    nextStep();
   };
 
   const { mutate, isPending } = useMutation({
@@ -81,10 +86,7 @@ export function CalculatorForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...data,
-          documentLanguage,
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -95,9 +97,12 @@ export function CalculatorForm() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Store the result in history state and navigate to results page
-      window.history.pushState({ result: data }, '', '/results');
-      navigate('/results');
+      toast({
+        title: "Success!",
+        description: "Calculation completed successfully.",
+      });
+      // Navigate to results page with the calculation data
+      navigate("/results", { replace: true, state: { result: data } });
     },
     onError: (error: Error) => {
       toast({
@@ -109,6 +114,7 @@ export function CalculatorForm() {
   });
 
   const onSubmit = (data: InsertSubmission) => {
+    console.log("Submitting form data:", data);
     mutate(data);
   };
 
