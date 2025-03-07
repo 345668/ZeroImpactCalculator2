@@ -1,11 +1,13 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { db, testDatabaseConnection } from "./db";
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Add request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -36,11 +38,25 @@ app.use((req, res, next) => {
   next();
 });
 
+// Add health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
 (async () => {
   try {
     log('Starting server initialization...');
 
+    // Test database connection first
+    log('Testing database connection...');
+    const dbConnected = await testDatabaseConnection();
+    if (!dbConnected) {
+      throw new Error('Failed to connect to database');
+    }
+    log('Database connection successful');
+
     // Register routes and get http server
+    log('Registering routes...');
     const server = await registerRoutes(app);
     log('Routes registered successfully');
 
@@ -53,13 +69,17 @@ app.use((req, res, next) => {
     });
 
     // Setup Vite in development or serve static files in production
-    if (app.get("env") === "development") {
+    const env = app.get("env");
+    log(`Setting up server for ${env} environment...`);
+
+    if (env === "development") {
       log('Setting up Vite for development...');
       await setupVite(app, server);
       log('Vite setup complete');
     } else {
       log('Setting up static file serving for production...');
       serveStatic(app);
+      log('Static file serving setup complete');
     }
 
     // Start the server

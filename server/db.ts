@@ -23,10 +23,11 @@ const pool = new Pool({
 export const db = drizzle(pool, { schema });
 
 // Test and maintain the connection
-async function testConnection() {
+export async function testDatabaseConnection() {
   try {
     const client = await pool.connect();
-    console.log('Database connection successful');
+    const result = await client.query('SELECT 1 as test');
+    console.log('Database connection test result:', result.rows[0]);
     client.release();
     return true;
   } catch (err) {
@@ -36,7 +37,7 @@ async function testConnection() {
 }
 
 // Initial connection test
-testConnection()
+testDatabaseConnection()
   .then(success => {
     if (!success) {
       console.error('Initial database connection failed');
@@ -45,7 +46,7 @@ testConnection()
 
 // Keep connection alive with error handling
 setInterval(async () => {
-  const success = await testConnection();
+  const success = await testDatabaseConnection();
   if (!success) {
     console.error('Periodic database connection check failed');
   }
