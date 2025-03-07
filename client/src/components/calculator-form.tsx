@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
+import { InsertSubmission, insertSubmissionSchema, calculationSchema, contactSchema, consultantSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MultiStepForm, formSteps } from "./multi-step-form";
+import * as z from 'zod';
 
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
@@ -74,16 +75,18 @@ export function CalculatorForm() {
   const calculateResults = async () => {
     const data = form.getValues();
     try {
+      const calculationData = {
+        buildingOwnership: data.buildingOwnership,
+        buildingSize: data.buildingSize,
+        heatingSystem: data.heatingSystem,
+        currentConsumption: data.currentConsumption,
+        projectedConsumption: data.projectedConsumption,
+      };
+
       const response = await fetch("/api/calculate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          buildingOwnership: data.buildingOwnership,
-          buildingSize: data.buildingSize,
-          heatingSystem: data.heatingSystem,
-          currentConsumption: data.currentConsumption,
-          projectedConsumption: data.projectedConsumption,
-        }),
+        body: JSON.stringify(calculationData),
       });
 
       if (!response.ok) {
@@ -101,6 +104,70 @@ export function CalculatorForm() {
         description: error instanceof Error ? error.message : "Failed to calculate results",
         variant: "destructive",
       });
+    }
+  };
+
+  // Validation for the current step before proceeding
+  const validateStep = async () => {
+    try {
+      const values = form.getValues();
+
+      switch (step) {
+        case 1:
+          // Building Information
+          await calculationSchema.pick({
+            buildingSize: true,
+            buildingOwnership: true
+          }).parseAsync(values);
+          break;
+        case 2:
+          // Current Consumption
+          await calculationSchema.pick({
+            currentConsumption: true
+          }).parseAsync(values);
+          break;
+        case 3:
+          // Projected Consumption
+          await calculationSchema.pick({
+            projectedConsumption: true
+          }).parseAsync(values);
+          break;
+        case 4:
+          // Heating System
+          await calculationSchema.pick({
+            heatingSystem: true
+          }).parseAsync(values);
+          break;
+        case 6:
+          // Contact Information
+          await contactSchema.parseAsync(values);
+          break;
+        case 7:
+          // Consultant Information
+          await consultantSchema.parseAsync(values);
+          break;
+      }
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        error.errors.forEach((err) => {
+          form.setError(err.path[0] as any, {
+            type: 'manual',
+            message: err.message
+          });
+        });
+      }
+      return false;
+    }
+  };
+
+  const handleNext = async () => {
+    if (await validateStep()) {
+      if (step === 4) {
+        await calculateResults();
+      } else {
+        nextStep();
+      }
     }
   };
 
@@ -155,7 +222,7 @@ export function CalculatorForm() {
         <MultiStepForm
           currentStep={step}
           steps={formSteps}
-          onNext={step === 4 ? calculateResults : nextStep}
+          onNext={handleNext}
           onPrevious={previousStep}
           isLastStep={step === formSteps.length}
           isSubmitting={isPending}
