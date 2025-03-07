@@ -1,5 +1,5 @@
 import { createWorker } from 'tesseract.js';
-import * as pdfParse from 'pdf-parse/lib/pdf-parse.js';
+import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 
 export async function extractTextFromDocument(file: Express.Multer.File): Promise<string> {
   try {
@@ -9,9 +9,15 @@ export async function extractTextFromDocument(file: Express.Multer.File): Promis
     if (file.mimetype === 'application/pdf') {
       // Handle PDF
       console.log('Processing PDF file');
-      const dataBuffer = file.buffer;
-      const pdfData = await pdfParse(dataBuffer);
-      text = pdfData.text;
+      try {
+        const dataBuffer = Buffer.from(file.buffer);
+        const pdfData = await pdfParse(dataBuffer);
+        text = pdfData.text;
+        console.log('PDF text extraction successful');
+      } catch (pdfError) {
+        console.error('PDF parsing error:', pdfError);
+        throw new Error(`PDF parsing failed: ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`);
+      }
     } else if (file.mimetype.startsWith('image/')) {
       // Handle images using Tesseract
       console.log('Processing image file with Tesseract');
@@ -19,6 +25,7 @@ export async function extractTextFromDocument(file: Express.Multer.File): Promis
       const { data: { text: extractedText } } = await worker.recognize(file.buffer);
       await worker.terminate();
       text = extractedText;
+      console.log('Image text extraction successful');
     } else {
       throw new Error('Unsupported file type. Please upload a PDF or image file.');
     }
@@ -27,7 +34,6 @@ export async function extractTextFromDocument(file: Express.Multer.File): Promis
       throw new Error('No text could be extracted from the document');
     }
 
-    console.log('Text extraction successful');
     return text;
   } catch (error) {
     console.error('Error extracting text:', error);
