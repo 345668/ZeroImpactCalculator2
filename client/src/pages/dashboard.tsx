@@ -355,10 +355,36 @@ export default function Dashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => window.location.href = `/api/submissions/${submission.id}/report`}
+                        onClick={async () => {
+                          try {
+                            const response = await fetch('/api/send-report', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({ submissionId: submission.id }),
+                            });
+
+                            if (!response.ok) {
+                              throw new Error('Failed to send report');
+                            }
+
+                            toast({
+                              title: "Success",
+                              description: "Report has been sent to your email",
+                            });
+                          } catch (error) {
+                            console.error('Error sending report:', error);
+                            toast({
+                              title: "Error",
+                              description: "Failed to send report email",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
                       >
                         <FileDown className="h-4 w-4 mr-1" />
-                        Report
+                        Send Report
                       </Button>
                       {submission.fileUrl && (
                         <Button
