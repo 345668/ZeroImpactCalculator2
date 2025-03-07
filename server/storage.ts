@@ -23,6 +23,7 @@ export class DbStorage implements IStorage {
       carbonCredits: carbonCredits.toString(),
       financialValue: financialValue.toString(),
       acceptedTerms: insertSubmission.acceptedTerms.toString(),
+      gdprConsent: insertSubmission.gdprConsent.toString(), // Add GDPR consent
       submittedAt: new Date()
     }).returning();
 

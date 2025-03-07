@@ -30,6 +30,7 @@ export const submissions = pgTable("submissions", {
   // Additional Fields
   email: text("email").notNull(),
   acceptedTerms: text("accepted_terms").notNull(),
+  gdprConsent: text("gdpr_consent").notNull(), // New field for GDPR consent
   fileUrl: text("file_url"),
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
@@ -44,6 +45,12 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
     invalid_type_error: "Accepted terms must be a boolean"
   }).refine((val) => val === true, {
     message: "You must accept the terms and conditions"
+  }),
+  gdprConsent: z.boolean({ // New validation for GDPR consent
+    required_error: "You must consent to data processing under GDPR",
+    invalid_type_error: "GDPR consent must be a boolean"
+  }).refine((val) => val === true, {
+    message: "You must consent to data processing under GDPR"
   }),
   consultantId: z.string().min(1, "Consultant ID is required"),
   consultantBafaNumber: z.string().min(1, "BAFA number is required"),
