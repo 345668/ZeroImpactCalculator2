@@ -34,10 +34,10 @@ export function CalculatorForm() {
     resolver: zodResolver(insertSubmissionSchema),
     defaultValues: {
       buildingOwnership: "own",
-      buildingSize: 0,
+      buildingSize: "",
+      currentConsumption: "",
+      projectedConsumption: "",
       heatingSystem: "gas",
-      currentConsumption: 0,
-      projectedConsumption: 0,
       firstName: "",
       lastName: "",
       email: "",
@@ -55,9 +55,26 @@ export function CalculatorForm() {
     console.log('Extracted data:', data);
 
     // Map snake_case to camelCase and ensure proper number conversion
-    form.setValue("buildingSize", Number(data.building_size) || 0);
-    form.setValue("currentConsumption", Number(data.current_consumption) || 0);
-    form.setValue("projectedConsumption", Number(data.projected_consumption) || 0);
+    if (data.building_size) {
+      const size = Number(data.building_size);
+      if (!isNaN(size)) {
+        form.setValue("buildingSize", size.toString());
+      }
+    }
+
+    if (data.current_consumption) {
+      const consumption = Number(data.current_consumption);
+      if (!isNaN(consumption)) {
+        form.setValue("currentConsumption", consumption.toString());
+      }
+    }
+
+    if (data.projected_consumption) {
+      const projected = Number(data.projected_consumption);
+      if (!isNaN(projected)) {
+        form.setValue("projectedConsumption", projected.toString());
+      }
+    }
 
     if (data.heating_system_type) {
       // Map heating system type to enum values
@@ -254,7 +271,11 @@ export function CalculatorForm() {
                         type="number"
                         placeholder="Enter building size"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value ? value : '');
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
@@ -280,7 +301,11 @@ export function CalculatorForm() {
                         type="number"
                         placeholder="Current Consumption (kWh/year)"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value ? value : '');
+                        }}
                         className="text-lg p-6"
                       />
                     </FormControl>
@@ -307,7 +332,11 @@ export function CalculatorForm() {
                         type="number"
                         placeholder="Projected Consumption (kWh/year)"
                         {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
+                        value={field.value || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          field.onChange(value ? value : '');
+                        }}
                         className="text-lg p-6"
                       />
                     </FormControl>
