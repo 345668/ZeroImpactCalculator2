@@ -53,40 +53,48 @@ export function CalculatorForm() {
 
   const handleExtractedData = (data: any) => {
     console.log('Extracted data:', data);
-    if (data.building_size) {
-      form.setValue("buildingSize", Number(data.building_size));
-    }
-    if (data.current_consumption) {
-      form.setValue("currentConsumption", Number(data.current_consumption));
-    }
-    if (data.projected_consumption) {
-      form.setValue("projectedConsumption", Number(data.projected_consumption));
-    }
+
+    // Map snake_case to camelCase and ensure proper number conversion
+    form.setValue("buildingSize", Number(data.building_size) || 0);
+    form.setValue("currentConsumption", Number(data.current_consumption) || 0);
+    form.setValue("projectedConsumption", Number(data.projected_consumption) || 0);
+
     if (data.heating_system_type) {
-      // Map "Gas-NT" to "gas"
-      const heatingType = data.heating_system_type.toLowerCase().startsWith('gas') ? 'gas' : data.heating_system_type.toLowerCase();
+      // Map heating system type to enum values
+      let heatingType = 'other';
+      const type = data.heating_system_type.toLowerCase();
+      if (type.includes('gas')) heatingType = 'gas';
+      else if (type.includes('oil')) heatingType = 'oil';
+      else if (type.includes('electric')) heatingType = 'electric';
       form.setValue("heatingSystem", heatingType);
     }
+
+    // Set default values
+    form.setValue("buildingOwnership", "own");
+
+    // Set document language if available
     if (data.language) {
       setDocumentLanguage(data.language);
     }
+
     setIsDocumentUploaded(true);
     nextStep();
   };
 
   const calculateResults = async () => {
     try {
-      const data = form.getValues();
-      // Only include calculation-relevant fields
+      const values = form.getValues();
+
+      // Transform and validate calculation data
       const calculationData = {
-        buildingSize: data.buildingSize,
-        currentConsumption: data.currentConsumption,
-        projectedConsumption: data.projectedConsumption,
-        buildingOwnership: data.buildingOwnership,
-        heatingSystem: data.heatingSystem,
+        buildingSize: Number(values.buildingSize),
+        currentConsumption: Number(values.currentConsumption),
+        projectedConsumption: Number(values.projectedConsumption),
+        buildingOwnership: values.buildingOwnership as "own" | "rent",
+        heatingSystem: values.heatingSystem as "gas" | "oil" | "electric" | "other"
       };
 
-      console.log('Calculation data:', calculationData);
+      console.log('Sending calculation data:', calculationData);
 
       const response = await fetch("/api/calculate", {
         method: "POST",
