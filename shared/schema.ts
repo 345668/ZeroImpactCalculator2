@@ -39,7 +39,7 @@ export const submissions = pgTable("submissions", {
 export type CalculationInput = z.infer<typeof calculationSchema>;
 export type Submission = typeof submissions.$inferSelect;
 
-// Step 6: Contact Information Schema with validations
+// Contact information schema (Step 6)
 export const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -61,10 +61,4 @@ export const insertSubmissionSchema = createInsertSchema(submissions)
     co2Savings: true,
     carbonCredits: true,
     financialValue: true 
-  })
-  .extend({
-    acceptedTerms: z.boolean(),
-    acceptedGDPR: z.boolean(),
   });
-
-export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;

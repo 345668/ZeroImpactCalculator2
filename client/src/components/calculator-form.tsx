@@ -53,7 +53,6 @@ export function CalculatorForm() {
 
   const handleExtractedData = (data: any) => {
     console.log('Extracted data:', data);
-
     if (data.building_size) {
       const size = Number(data.building_size);
       if (!isNaN(size)) {
@@ -84,18 +83,12 @@ export function CalculatorForm() {
       form.setValue("heatingSystem", heatingType);
     }
 
-    // Set default values
+    // Set default values and consultant info if available
     form.setValue("buildingOwnership", "own");
-
-    // Set consultant details if available
     if (data.consultant_name) form.setValue("consultantName", data.consultant_name);
     if (data.consultant_company) form.setValue("consultantCompany", data.consultant_company);
     if (data.consultant_id) form.setValue("consultantId", data.consultant_id);
     if (data.consultant_bafa_number) form.setValue("consultantBafaNumber", data.consultant_bafa_number);
-
-    if (data.language) {
-      setDocumentLanguage(data.language);
-    }
 
     setIsDocumentUploaded(true);
     nextStep();
@@ -105,14 +98,14 @@ export function CalculatorForm() {
     try {
       const values = form.getValues();
 
-      // Only validate calculation-related fields
-      const calculationData = await calculationSchema.parseAsync({
+      // Only include calculation-relevant fields
+      const calculationData = {
         buildingSize: Number(values.buildingSize),
         currentConsumption: Number(values.currentConsumption),
         projectedConsumption: Number(values.projectedConsumption),
         buildingOwnership: values.buildingOwnership,
         heatingSystem: values.heatingSystem
-      });
+      };
 
       console.log('Sending calculation data:', calculationData);
 
