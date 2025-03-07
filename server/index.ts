@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db, testDatabaseConnection } from "./db";
+import path from "path";
 
 const app = express();
 app.use(express.json());
@@ -78,12 +79,22 @@ app.get("/api/health", (req, res) => {
       log('Vite setup complete');
     } else {
       log('Setting up static file serving for production...');
-      serveStatic(app);
+      const distPath = path.resolve(__dirname, "../dist/public");
+      app.use(express.static(distPath));
+
+      // Serve index.html for all routes except /api
+      app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api')) {
+          next();
+          return;
+        }
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
       log('Static file serving setup complete');
     }
 
     // Start the server
-    const port = 5000;
+    const port = process.env.PORT || 5000;
     server.listen({
       port,
       host: "0.0.0.0",
