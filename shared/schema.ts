@@ -36,13 +36,11 @@ export const submissions = pgTable("submissions", {
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
-// Base submission schema without consultant details
-export const baseSubmissionSchema = z.object({
-  buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
-  currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
-  projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
-  buildingOwnership: z.enum(["own", "rent"]),
-  heatingSystem: z.enum(["gas", "oil", "electric", "other"]),
+export type CalculationInput = z.infer<typeof calculationSchema>;
+export type Submission = typeof submissions.$inferSelect;
+
+// Step 6: Contact Information Schema with validations
+export const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email address"),
@@ -55,17 +53,18 @@ export const baseSubmissionSchema = z.object({
   })
 });
 
-// Consultant schema (only required when document is uploaded)
-export const consultantSchema = z.object({
-  consultantName: z.string().optional(),
-  consultantCompany: z.string().optional(),
-  consultantId: z.string().optional(),
-  consultantBafaNumber: z.string().optional(),
-});
-
-// Full submission schema
-export const insertSubmissionSchema = baseSubmissionSchema.merge(consultantSchema);
+// Full submission schema (combining all steps)
+export const insertSubmissionSchema = createInsertSchema(submissions)
+  .omit({ 
+    id: true, 
+    submittedAt: true,
+    co2Savings: true,
+    carbonCredits: true,
+    financialValue: true 
+  })
+  .extend({
+    acceptedTerms: z.boolean(),
+    acceptedGDPR: z.boolean(),
+  });
 
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
-export type Submission = typeof submissions.$inferSelect;
-export type CalculationInput = z.infer<typeof calculationSchema>;

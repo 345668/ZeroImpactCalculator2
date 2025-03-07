@@ -105,14 +105,14 @@ export function CalculatorForm() {
     try {
       const values = form.getValues();
 
-      // Transform and validate calculation data
-      const calculationData = {
+      // Only validate calculation-related fields
+      const calculationData = await calculationSchema.parseAsync({
         buildingSize: Number(values.buildingSize),
         currentConsumption: Number(values.currentConsumption),
         projectedConsumption: Number(values.projectedConsumption),
-        buildingOwnership: values.buildingOwnership as "own" | "rent",
-        heatingSystem: values.heatingSystem as "gas" | "oil" | "electric" | "other"
-      };
+        buildingOwnership: values.buildingOwnership,
+        heatingSystem: values.heatingSystem
+      });
 
       console.log('Sending calculation data:', calculationData);
 
