@@ -1,4 +1,4 @@
-import { pgTable, text, serial, numeric, timestamp, json } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, numeric, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -35,46 +35,6 @@ export const submissions = pgTable("submissions", {
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
-// New table for detailed reports
-export const detailedReports = pgTable("detailed_reports", {
-  id: serial("id").primaryKey(),
-  submissionId: numeric("submission_id").notNull(),
-
-  // Building Details
-  buildingType: text("building_type"),
-  constructionYear: numeric("construction_year"),
-  totalFloorArea: numeric("total_floor_area"),
-
-  // Energy Analysis
-  currentEnergyClass: text("current_energy_class"),
-  targetEnergyClass: text("target_energy_class"),
-  annualHeatingDemand: numeric("annual_heating_demand"),
-  primaryEnergyDemand: numeric("primary_energy_demand"),
-
-  // Renovation Measures
-  proposedMeasures: json("proposed_measures"),
-  expectedSavings: json("expected_savings"),
-  implementationTimeline: json("implementation_timeline"),
-
-  // Cost Analysis
-  estimatedCosts: numeric("estimated_costs"),
-  potentialSubsidies: numeric("potential_subsidies"),
-  returnOnInvestment: numeric("return_on_investment"),
-
-  // Environmental Impact
-  lifetimeCO2Reduction: numeric("lifetime_co2_reduction"),
-  renewableEnergyPotential: json("renewable_energy_potential"),
-
-  // Report Metadata
-  reportDate: timestamp("report_date").defaultNow(),
-  reportLanguage: text("report_language"),
-  aiAnalysisSummary: text("ai_analysis_summary"),
-
-  // Raw Data
-  rawExtractedData: json("raw_extracted_data"),
-});
-
-// Keep existing schemas and add new one for detailed reports
 export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
   currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
@@ -92,10 +52,12 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   }).refine((val) => val === true, {
     message: "You must consent to data processing under GDPR"
   }),
+  // Make consultant fields optional
   consultantName: z.string().optional(),
   consultantCompany: z.string().optional(),
   consultantId: z.string().optional(),
   consultantBafaNumber: z.string().optional(),
+  // Address is required
   address: z.string().min(1, "Address is required"),
   fileUrl: z.string().optional()
 }).omit({ 
@@ -106,12 +68,5 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   financialValue: true 
 });
 
-export const insertDetailedReportSchema = createInsertSchema(detailedReports).omit({
-  id: true,
-  reportDate: true
-});
-
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type Submission = typeof submissions.$inferSelect;
-export type DetailedReport = typeof detailedReports.$inferSelect;
-export type InsertDetailedReport = z.infer<typeof insertDetailedReportSchema>;

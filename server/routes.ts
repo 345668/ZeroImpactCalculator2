@@ -5,11 +5,9 @@ import { storage } from "./storage";
 import { insertSubmissionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage";
-import { extractTextFromDocument } from "./utils/document-processor";
-import { calculateWithOpenAI } from "./utils/openai-calculator";
-import { analyzeDocumentWithClaude } from "./utils/claude-ai";
+import { extractTextFromDocument, processWithMistral } from "./utils/document-processor";
 import { generatePDFReport } from "./utils/pdf-generator";
-import { sendReportEmail } from "./utils/email-service";
+import { sendReportEmail } from "./utils/email-service"; // Fixed import path
 
 // Configure multer for file uploads
 const upload = multer({
@@ -21,20 +19,15 @@ async function processDocument(file: Express.Multer.File) {
   try {
     console.log('Starting document processing...');
 
-    // Extract text from document using OCR
+    // Extract text from document
     console.log('Extracting text from document...');
     const extractedText = await extractTextFromDocument(file);
     console.log('Text extracted successfully');
 
-    // Process with OpenAI for initial calculations
-    console.log('Processing with OpenAI...');
-    const calculatedData = await calculateWithOpenAI(extractedText);
-    console.log('OpenAI processing complete:', calculatedData);
-
-    // Process with Claude AI for detailed analysis and reporting
-    console.log('Processing with Claude AI for detailed report...');
-    const detailedAnalysis = await analyzeDocumentWithClaude(extractedText);
-    console.log('Claude AI analysis complete');
+    // Process with Mistral AI
+    console.log('Processing with Mistral AI...');
+    const processedData = await processWithMistral(extractedText);
+    console.log('Mistral processing complete:', processedData);
 
     // Upload to Azure Blob Storage
     console.log('Uploading to Azure Blob Storage...');
@@ -42,8 +35,7 @@ async function processDocument(file: Express.Multer.File) {
     console.log('File uploaded successfully');
 
     return {
-      extractedData: calculatedData,
-      detailedAnalysis: detailedAnalysis,
+      extractedData: processedData,
       fileUrl
     };
   } catch (error) {
@@ -100,15 +92,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Received calculation request:', req.body);
       const validatedData = insertSubmissionSchema.parse({
         ...req.body,
-        acceptedTerms: req.body.acceptedTerms === true || req.body.acceptedTerms === "true",
-        gdprConsent: req.body.gdprConsent === true || req.body.gdprConsent === "true"
+        acceptedTerms: req.body.acceptedTerms === true || req.body.acceptedTerms === "true"
       });
 
       // Convert boolean to string for database storage
       const submissionData = {
         ...validatedData,
         acceptedTerms: validatedData.acceptedTerms.toString(),
-        gdprConsent: validatedData.gdprConsent.toString(),
         // Add calculated fields
         co2Savings: calculateCO2Savings(validatedData),
         carbonCredits: calculateCarbonCredits(validatedData),
@@ -116,16 +106,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const result = await storage.createSubmission(submissionData);
-
-      // Create detailed report if file was uploaded
-      if (req.body.detailedAnalysis) {
-        await storage.createDetailedReport({
-          submissionId: result.id,
-          ...req.body.detailedAnalysis,
-          reportLanguage: req.body.documentLanguage || 'en'
-        });
-      }
-
       res.json(result);
     } catch (error) {
       console.error('Calculation error:', error);
@@ -143,7 +123,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { submissionId, email } = req.body;
       const submission = await storage.getSubmissionById(submissionId);
-      const detailedReport = await storage.getDetailedReport(submissionId);
 
       if (!submission) {
         return res.status(404).json({ message: "Submission not found" });
@@ -153,7 +132,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
-      await sendReportEmail(submission, detailedReport);
+      await sendReportEmail(submission);
       res.json({ message: "Email sent successfully" });
     } catch (error) {
       console.error('Error sending email:', error);
