@@ -133,10 +133,13 @@ export function CalculatorForm() {
           }).parseAsync(values);
           break;
         case 4:
-          // Heating System
+          // Heating System - only validate heating system selection
           await calculationSchema.pick({
             heatingSystem: true
           }).parseAsync(values);
+          // After validation, proceed to calculation
+          await calculateResults();
+          return false; // prevent default next step
           break;
         case 6:
           // Contact Information
@@ -163,11 +166,7 @@ export function CalculatorForm() {
 
   const handleNext = async () => {
     if (await validateStep()) {
-      if (step === 4) {
-        await calculateResults();
-      } else {
-        nextStep();
-      }
+      nextStep();
     }
   };
 
