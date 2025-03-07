@@ -23,17 +23,10 @@ const upload = multer({
 async function processDocument(file: Express.Multer.File) {
   try {
     console.log('Starting document processing...');
-
-    // Extract text from document
-    console.log('Extracting text from document...');
     const extractedText = await extractTextFromDocument(file);
     console.log('Text extracted successfully');
-
-    // Process with Mistral AI
-    console.log('Processing with Mistral AI...');
     const processedData = await processWithMistral(extractedText);
     console.log('Mistral processing complete:', processedData);
-
     return processedData;
   } catch (error) {
     console.error('Document processing error:', error);
@@ -48,6 +41,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use((req, res, next) => {
     res.header('Content-Type', 'application/json');
     next();
+  });
+
+  // GET all submissions endpoint
+  app.get("/api/submissions", async (req, res) => {
+    try {
+      console.log('Fetching all submissions from database');
+      const submissions = await storage.getAllSubmissions();
+      console.log(`Found ${submissions.length} submissions`);
+      res.json(submissions);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      res.status(500).json({ 
+        message: "Error fetching submissions",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
   });
 
   // Document upload endpoint
