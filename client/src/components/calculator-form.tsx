@@ -54,7 +54,6 @@ export function CalculatorForm() {
   const handleExtractedData = (data: any) => {
     console.log('Extracted data:', data);
 
-    // Map snake_case to camelCase and ensure proper number conversion
     if (data.building_size) {
       const size = Number(data.building_size);
       if (!isNaN(size)) {
@@ -77,7 +76,6 @@ export function CalculatorForm() {
     }
 
     if (data.heating_system_type) {
-      // Map heating system type to enum values
       let heatingType = 'other';
       const type = data.heating_system_type.toLowerCase();
       if (type.includes('gas')) heatingType = 'gas';
@@ -89,7 +87,12 @@ export function CalculatorForm() {
     // Set default values
     form.setValue("buildingOwnership", "own");
 
-    // Set document language if available
+    // Set consultant details if available
+    if (data.consultant_name) form.setValue("consultantName", data.consultant_name);
+    if (data.consultant_company) form.setValue("consultantCompany", data.consultant_company);
+    if (data.consultant_id) form.setValue("consultantId", data.consultant_id);
+    if (data.consultant_bafa_number) form.setValue("consultantBafaNumber", data.consultant_bafa_number);
+
     if (data.language) {
       setDocumentLanguage(data.language);
     }
