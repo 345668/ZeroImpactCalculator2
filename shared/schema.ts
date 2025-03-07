@@ -4,18 +4,32 @@ import { z } from "zod";
 
 export const submissions = pgTable("submissions", {
   id: serial("id").primaryKey(),
+  // Customer Information
+  firstName: text("first_name").notNull(),
+  lastName: text("last_name").notNull(),
+  address: text("address").notNull(),
+
+  // Energy Consultant Information
+  consultantName: text("consultant_name").notNull(),
+  consultantCompany: text("consultant_company").notNull(),
+  consultantId: text("consultant_id").notNull(),
+  consultantBafaNumber: text("consultant_bafa_number").notNull(),
+
+  // Building and Energy Information
   buildingOwnership: text("building_ownership").notNull(),
   buildingSize: numeric("building_size").notNull(),
   heatingSystem: text("heating_system").notNull(),
   currentConsumption: numeric("current_consumption").notNull(),
   projectedConsumption: numeric("projected_consumption").notNull(),
-  firstName: text("first_name").notNull(),
-  lastName: text("last_name").notNull(),
-  email: text("email").notNull(),
-  acceptedTerms: text("accepted_terms").notNull(),
+
+  // Calculation Results
   co2Savings: numeric("co2_savings").notNull(),
   carbonCredits: numeric("carbon_credits").notNull(),
   financialValue: numeric("financial_value").notNull(),
+
+  // Additional Fields
+  email: text("email").notNull(),
+  acceptedTerms: text("accepted_terms").notNull(),
   fileUrl: text("file_url"),
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
@@ -31,6 +45,9 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   }).refine((val) => val === true, {
     message: "You must accept the terms and conditions"
   }),
+  consultantId: z.string().min(1, "Consultant ID is required"),
+  consultantBafaNumber: z.string().min(1, "BAFA number is required"),
+  address: z.string().min(1, "Address is required"),
   fileUrl: z.string().optional()
 }).omit({ 
   id: true, 

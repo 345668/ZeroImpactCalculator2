@@ -250,6 +250,8 @@ export default function Dashboard() {
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
+                <TableHead>Customer</TableHead>
+                <TableHead>Consultant</TableHead>
                 <TableHead>Building Size</TableHead>
                 <TableHead>Energy Reduction</TableHead>
                 <TableHead>CO₂ Savings</TableHead>
@@ -264,6 +266,20 @@ export default function Dashboard() {
                   <TableCell>
                     {submission.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : "N/A"}
                   </TableCell>
+                  <TableCell>
+                    {`${submission.firstName} ${submission.lastName}`}
+                    <br />
+                    <span className="text-xs text-muted-foreground">{submission.address}</span>
+                  </TableCell>
+                  <TableCell>
+                    {submission.consultantName}
+                    <br />
+                    <span className="text-xs text-muted-foreground">
+                      {submission.consultantCompany}
+                      <br />
+                      ID: {submission.consultantId}
+                    </span>
+                  </TableCell>
                   <TableCell>{submission.buildingSize} m²</TableCell>
                   <TableCell>
                     {(((Number(submission.currentConsumption) - Number(submission.projectedConsumption)) / Number(submission.currentConsumption)) * 100).toFixed(1)}%
@@ -275,7 +291,7 @@ export default function Dashboard() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(`/api/submissions/${submission.id}/report`, '_blank')}
+                      onClick={() => window.location.href = `/api/submissions/${submission.id}/report`}
                     >
                       <FileDown className="h-4 w-4 mr-1" />
                       Report
