@@ -45,7 +45,7 @@ export function ResultsPage() {
       console.error('Error sending email:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to send email report",
+        description: error instanceof Error ? error.message : "Failed to send email report",
         variant: "destructive",
       });
     }

@@ -95,14 +95,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         acceptedTerms: req.body.acceptedTerms === true || req.body.acceptedTerms === "true"
       });
 
-      // Convert boolean to string for database storage
+      // Add calculated fields
+      const co2Savings = calculateCO2Savings(validatedData);
+      const carbonCredits = calculateCarbonCredits(validatedData);
+      const financialValue = calculateFinancialValue(validatedData);
+
       const submissionData = {
         ...validatedData,
-        acceptedTerms: validatedData.acceptedTerms.toString(),
-        // Add calculated fields
-        co2Savings: calculateCO2Savings(validatedData),
-        carbonCredits: calculateCarbonCredits(validatedData),
-        financialValue: calculateFinancialValue(validatedData)
+        co2Savings: co2Savings.toString(),
+        carbonCredits: carbonCredits.toString(),
+        financialValue: financialValue.toString(),
+        acceptedTerms: validatedData.acceptedTerms.toString()
       };
 
       const result = await storage.createSubmission(submissionData);

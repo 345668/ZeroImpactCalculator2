@@ -35,7 +35,7 @@ export function CalculatorForm() {
   const [step, setStep] = useState(1);
   const [documentLanguage, setDocumentLanguage] = useState<string>("en");
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
 
   const form = useForm<InsertSubmission>({
@@ -95,10 +95,9 @@ export function CalculatorForm() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Navigate to results page with the calculation data
-      setLocation("/results", {
-        state: { result: data }
-      });
+      // Store the result in history state and navigate to results page
+      window.history.pushState({ result: data }, '', '/results');
+      navigate('/results');
     },
     onError: (error: Error) => {
       toast({
@@ -124,7 +123,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 5} // Updated step count
+          isLastStep={step === formSteps.length}
           isSubmitting={isPending}
         >
           {step === 1 && (
