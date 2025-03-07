@@ -126,6 +126,14 @@ export async function sendReportEmail(submission: any) {
       html: msg.html
     }));
 
+    console.log('Attempting to send email with sanitized message:', {
+      to: sanitizedMsg.to,
+      from: sanitizedMsg.from,
+      subject: sanitizedMsg.subject,
+      textLength: sanitizedMsg.text.length,
+      htmlLength: sanitizedMsg.html.length
+    });
+
     await sgMail.send(sanitizedMsg);
     console.log('Email sent successfully to:', data.email);
     return true;
