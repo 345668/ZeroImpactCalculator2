@@ -38,6 +38,8 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
       return res.json();
     },
     onSuccess: (data) => {
+      console.log('Document processing response:', data); // Debug log
+
       toast({
         title: "Document processed successfully",
         description: `Language detected: ${data.language}. Document has been analyzed.`,
@@ -50,7 +52,7 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
         currentConsumption: data.extractedData?.current_consumption || undefined,
         projectedConsumption: data.extractedData?.projected_consumption || undefined,
         heatingSystem: data.extractedData?.heating_system_type || undefined,
-        // Add energy consultant information
+        // Add energy consultant information with updated field names
         energyConsultantName: data.extractedData?.energy_consultant_name || undefined,
         energyConsultantCompany: data.extractedData?.energy_consultant_company || undefined,
         energyConsultantId: data.extractedData?.energy_consultant_id || undefined,
@@ -58,15 +60,17 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
         fileUrl: data.fileUrl || undefined,
       };
 
+      console.log('Extracted data:', extractedData); // Debug log
       onDataExtracted(extractedData);
     },
     onError: (error: Error) => {
+      console.error('Document processing error:', error); // Debug log
       toast({
         title: "Error processing document",
         description: error.message,
         variant: "destructive",
       });
-      setFile(null); // Reset file selection on error
+      setFile(null);
     },
   });
 

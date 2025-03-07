@@ -86,7 +86,7 @@ export function CalculatorForm() {
       address: "",
       acceptedTerms: false,
       gdprConsent: false,
-      energyConsultantName: "", // Updated field names
+      energyConsultantName: "",
       energyConsultantCompany: "",
       energyConsultantId: "",
       energyConsultantBafaNumber: "",
@@ -95,7 +95,7 @@ export function CalculatorForm() {
   });
 
   const handleExtractedData = (data: ExtractedData) => {
-    console.log('Received extracted data:', data);
+    console.log('Received extracted data:', data); // Debug log
     if (data.language) {
       setDocumentLanguage(data.language);
     }
@@ -166,6 +166,7 @@ export function CalculatorForm() {
   });
 
   const onSubmit = (data: InsertSubmission) => {
+    console.log('Submitting form data:', data); // Debug log
     mutate(data);
   };
 
