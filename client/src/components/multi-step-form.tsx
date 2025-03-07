@@ -43,7 +43,7 @@ export function MultiStepForm({
                   className={`h-2 rounded-full ${
                     index < currentStep
                       ? "bg-[#4CAF50]" // Completed steps (green)
-                      : index === currentStep
+                      : index === currentStep - 1
                       ? "bg-[#4CAF50]" // Current step (green)
                       : "bg-gray-200" // Future steps (gray)
                   } mx-0.5`}
@@ -56,6 +56,9 @@ export function MultiStepForm({
         {/* Form content */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-4">{steps[currentStep - 1].title}</h2>
+          {steps[currentStep - 1].description && (
+            <p className="text-muted-foreground mb-6">{steps[currentStep - 1].description}</p>
+          )}
           {children}
         </div>
 
@@ -80,7 +83,7 @@ export function MultiStepForm({
           >
             {isLastStep 
               ? (isSubmitting ? "Submitting..." : "Submit") 
-              : currentStep === 4 ? "Continue" : "Next"}
+              : currentStep === 5 ? "Continue" : "Next"}
           </Button>
         </div>
       </CardContent>
@@ -91,7 +94,7 @@ export function MultiStepForm({
 export const formSteps: Step[] = [
   {
     title: "Building Information",
-    description: "Tell us about your building"
+    description: "Tell us about your building or upload your energy certificate"
   },
   {
     title: "Current Energy Consumption",
@@ -102,11 +105,19 @@ export const formSteps: Step[] = [
     description: "Enter your expected energy usage after improvements"
   },
   {
-    title: "Review Results",
-    description: "See your potential savings"
+    title: "Heating System",
+    description: "Tell us about your heating system"
+  },
+  {
+    title: "Results Preview",
+    description: "Review your potential savings"
   },
   {
     title: "Contact Information",
     description: "Tell us how to reach you"
+  },
+  {
+    title: "Energy Consultant Details",
+    description: "Provide your energy consultant information"
   }
 ];

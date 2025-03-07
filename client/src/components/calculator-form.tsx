@@ -142,7 +142,7 @@ export function CalculatorForm() {
         <MultiStepForm
           currentStep={step}
           steps={formSteps}
-          onNext={step === 3 ? calculateResults : nextStep}
+          onNext={step === 4 ? calculateResults : nextStep}
           onPrevious={previousStep}
           isLastStep={step === formSteps.length}
           isSubmitting={isPending}
@@ -274,14 +274,65 @@ export function CalculatorForm() {
             </div>
           )}
 
-          {step === 4 && interimResults && (
+          {step === 4 && (
+            <div className="space-y-6">
+              <FormField
+                control={form.control}
+                name="heatingSystem"
+                render={({ field }) => (
+                  <FormItem className="space-y-4">
+                    <FormLabel>What type of heating system do you use?</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                      >
+                        <FormItem className="relative flex flex-col items-start space-y-3 rounded-lg border-2 border-muted p-4 hover:border-primary">
+                          <FormControl>
+                            <RadioGroupItem value="gas" className="absolute right-4 top-4" />
+                          </FormControl>
+                          <FormLabel className="text-base font-semibold">Gas Heating</FormLabel>
+                          <p className="text-sm text-muted-foreground">Natural gas or LPG heating system</p>
+                        </FormItem>
+                        <FormItem className="relative flex flex-col items-start space-y-3 rounded-lg border-2 border-muted p-4 hover:border-primary">
+                          <FormControl>
+                            <RadioGroupItem value="oil" className="absolute right-4 top-4" />
+                          </FormControl>
+                          <FormLabel className="text-base font-semibold">Oil Heating</FormLabel>
+                          <p className="text-sm text-muted-foreground">Oil-based heating system</p>
+                        </FormItem>
+                        <FormItem className="relative flex flex-col items-start space-y-3 rounded-lg border-2 border-muted p-4 hover:border-primary">
+                          <FormControl>
+                            <RadioGroupItem value="electric" className="absolute right-4 top-4" />
+                          </FormControl>
+                          <FormLabel className="text-base font-semibold">Electric Heating</FormLabel>
+                          <p className="text-sm text-muted-foreground">Electric heating system</p>
+                        </FormItem>
+                        <FormItem className="relative flex flex-col items-start space-y-3 rounded-lg border-2 border-muted p-4 hover:border-primary">
+                          <FormControl>
+                            <RadioGroupItem value="other" className="absolute right-4 top-4" />
+                          </FormControl>
+                          <FormLabel className="text-base font-semibold">Other</FormLabel>
+                          <p className="text-sm text-muted-foreground">Other heating system type</p>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
+          {step === 5 && interimResults && (
             <InterimResultsView
               data={interimResults}
               onContinue={nextStep}
             />
           )}
 
-          {step === 5 && (
+          {step === 6 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
               <FormField
@@ -328,6 +379,20 @@ export function CalculatorForm() {
 
               <FormField
                 control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
                 name="acceptedTerms"
                 render={({ field }) => (
                   <FormItem className="flex flex-col space-y-4">
@@ -353,10 +418,71 @@ export function CalculatorForm() {
                       </FormControl>
                       <div className="space-y-1 leading-none">
                         <FormLabel>
-                          I understand and agree that my personal data will be processed in accordance with the <a href="/privacy" className="text-primary hover:underline">GDPR privacy policy</a>. This includes storing my information securely and using it to contact me about my carbon credit potential.
+                          I understand and agree that my personal data will be processed in accordance with the <a href="/privacy" className="text-primary hover:underline">GDPR privacy policy</a>
                         </FormLabel>
                       </div>
                     </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
+          {step === 7 && (
+            <div className="space-y-6">
+              <h2 className="text-xl font-semibold mb-4">Energy Consultant Details</h2>
+              <FormField
+                control={form.control}
+                name="consultantName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Consultant Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="consultantCompany"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Consultant Company</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="consultantId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Consultant ID</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="consultantBafaNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>BAFA Number</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
