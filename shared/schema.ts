@@ -25,8 +25,11 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
   projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
   email: z.string().email("Please enter a valid email address"),
-  acceptedTerms: z.literal("true", {
-    errorMap: () => ({ message: "You must accept the terms and conditions" })
+  acceptedTerms: z.boolean({
+    required_error: "You must accept the terms and conditions",
+    invalid_type_error: "Accepted terms must be a boolean"
+  }).refine((val) => val === true, {
+    message: "You must accept the terms and conditions"
   }),
   fileUrl: z.string().optional()
 }).omit({ 

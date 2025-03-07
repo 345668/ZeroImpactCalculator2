@@ -85,6 +85,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Calculate endpoint
+  app.post("/api/calculate", async (req, res) => {
+    try {
+      console.log('Received calculation request:', req.body);
+      const validatedData = insertSubmissionSchema.parse({
+        ...req.body,
+        acceptedTerms: req.body.acceptedTerms === true || req.body.acceptedTerms === "true"
+      });
+
+      // Convert boolean to string for database storage
+      const submissionData = {
+        ...validatedData,
+        acceptedTerms: validatedData.acceptedTerms.toString(),
+        // Add calculated fields -  These functions need to be defined elsewhere
+        co2Savings: calculateCO2Savings(validatedData),
+        carbonCredits: calculateCarbonCredits(validatedData),
+        financialValue: calculateFinancialValue(validatedData)
+      };
+
+      const result = await storage.createSubmission(submissionData);
+      res.json(result);
+    } catch (error) {
+      console.error('Calculation error:', error);
+      if (error instanceof Error) {
+        const validationError = fromZodError(error);
+        res.status(400).json({ message: validationError.message });
+      } else {
+        res.status(500).json({ message: "Internal server error" });
+      }
+    }
+  });
+
   // PDF Report endpoint
   app.get("/api/submissions/:id/report", async (req, res) => {
     try {
@@ -107,4 +139,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
   return httpServer;
+}
+
+// Placeholder functions -  These need to be implemented based on the application logic
+function calculateCO2Savings(data: any): number {
+  // Implement your CO2 savings calculation logic here
+  return 0;
+}
+
+function calculateCarbonCredits(data: any): number {
+  // Implement your carbon credits calculation logic here
+  return 0;
+}
+
+function calculateFinancialValue(data: any): number {
+  // Implement your financial value calculation logic here
+  return 0;
 }

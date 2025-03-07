@@ -2,13 +2,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { insertSubmissionSchema } from "@shared/schema";
-import type { InsertSubmission } from "@shared/schema";
+import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Check } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 
+// Import necessary UI components
 import {
   Form,
   FormControl,
@@ -45,7 +44,7 @@ export function CalculatorForm() {
       firstName: "",
       lastName: "",
       email: "",
-      acceptedTerms: "false"
+      acceptedTerms: false // Changed from "false" to false
     }
   });
 
@@ -53,7 +52,6 @@ export function CalculatorForm() {
     if (data.language) {
       setDocumentLanguage(data.language);
     }
-
     if (data.buildingSize) {
       form.setValue("buildingSize", data.buildingSize);
     }
@@ -65,21 +63,34 @@ export function CalculatorForm() {
     }
   };
 
-  const { mutate, isPending, data: result } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: async (data: InsertSubmission) => {
-      const res = await apiRequest("POST", "/api/calculate", {
-        ...data,
-        documentLanguage,
+      const response = await fetch("/api/calculate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...data,
+          documentLanguage,
+          acceptedTerms: data.acceptedTerms.toString() // Convert boolean to string
+        }),
       });
-      return res.json();
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to submit calculation");
+      }
+
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success!",
         description: "Your calculation has been submitted.",
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
@@ -92,13 +103,8 @@ export function CalculatorForm() {
     mutate(data);
   };
 
-  const nextStep = () => {
-    setStep(step + 1);
-  };
-
-  const previousStep = () => {
-    setStep(step - 1);
-  };
+  const nextStep = () => setStep(step + 1);
+  const previousStep = () => setStep(step - 1);
 
   return (
     <Form {...form}>
@@ -296,10 +302,8 @@ export function CalculatorForm() {
                   <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                     <FormControl>
                       <Checkbox
-                        checked={field.value === "true"}
-                        onCheckedChange={(checked) => {
-                          field.onChange(checked ? "true" : "false");
-                        }}
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
@@ -314,87 +318,6 @@ export function CalculatorForm() {
             </>
           )}
         </MultiStepForm>
-
-        {result && (
-          <div className="mt-8 space-y-6">
-            <h2 className="text-2xl font-semibold text-center">Your Carbon Savings Results</h2>
-            <p className="text-center text-muted-foreground">
-              Here's the potential impact of your energy efficiency improvements
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-primary/5 rounded-lg p-6 text-center relative">
-                <div className="absolute top-4 right-4 bg-primary/10 rounded-full p-1">
-                  <Check className="w-4 h-4 text-primary" />
-                </div>
-                <h3 className="text-primary font-semibold mb-2">CO₂ Savings</h3>
-                <p className="text-3xl font-bold">{Number(result.co2Savings)}</p>
-                <p className="text-sm text-muted-foreground">Tons of CO₂ per year</p>
-              </div>
-              <div className="bg-primary/5 rounded-lg p-6 text-center relative">
-                <div className="absolute top-4 right-4 bg-primary/10 rounded-full p-1">
-                  <Check className="w-4 h-4 text-primary" />
-                </div>
-                <h3 className="text-primary font-semibold mb-2">Carbon Credits</h3>
-                <p className="text-3xl font-bold">{Number(result.carbonCredits)}</p>
-                <p className="text-sm text-muted-foreground">Credits (1:1 with CO₂)</p>
-              </div>
-              <div className="bg-primary/5 rounded-lg p-6 text-center relative">
-                <div className="absolute top-4 right-4 bg-primary/10 rounded-full p-1">
-                  <Check className="w-4 h-4 text-primary" />
-                </div>
-                <h3 className="text-primary font-semibold mb-2">Financial Value</h3>
-                <p className="text-3xl font-bold">€{Number(result.financialValue)}</p>
-                <p className="text-sm text-muted-foreground">Potential market value</p>
-              </div>
-            </div>
-            <div className="mt-6 p-6 bg-muted/20 rounded-lg">
-              <h3 className="font-semibold mb-4">Building Information</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Ownership Type</p>
-                  <p className="font-medium capitalize">{result.buildingOwnership}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Building Size</p>
-                  <p className="font-medium">{result.buildingSize} m²</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Heating System</p>
-                  <p className="font-medium capitalize">{result.heatingSystem}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Energy Consumption Reduction</p>
-                  <p className="font-medium">
-                    {Number(result.currentConsumption) - Number(result.projectedConsumption)} kWh/year (
-                    {Math.round(((Number(result.currentConsumption) - Number(result.projectedConsumption)) / Number(result.currentConsumption)) * 100)}%)
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-6 p-6 bg-muted/20 rounded-lg">
-              <h3 className="font-semibold mb-4">10-Year Prognosis</h3>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-muted-foreground">Total CO₂ Savings</p>
-                    <p className="text-2xl font-bold">{(Number(result.co2Savings) * 10).toFixed(2)} tons</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Total Carbon Credits</p>
-                    <p className="text-2xl font-bold">{(Number(result.carbonCredits) * 10).toFixed(2)}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground">Total Financial Value</p>
-                    <p className="text-2xl font-bold">€{(Number(result.financialValue) * 10).toFixed(2)}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  * Projections assume consistent savings over 10 years. Actual results may vary based on market conditions and implementation.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </form>
     </Form>
   );
