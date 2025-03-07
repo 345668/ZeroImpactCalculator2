@@ -48,6 +48,11 @@ export function ResultsPage() {
     }
   };
 
+  // Format numbers with commas
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(num);
+  };
+
   // Ensure numeric values
   const co2Savings = Number(result.co2Savings);
   const carbonCredits = Number(result.carbonCredits);
@@ -63,35 +68,35 @@ export function ResultsPage() {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-primary/5 rounded-lg p-6 text-center relative">
-          <div className="absolute top-4 right-4 bg-primary/10 rounded-full p-1">
-            <Check className="w-4 h-4 text-primary" />
+        <div className="bg-[#F8FAF8] rounded-lg p-6 text-center relative">
+          <div className="absolute top-4 right-4 bg-[#4CAF50]/10 rounded-full p-1">
+            <Check className="w-4 h-4 text-[#4CAF50]" />
           </div>
-          <h3 className="text-primary font-semibold mb-2">CO₂ Savings</h3>
-          <p className="text-3xl font-bold">{co2Savings.toFixed(2)}</p>
-          <p className="text-sm text-muted-foreground">Tons of CO₂ per year</p>
+          <h3 className="text-[#4CAF50] font-semibold mb-2">CO<sub>2</sub> Savings</h3>
+          <p className="text-3xl font-bold">{formatNumber(co2Savings)}</p>
+          <p className="text-sm text-muted-foreground">Tons of CO<sub>2</sub> per year</p>
         </div>
 
-        <div className="bg-primary/5 rounded-lg p-6 text-center relative">
-          <div className="absolute top-4 right-4 bg-primary/10 rounded-full p-1">
-            <Check className="w-4 h-4 text-primary" />
+        <div className="bg-[#F8FAF8] rounded-lg p-6 text-center relative">
+          <div className="absolute top-4 right-4 bg-[#4CAF50]/10 rounded-full p-1">
+            <Check className="w-4 h-4 text-[#4CAF50]" />
           </div>
-          <h3 className="text-primary font-semibold mb-2">Carbon Credits</h3>
-          <p className="text-3xl font-bold">{carbonCredits.toFixed(2)}</p>
-          <p className="text-sm text-muted-foreground">Credits (1:1 with CO₂)</p>
+          <h3 className="text-[#4CAF50] font-semibold mb-2">Carbon Credits</h3>
+          <p className="text-3xl font-bold">{formatNumber(carbonCredits)}</p>
+          <p className="text-sm text-muted-foreground">Credits (1:1 with CO<sub>2</sub>)</p>
         </div>
 
-        <div className="bg-primary/5 rounded-lg p-6 text-center relative">
-          <div className="absolute top-4 right-4 bg-primary/10 rounded-full p-1">
-            <Check className="w-4 h-4 text-primary" />
+        <div className="bg-[#F8FAF8] rounded-lg p-6 text-center relative">
+          <div className="absolute top-4 right-4 bg-[#4CAF50]/10 rounded-full p-1">
+            <Check className="w-4 h-4 text-[#4CAF50]" />
           </div>
-          <h3 className="text-primary font-semibold mb-2">Financial Value</h3>
-          <p className="text-3xl font-bold">€{financialValue.toFixed(2)}</p>
+          <h3 className="text-[#4CAF50] font-semibold mb-2">Financial Value</h3>
+          <p className="text-3xl font-bold">€{formatNumber(financialValue)}</p>
           <p className="text-sm text-muted-foreground">Potential market value</p>
         </div>
       </div>
 
-      <div className="mt-8 p-6 bg-muted/20 rounded-lg">
+      <div className="mt-8 p-6 bg-[#F8FAF8] rounded-lg">
         <h3 className="font-semibold mb-4">Building Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
@@ -109,9 +114,9 @@ export function ResultsPage() {
           <div>
             <p className="text-muted-foreground">Energy Consumption Reduction</p>
             <p className="font-medium">
-              {currentConsumption - projectedConsumption} kWh/year (
-              {Math.round(((currentConsumption - projectedConsumption) / currentConsumption) * 100)}
-              %)
+              {formatNumber(currentConsumption - projectedConsumption)} kWh/year ({
+                Math.round(((currentConsumption - projectedConsumption) / currentConsumption) * 100)
+              }%)
             </p>
           </div>
         </div>
@@ -121,7 +126,7 @@ export function ResultsPage() {
         <Button 
           onClick={handleSendEmail} 
           disabled={emailSent}
-          className="w-full max-w-md"
+          className="w-full max-w-md bg-[#4CAF50] hover:bg-[#45a049]"
         >
           {emailSent ? "Report Sent!" : "Send Report to Email"}
         </Button>
