@@ -20,7 +20,10 @@ export async function sendReportEmail(submission: any) {
 
   const msg = {
     to: submission.email,
-    from: 'no-reply@radical-zero.com',
+    from: {
+      email: 'reports@radical-zero.com',
+      name: 'Radical Zero'
+    },
     subject: 'Your Carbon Credit Calculation Report',
     html: `
       <h1>Your Carbon Savings Report</h1>
@@ -49,9 +52,14 @@ export async function sendReportEmail(submission: any) {
 
   try {
     await sgMail.send(msg);
+    console.log('Email sent successfully to:', submission.email);
     return true;
   } catch (error) {
     console.error('Error sending email:', error);
+    if (error.response) {
+      console.error('SendGrid API error:', error.response.body);
+      throw new Error(`Failed to send email: ${error.response.body.errors?.[0]?.message || 'Unknown error'}`);
+    }
     throw error;
   }
 }

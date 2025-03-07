@@ -30,8 +30,10 @@ export function ResultsPage() {
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to send email');
+        throw new Error(data.message || 'Failed to send email');
       }
 
       setEmailSent(true);
@@ -40,9 +42,10 @@ export function ResultsPage() {
         description: "Report has been sent to your email.",
       });
     } catch (error) {
+      console.error('Error sending email:', error);
       toast({
         title: "Error",
-        description: "Failed to send email report",
+        description: error.message || "Failed to send email report",
         variant: "destructive",
       });
     }
@@ -123,15 +126,15 @@ export function ResultsPage() {
       </div>
 
       <div className="mt-8 flex flex-col items-center gap-4">
-        <Button 
-          onClick={handleSendEmail} 
+        <Button
+          onClick={handleSendEmail}
           disabled={emailSent}
           className="w-full max-w-md bg-[#4CAF50] hover:bg-[#45a049]"
         >
           {emailSent ? "Report Sent!" : "Send Report to Email"}
         </Button>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => setLocation("/")}
           className="w-full max-w-md"
         >
