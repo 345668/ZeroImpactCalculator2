@@ -1,4 +1,4 @@
-import { submissions, type Submission, type InsertSubmission } from "@shared/schema";
+import { submissions, detailedReports, type Submission, type InsertSubmission, type DetailedReport, type InsertDetailedReport } from "@shared/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { db } from "./db";
 
@@ -7,6 +7,8 @@ export interface IStorage {
   getSubmissionByEmail(email: string): Promise<Submission | undefined>;
   getAllSubmissions(): Promise<Submission[]>;
   getSubmissionById(id: number): Promise<Submission | undefined>;
+  createDetailedReport(report: InsertDetailedReport): Promise<DetailedReport>;
+  getDetailedReport(submissionId: number): Promise<DetailedReport | undefined>;
 }
 
 export class DbStorage implements IStorage {
@@ -64,6 +66,23 @@ export class DbStorage implements IStorage {
       .select()
       .from(submissions)
       .where(eq(submissions.id, id));
+    return result[0];
+  }
+
+  async createDetailedReport(report: InsertDetailedReport): Promise<DetailedReport> {
+    const [detailedReport] = await db
+      .insert(detailedReports)
+      .values(report)
+      .returning();
+    return detailedReport;
+  }
+
+  async getDetailedReport(submissionId: number): Promise<DetailedReport | undefined> {
+    const result = await db
+      .select()
+      .from(detailedReports)
+      .where(eq(detailedReports.submissionId, submissionId))
+      .orderBy(desc(detailedReports.reportDate));
     return result[0];
   }
 }

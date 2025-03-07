@@ -6,8 +6,9 @@ import { insertSubmissionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor";
+import { analyzeDocumentWithClaude } from "./utils/claude-ai";
 import { generatePDFReport } from "./utils/pdf-generator";
-import { sendReportEmail } from "./utils/email-service"; // Fixed import path
+import { sendReportEmail } from "./utils/email-service";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -24,10 +25,15 @@ async function processDocument(file: Express.Multer.File) {
     const extractedText = await extractTextFromDocument(file);
     console.log('Text extracted successfully');
 
-    // Process with Mistral AI
+    // Process with Mistral AI for basic info
     console.log('Processing with Mistral AI...');
-    const processedData = await processWithMistral(extractedText);
-    console.log('Mistral processing complete:', processedData);
+    const mistralData = await processWithMistral(extractedText);
+    console.log('Mistral processing complete:', mistralData);
+
+    // Process with Claude AI for detailed analysis
+    console.log('Processing with Claude AI...');
+    const claudeAnalysis = await analyzeDocumentWithClaude(extractedText);
+    console.log('Claude AI analysis complete');
 
     // Upload to Azure Blob Storage
     console.log('Uploading to Azure Blob Storage...');
@@ -35,7 +41,8 @@ async function processDocument(file: Express.Multer.File) {
     console.log('File uploaded successfully');
 
     return {
-      extractedData: processedData,
+      extractedData: mistralData,
+      detailedAnalysis: claudeAnalysis,
       fileUrl
     };
   } catch (error) {
@@ -92,13 +99,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Received calculation request:', req.body);
       const validatedData = insertSubmissionSchema.parse({
         ...req.body,
-        acceptedTerms: req.body.acceptedTerms === true || req.body.acceptedTerms === "true"
+        acceptedTerms: req.body.acceptedTerms === true || req.body.acceptedTerms === "true",
+        gdprConsent: req.body.gdprConsent === true || req.body.gdprConsent === "true"
       });
 
       // Convert boolean to string for database storage
       const submissionData = {
         ...validatedData,
         acceptedTerms: validatedData.acceptedTerms.toString(),
+        gdprConsent: validatedData.gdprConsent.toString(),
         // Add calculated fields
         co2Savings: calculateCO2Savings(validatedData),
         carbonCredits: calculateCarbonCredits(validatedData),
@@ -106,6 +115,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       const result = await storage.createSubmission(submissionData);
+
+      // Create detailed report if file was uploaded
+      if (req.body.detailedAnalysis) {
+        await storage.createDetailedReport({
+          submissionId: result.id,
+          ...req.body.detailedAnalysis,
+          reportLanguage: req.body.documentLanguage || 'en'
+        });
+      }
+
       res.json(result);
     } catch (error) {
       console.error('Calculation error:', error);
@@ -123,6 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { submissionId, email } = req.body;
       const submission = await storage.getSubmissionById(submissionId);
+      const detailedReport = await storage.getDetailedReport(submissionId);
 
       if (!submission) {
         return res.status(404).json({ message: "Submission not found" });
@@ -132,7 +152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Unauthorized" });
       }
 
-      await sendReportEmail(submission);
+      await sendReportEmail(submission, detailedReport);
       res.json({ message: "Email sent successfully" });
     } catch (error) {
       console.error('Error sending email:', error);
