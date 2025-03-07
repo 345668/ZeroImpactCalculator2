@@ -42,6 +42,7 @@ export function CalculatorForm() {
       lastName: "",
       email: "",
       acceptedTerms: false,
+      acceptedGDPR: false,
       consultantName: "",
       consultantCompany: "",
       consultantId: "",
@@ -97,17 +98,21 @@ export function CalculatorForm() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: InsertSubmission) => {
-      const response = await fetch("/api/calculate", {
+      const response = await fetch("/api/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          acceptedTerms: data.acceptedTerms === true,
+          acceptedGDPR: data.acceptedGDPR === true
+        }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to submit calculation");
+        throw new Error(errorData.message || "Failed to submit form");
       }
 
       return response.json();
@@ -147,12 +152,13 @@ export function CalculatorForm() {
           isLastStep={step === formSteps.length}
           isSubmitting={isPending}
         >
+          {/* Step 1: Building Information */}
           {step === 1 && (
             <div className="space-y-6">
               <div className="p-6 bg-primary/5 rounded-lg">
                 <h3 className="text-lg font-medium mb-2">Upload Energy Certificate</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  For faster results, upload your energy certificate or renovation plan to automatically fill the form
+                  For faster results, upload your energy certificate or renovation plan
                 </p>
                 <DocumentUpload onDataExtracted={handleExtractedData} />
                 {isDocumentUploaded && (
@@ -187,7 +193,7 @@ export function CalculatorForm() {
                           </FormControl>
                           <FormLabel className="text-base font-semibold">Building Owner</FormLabel>
                           <p className="text-sm text-muted-foreground">
-                            I own the building and can implement energy efficiency measures.
+                            I own the building and can implement energy efficiency measures
                           </p>
                         </FormItem>
                         <FormItem className="relative flex flex-col items-start space-y-3 rounded-lg border-2 border-muted p-4 hover:border-primary">
@@ -196,7 +202,7 @@ export function CalculatorForm() {
                           </FormControl>
                           <FormLabel className="text-base font-semibold">Tenant</FormLabel>
                           <p className="text-sm text-muted-foreground">
-                            I rent the building and want to explore energy efficiency options.
+                            I rent the building and want to explore energy efficiency options
                           </p>
                         </FormItem>
                       </RadioGroup>
@@ -213,7 +219,12 @@ export function CalculatorForm() {
                   <FormItem>
                     <FormLabel>What is the size of your building in square meters?</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter building size" {...field} />
+                      <Input
+                        type="number"
+                        placeholder="Enter building size"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -222,6 +233,7 @@ export function CalculatorForm() {
             </div>
           )}
 
+          {/* Step 2: Current Energy Consumption */}
           {step === 2 && (
             <div className="space-y-6">
               <FormField
@@ -229,7 +241,7 @@ export function CalculatorForm() {
                 name="currentConsumption"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base mb-4">
+                    <FormLabel>
                       What is your current annual energy consumption (excluding solar PV)?
                     </FormLabel>
                     <FormControl>
@@ -237,7 +249,7 @@ export function CalculatorForm() {
                         type="number"
                         placeholder="Current Consumption (kWh/year)"
                         {...field}
-                        value={field.value || ''}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                         className="text-lg p-6"
                       />
                     </FormControl>
@@ -248,6 +260,7 @@ export function CalculatorForm() {
             </div>
           )}
 
+          {/* Step 3: Projected Energy Consumption */}
           {step === 3 && (
             <div className="space-y-6">
               <FormField
@@ -255,7 +268,7 @@ export function CalculatorForm() {
                 name="projectedConsumption"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-base mb-4">
+                    <FormLabel>
                       What is your projected annual energy consumption after improvements?
                     </FormLabel>
                     <FormControl>
@@ -263,7 +276,7 @@ export function CalculatorForm() {
                         type="number"
                         placeholder="Projected Consumption (kWh/year)"
                         {...field}
-                        value={field.value || ''}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
                         className="text-lg p-6"
                       />
                     </FormControl>
@@ -274,6 +287,7 @@ export function CalculatorForm() {
             </div>
           )}
 
+          {/* Step 4: Heating System */}
           {step === 4 && (
             <div className="space-y-6">
               <FormField
@@ -325,6 +339,7 @@ export function CalculatorForm() {
             </div>
           )}
 
+          {/* Step 5: Results Preview */}
           {step === 5 && interimResults && (
             <InterimResultsView
               data={interimResults}
@@ -332,6 +347,7 @@ export function CalculatorForm() {
             />
           )}
 
+          {/* Step 6: Contact Information */}
           {step === 6 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
@@ -407,8 +423,18 @@ export function CalculatorForm() {
                         <FormLabel>
                           I accept the <a href="/terms" className="text-primary hover:underline">terms and conditions</a>
                         </FormLabel>
+                        <FormMessage />
                       </div>
                     </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="acceptedGDPR"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col space-y-4">
                     <div className="flex items-start space-x-3">
                       <FormControl>
                         <Checkbox
@@ -420,15 +446,16 @@ export function CalculatorForm() {
                         <FormLabel>
                           I understand and agree that my personal data will be processed in accordance with the <a href="/privacy" className="text-primary hover:underline">GDPR privacy policy</a>
                         </FormLabel>
+                        <FormMessage />
                       </div>
                     </div>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
           )}
 
+          {/* Step 7: Energy Consultant Details */}
           {step === 7 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Energy Consultant Details</h2>
