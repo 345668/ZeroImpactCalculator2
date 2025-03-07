@@ -24,9 +24,9 @@ export const submissions = pgTable("submissions", {
   projectedConsumption: numeric("projected_consumption").notNull(),
 
   // Calculation Results
-  co2Savings: numeric("co2_savings").notNull(),
-  carbonCredits: numeric("carbon_credits").notNull(),
-  financialValue: numeric("financial_value").notNull(),
+  co2Savings: numeric("co2_savings"),
+  carbonCredits: numeric("carbon_credits"),
+  financialValue: numeric("financial_value"),
 
   // Additional Fields
   acceptedTerms: text("accepted_terms").notNull(),
@@ -35,33 +35,20 @@ export const submissions = pgTable("submissions", {
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
+// Create insert schema with proper validations
 export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
   currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
   projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
   email: z.string().email("Please enter a valid email address"),
-  acceptedTerms: z.boolean({
-    required_error: "You must accept the terms and conditions",
-    invalid_type_error: "Accepted terms must be a boolean"
-  }).refine((val) => val === true, {
-    message: "You must accept the terms and conditions"
-  }),
-  gdprConsent: z.boolean({
-    required_error: "You must consent to data processing under GDPR",
-    invalid_type_error: "GDPR consent must be a boolean"
-  }).refine((val) => val === true, {
-    message: "You must consent to data processing under GDPR"
-  }),
-  // Optional energy consultant fields
-  energyConsultantName: z.string().optional(),
-  energyConsultantCompany: z.string().optional(),
-  energyConsultantId: z.string().optional(),
-  energyConsultantBafaNumber: z.string().optional(),
-  // Required address
-  address: z.string().min(1, "Address is required"),
-  fileUrl: z.string().optional()
+  acceptedTerms: z.union([z.boolean(), z.string()]).transform(val => 
+    typeof val === 'boolean' ? String(val) : val
+  ),
+  gdprConsent: z.union([z.boolean(), z.string()]).transform(val => 
+    typeof val === 'boolean' ? String(val) : val
+  )
 }).omit({ 
-  id: true, 
+  id: true,
   submittedAt: true,
   co2Savings: true,
   carbonCredits: true,

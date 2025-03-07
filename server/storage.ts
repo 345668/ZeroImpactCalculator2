@@ -1,5 +1,5 @@
 import { submissions, type Submission, type InsertSubmission } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
 
 export interface IStorage {
@@ -11,45 +11,54 @@ export interface IStorage {
 
 export class DbStorage implements IStorage {
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
-    console.log('Creating submission with data:', insertSubmission); // Debug log
-
-    // Calculate CO2 savings based on consumption difference
-    const consumptionDiff = Number(insertSubmission.currentConsumption) - Number(insertSubmission.projectedConsumption);
-    const co2Savings = Number((consumptionDiff * 0.2).toFixed(2)); // Simplified CO2 calculation factor
-    const carbonCredits = co2Savings; // 1:1 ratio for this example
-    const financialValue = Number((carbonCredits * 50).toFixed(2)); // €50 per credit
+    console.log('Creating submission with data:', insertSubmission);
 
     try {
-      // Create new submission
-      const submission = await db.insert(submissions).values({
+      // Calculate CO2 savings based on consumption difference
+      const currentConsumption = Number(insertSubmission.currentConsumption);
+      const projectedConsumption = Number(insertSubmission.projectedConsumption);
+      const consumptionDiff = currentConsumption - projectedConsumption;
+      const co2Savings = Number((consumptionDiff * 0.2).toFixed(2)); // Simplified CO2 calculation factor
+      const carbonCredits = co2Savings; // 1:1 ratio for this example
+      const financialValue = Number((carbonCredits * 50).toFixed(2)); // €50 per credit
+
+      // Prepare submission data
+      const submissionData = {
         ...insertSubmission,
         co2Savings: co2Savings.toString(),
         carbonCredits: carbonCredits.toString(),
         financialValue: financialValue.toString(),
-        acceptedTerms: insertSubmission.acceptedTerms.toString(),
-        gdprConsent: insertSubmission.gdprConsent.toString(),
+        acceptedTerms: String(insertSubmission.acceptedTerms),
         submittedAt: new Date()
-      }).returning();
+      };
 
-      console.log('Submission created successfully:', submission[0]); // Debug log
-      return submission[0];
+      console.log('Inserting submission data:', submissionData);
+
+      // Create new submission
+      const [submission] = await db.insert(submissions)
+        .values(submissionData)
+        .returning();
+
+      console.log('Submission created successfully:', submission);
+      return submission;
     } catch (error) {
-      console.error('Error creating submission:', error); // Debug log
+      console.error('Error creating submission:', error);
       throw error;
     }
   }
 
   async getSubmissionByEmail(email: string): Promise<Submission | undefined> {
     try {
-      const result = await db
+      const [result] = await db
         .select()
         .from(submissions)
         .where(eq(submissions.email, email))
         .orderBy(desc(submissions.submittedAt));
-      console.log('Found submission by email:', result[0]); // Debug log
-      return result[0];
+
+      console.log('Found submission by email:', result);
+      return result;
     } catch (error) {
-      console.error('Error getting submission by email:', error); // Debug log
+      console.error('Error getting submission by email:', error);
       throw error;
     }
   }
@@ -60,24 +69,26 @@ export class DbStorage implements IStorage {
         .select()
         .from(submissions)
         .orderBy(desc(submissions.submittedAt));
-      console.log('Retrieved all submissions:', results.length); // Debug log
+
+      console.log('Retrieved all submissions:', results.length);
       return results;
     } catch (error) {
-      console.error('Error getting all submissions:', error); // Debug log
+      console.error('Error getting all submissions:', error);
       throw error;
     }
   }
 
   async getSubmissionById(id: number): Promise<Submission | undefined> {
     try {
-      const result = await db
+      const [result] = await db
         .select()
         .from(submissions)
         .where(eq(submissions.id, id));
-      console.log('Found submission by id:', result[0]); // Debug log
-      return result[0];
+
+      console.log('Found submission by id:', result);
+      return result;
     } catch (error) {
-      console.error('Error getting submission by id:', error); // Debug log
+      console.error('Error getting submission by id:', error);
       throw error;
     }
   }
