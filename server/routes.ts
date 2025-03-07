@@ -44,6 +44,12 @@ async function processDocument(file: Express.Multer.File) {
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
 
+  // Add CORS headers middleware
+  app.use((req, res, next) => {
+    res.header('Content-Type', 'application/json');
+    next();
+  });
+
   // Document upload endpoint
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
     console.log('Upload request received:', req.file ? 'File present' : 'No file');
@@ -92,6 +98,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
     }
+  });
+
+  // Error handling middleware
+  app.use((err, _req, res, _next) => {
+    console.error('Express error:', err);
+    res.status(500).json({
+      message: "Internal server error",
+      error: err instanceof Error ? err.message : "Unknown error"
+    });
   });
 
   console.log('Route registration completed successfully');
