@@ -109,15 +109,24 @@ export async function sendReportEmail(submission: any) {
       .join('');
 
     // Create a JSON-safe email message object
-    const msg = JSON.parse(JSON.stringify({
+    const msg = {
       to: data.email,
       from: 'pmm@sands-neptune.de',
       subject: 'Your Carbon Credit Calculation Report',
       text: plainText,
       html: `<div style="font-family: monospace; white-space: pre-wrap;">${htmlContent}</div>`
+    };
+
+    // Parse and stringify to ensure valid JSON and escape problematic characters
+    const sanitizedMsg = JSON.parse(JSON.stringify({
+      to: msg.to,
+      from: msg.from,
+      subject: msg.subject,
+      text: msg.text,
+      html: msg.html
     }));
 
-    await sgMail.send(msg);
+    await sgMail.send(sanitizedMsg);
     console.log('Email sent successfully to:', data.email);
     return true;
   } catch (error: any) {
