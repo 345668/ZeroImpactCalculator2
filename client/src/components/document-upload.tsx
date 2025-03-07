@@ -21,7 +21,14 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (formData: FormData) => {
-      const res = await apiRequest("POST", "/api/upload-document", formData);
+      const res = await fetch('/api/upload-document', {
+        method: 'POST',
+        body: formData
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Error uploading document');
+      }
       return res.json();
     },
     onSuccess: (data) => {
@@ -40,7 +47,7 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
 
       onDataExtracted(extractedData);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error processing document",
         description: error.message,

@@ -119,13 +119,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Document upload endpoint
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
+    console.log('Upload request received:', req.file ? 'File present' : 'No file');
+
     try {
       if (!req.file) {
+        console.error('No file in request');
         return res.status(400).json({ message: "No file uploaded" });
       }
 
+      console.log('Processing file:', req.file.originalname);
       const processedData = await processDocumentWithMistral(req.file);
+      console.log('File processed successfully');
 
       res.json({
         message: "Document processed successfully",
