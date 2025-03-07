@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload } from "lucide-react";
 
@@ -63,10 +62,17 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
   };
 
   const handleUpload = () => {
-    if (!file) return;
+    if (!file) {
+      toast({
+        title: "No file selected",
+        description: "Please select a file to upload",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const formData = new FormData();
-    formData.append("document", file);
+    formData.append("document", file); // Make sure field name matches server expectation
     mutate(formData);
   };
 
