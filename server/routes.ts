@@ -1,15 +1,37 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage";
 import { insertSubmissionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
+import { extractTextFromDocument, processWithMistral } from "./utils/document-processor";
 
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
+
+async function processDocument(file: Express.Multer.File) {
+  try {
+    console.log('Starting document processing...');
+
+    // Extract text from document
+    console.log('Extracting text from document...');
+    const extractedText = await extractTextFromDocument(file);
+    console.log('Text extracted successfully');
+
+    // Process with Mistral AI
+    console.log('Processing with Mistral AI...');
+    const processedData = await processWithMistral(extractedText);
+    console.log('Mistral processing complete:', processedData);
+
+    return processedData;
+  } catch (error) {
+    console.error('Document processing error:', error);
+    throw error;
+  }
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...'); // Debug log
@@ -24,6 +46,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching submissions:', error);
       res.status(500).json({ message: "Error fetching submissions" });
+    }
+  });
+
+  // Document upload endpoint
+  app.post("/api/upload-document", upload.single('document'), async (req, res) => {
+    console.log('Upload request received:', req.file ? 'File present' : 'No file');
+
+    try {
+      if (!req.file) {
+        console.error('No file in request');
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      console.log('Processing file:', req.file.originalname);
+      const processedData = await processDocument(req.file);
+      console.log('File processed successfully');
+
+      res.json({
+        message: "Document processed successfully",
+        extractedData: processedData
+      });
+    } catch (error) {
+      console.error('Document processing error:', error);
+      res.status(500).json({
+        message: "Error processing document",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
     }
   });
 
