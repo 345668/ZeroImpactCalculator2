@@ -9,13 +9,10 @@ export function ResultsPage() {
   const { toast } = useToast();
   const [emailSent, setEmailSent] = useState(false);
 
-  // Get results from the location state
-  const locationState = window.history.state;
-  const result = locationState?.result;
+  // Get results from location state
+  const result = history.state?.result;
 
-  // If no result is available, redirect to home page
   if (!result) {
-    console.log("No result data found, redirecting to home");
     setLocation("/");
     return null;
   }
@@ -48,7 +45,7 @@ export function ResultsPage() {
       console.error('Error sending email:', error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send email report",
+        description: error.message || "Failed to send email report",
         variant: "destructive",
       });
     }
