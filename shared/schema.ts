@@ -2,11 +2,12 @@ import { pgTable, text, serial, numeric, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const submissions = pgTable("submissions", {
+export const submissions = pgTable("new_submissions", {
   id: serial("id").primaryKey(),
   // Customer Information
   firstName: text("first_name").notNull(),
   lastName: text("last_name").notNull(),
+  email: text("email").notNull(),
   address: text("address").notNull(),
 
   // Energy Consultant Information (Optional)
@@ -15,7 +16,7 @@ export const submissions = pgTable("submissions", {
   energyConsultantId: text("energy_consultant_id"),
   energyConsultantBafaNumber: text("energy_consultant_bafa_number"),
 
-  // Building and Energy Information
+  // Building Information
   buildingOwnership: text("building_ownership").notNull(),
   buildingSize: numeric("building_size").notNull(),
   heatingSystem: text("heating_system").notNull(),
@@ -28,7 +29,6 @@ export const submissions = pgTable("submissions", {
   financialValue: numeric("financial_value").notNull(),
 
   // Additional Fields
-  email: text("email").notNull(),
   acceptedTerms: text("accepted_terms").notNull(),
   gdprConsent: text("gdpr_consent").notNull(),
   fileUrl: text("file_url"),
