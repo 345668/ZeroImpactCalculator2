@@ -7,6 +7,7 @@ import { fromZodError } from "zod-validation-error";
 import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor";
 import { generatePDFReport } from "./utils/pdf-generator";
+import { sendReportEmail } from "./utils/email-service"; // Fixed import path
 
 // Configure multer for file uploads
 const upload = multer({
@@ -98,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const submissionData = {
         ...validatedData,
         acceptedTerms: validatedData.acceptedTerms.toString(),
-        // Add calculated fields -  These functions need to be defined elsewhere
+        // Add calculated fields
         co2Savings: calculateCO2Savings(validatedData),
         carbonCredits: calculateCarbonCredits(validatedData),
         financialValue: calculateFinancialValue(validatedData)
@@ -117,23 +118,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // PDF Report endpoint
-  app.get("/api/submissions/:id/report", async (req, res) => {
+  // Send email endpoint
+  app.post("/api/send-email", async (req, res) => {
     try {
-      const submission = await storage.getSubmissionById(parseInt(req.params.id));
+      const { submissionId, email } = req.body;
+      const submission = await storage.getSubmissionById(submissionId);
 
       if (!submission) {
         return res.status(404).json({ message: "Submission not found" });
       }
 
-      const pdfBuffer = await generatePDFReport(submission);
+      if (submission.email !== email) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename=carbon-credits-report-${submission.id}.pdf`);
-      res.send(pdfBuffer);
+      await sendReportEmail(submission);
+      res.json({ message: "Email sent successfully" });
     } catch (error) {
-      console.error('Error generating PDF report:', error);
-      res.status(500).json({ message: "Error generating PDF report" });
+      console.error('Error sending email:', error);
+      res.status(500).json({ message: "Failed to send email" });
     }
   });
 
@@ -141,18 +144,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-// Placeholder functions -  These need to be implemented based on the application logic
+// Calculation functions
 function calculateCO2Savings(data: any): number {
-  // Implement your CO2 savings calculation logic here
-  return 0;
+  // Calculate CO2 savings based on energy consumption reduction
+  const savingsKwh = data.currentConsumption - data.projectedConsumption;
+  // Using average CO2 emissions per kWh (0.0002 tons CO2 per kWh)
+  return savingsKwh * 0.0002;
 }
 
 function calculateCarbonCredits(data: any): number {
-  // Implement your carbon credits calculation logic here
-  return 0;
+  // 1:1 ratio with CO2 savings
+  return calculateCO2Savings(data);
 }
 
 function calculateFinancialValue(data: any): number {
-  // Implement your financial value calculation logic here
-  return 0;
+  // Assuming €50 per carbon credit
+  return calculateCarbonCredits(data) * 50;
 }

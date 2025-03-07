@@ -6,6 +6,7 @@ import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Check } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
+import { useLocation } from "wouter";
 
 // Import necessary UI components
 import {
@@ -20,18 +21,22 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { MultiStepForm, formSteps } from "./multi-step-form";
+import { Button } from "@/components/ui/button";
 
 interface ExtractedData {
   buildingSize?: number;
   currentConsumption?: number;
   projectedConsumption?: number;
   language?: string;
+  heatingSystem?: string;
 }
 
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
   const [documentLanguage, setDocumentLanguage] = useState<string>("en");
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
+  const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -44,11 +49,12 @@ export function CalculatorForm() {
       firstName: "",
       lastName: "",
       email: "",
-      acceptedTerms: false // Changed from "false" to false
+      acceptedTerms: false
     }
   });
 
   const handleExtractedData = (data: ExtractedData) => {
+    console.log('Received extracted data:', data);
     if (data.language) {
       setDocumentLanguage(data.language);
     }
@@ -61,6 +67,11 @@ export function CalculatorForm() {
     if (data.projectedConsumption) {
       form.setValue("projectedConsumption", data.projectedConsumption);
     }
+    if (data.heatingSystem) {
+      form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
+    }
+    setIsDocumentUploaded(true);
+    nextStep(); // Automatically move to next step after successful document upload
   };
 
   const { mutate, isPending } = useMutation({
@@ -73,7 +84,6 @@ export function CalculatorForm() {
         body: JSON.stringify({
           ...data,
           documentLanguage,
-          acceptedTerms: data.acceptedTerms.toString() // Convert boolean to string
         }),
       });
 
@@ -85,9 +95,9 @@ export function CalculatorForm() {
       return response.json();
     },
     onSuccess: (data) => {
-      toast({
-        title: "Success!",
-        description: "Your calculation has been submitted.",
+      // Navigate to results page with the calculation data
+      setLocation("/results", { 
+        state: { result: data }
       });
     },
     onError: (error: Error) => {
@@ -118,7 +128,27 @@ export function CalculatorForm() {
           isSubmitting={isPending}
         >
           {step === 1 && (
-            <>
+            <div className="space-y-6">
+              <div className="p-6 bg-primary/5 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Upload Energy Certificate</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  For faster results, upload your energy certificate or renovation plan to automatically fill the form
+                </p>
+                <DocumentUpload onDataExtracted={handleExtractedData} />
+                {isDocumentUploaded && (
+                  <p className="mt-2 text-sm text-primary">✓ Document processed successfully</p>
+                )}
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or fill manually</span>
+                </div>
+              </div>
+
               <FormField
                 control={form.control}
                 name="buildingOwnership"
@@ -169,18 +199,11 @@ export function CalculatorForm() {
                   </FormItem>
                 )}
               />
-            </>
+            </div>
           )}
 
           {step === 2 && (
             <>
-              <div className="mb-6">
-                <h3 className="text-lg font-medium mb-2">Upload Energy Certificate</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Upload your energy certificate or renovation plan to automatically fill the form
-                </p>
-                <DocumentUpload onDataExtracted={handleExtractedData} />
-              </div>
               <FormField
                 control={form.control}
                 name="heatingSystem"
