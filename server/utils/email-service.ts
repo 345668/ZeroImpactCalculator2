@@ -20,12 +20,12 @@ function getCurrentDate(): string {
 
 function sanitizeSubmissionData(submission: any) {
   return {
-    firstName: String(submission.firstName || ''),
-    lastName: String(submission.lastName || ''),
+    firstName: String(submission.firstName || '').replace(/[<>]/g, ''),
+    lastName: String(submission.lastName || '').replace(/[<>]/g, ''),
     email: String(submission.email || ''),
-    address: String(submission.address || ''),
+    address: String(submission.address || '').replace(/[<>]/g, ''),
     buildingSize: Number(submission.buildingSize || 0),
-    heatingSystem: String(submission.heatingSystem || ''),
+    heatingSystem: String(submission.heatingSystem || '').replace(/[<>]/g, ''),
     currentConsumption: Number(submission.currentConsumption || 0),
     projectedConsumption: Number(submission.projectedConsumption || 0),
     co2Savings: Number(submission.co2Savings || 0),
@@ -89,14 +89,26 @@ export async function sendReportEmail(submission: any) {
       'Amtsgericht Charlottenburg (HRB 255861 B)'
     ];
 
-    const emailContent = emailParts.join('\n');
+    const plainText = emailParts.join('\n');
+    const htmlContent = emailParts
+      .map(line => line.trim())
+      .map(line => `<div style="font-family: monospace; white-space: pre;">${line}</div>`)
+      .join('');
 
     const msg = {
       to: data.email,
       from: 'pmm@sands-neptune.de',
       subject: 'Your Carbon Credit Calculation Report',
-      text: emailContent,
-      html: emailParts.map(line => `<div>${line}</div>`).join('')
+      text: plainText,
+      html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body style="font-family: monospace; white-space: pre-wrap;">
+  ${htmlContent}
+</body>
+</html>`
     };
 
     await sgMail.send(msg);
