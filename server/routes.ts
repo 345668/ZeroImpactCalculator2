@@ -4,9 +4,8 @@ import multer from "multer";
 import { storage } from "./storage";
 import { insertSubmissionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
-import FormData from "form-data";
-import fetch from "node-fetch";
 import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage";
+import { extractTextFromDocument, processWithMistral } from "./utils/document-processor";
 import { generatePDFReport } from "./utils/pdf-generator";
 
 // Configure multer for file uploads
@@ -15,73 +14,27 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
 });
 
-async function processDocumentWithMistral(file: Express.Multer.File) {
+async function processDocument(file: Express.Multer.File) {
   try {
-    // First call: Chat completion to analyze the document
-    const response = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: "mistral-small-latest",
-        messages: [
-          {
-            role: "system",
-            content: "Extract the following information from the document: building size (m²), current energy consumption (kWh/year), projected energy consumption (kWh/year). Return the data in JSON format."
-          },
-          {
-            role: "user",
-            content: file.buffer.toString()
-          }
-        ],
-        response_format: { type: "json_object" }
-      })
-    });
+    console.log('Starting document processing...');
 
-    if (!response.ok) {
-      throw new Error(`Mistral API error: ${response.statusText}`);
-    }
+    // Extract text from document
+    console.log('Extracting text from document...');
+    const extractedText = await extractTextFromDocument(file);
+    console.log('Text extracted successfully');
 
-    const data = await response.json();
-    const extractedData = data.choices[0].message.content;
+    // Process with Mistral AI
+    console.log('Processing with Mistral AI...');
+    const processedData = await processWithMistral(extractedText);
+    console.log('Mistral processing complete:', processedData);
 
-    // Language detection
-    const langResponse = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MISTRAL_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: "mistral-small-latest",
-        messages: [
-          {
-            role: "system",
-            content: "Detect the language of the following text and return only the ISO 639-1 language code (e.g., 'en', 'de', 'fr')."
-          },
-          {
-            role: "user",
-            content: file.buffer.toString()
-          }
-        ]
-      })
-    });
-
-    if (!langResponse.ok) {
-      throw new Error(`Language detection failed: ${langResponse.statusText}`);
-    }
-
-    const langData = await langResponse.json();
-    const language = langData.choices[0].message.content.trim().toLowerCase();
-
-    // Upload file to Azure Blob Storage
+    // Upload to Azure Blob Storage
+    console.log('Uploading to Azure Blob Storage...');
     const fileUrl = await uploadFileToBlobStorage(file);
+    console.log('File uploaded successfully');
 
     return {
-      language,
-      extractedData: JSON.parse(extractedData),
+      extractedData: processedData,
       fileUrl
     };
   } catch (error) {
@@ -105,21 +58,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/calculate", async (req, res) => {
-    try {
-      const validatedData = insertSubmissionSchema.parse(req.body);
-      const result = await storage.createSubmission(validatedData);
-      res.json(result);
-    } catch (error) {
-      if (error instanceof Error) {
-        const validationError = fromZodError(error);
-        res.status(400).json({ message: validationError.message });
-      } else {
-        res.status(500).json({ message: "Internal server error" });
-      }
-    }
-  });
-
   // Document upload endpoint
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
     console.log('Upload request received:', req.file ? 'File present' : 'No file');
@@ -131,7 +69,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('Processing file:', req.file.originalname);
-      const processedData = await processDocumentWithMistral(req.file);
+      const processedData = await processDocument(req.file);
       console.log('File processed successfully');
 
       res.json({
@@ -147,7 +85,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add this new endpoint inside registerRoutes function
+  // PDF Report endpoint
   app.get("/api/submissions/:id/report", async (req, res) => {
     try {
       const submission = await storage.getSubmissionById(parseInt(req.params.id));

@@ -1,0 +1,260 @@
+Structured data extraction from unstructured content using LLM schemas
+LLM 0.23 is out today, and the signature feature is support for schemas—a new way of providing structured output from a model that matches a specification provided by the user. I’ve also upgraded both the llm-anthropic and llm-gemini plugins to add support for schemas.
+
+TLDR: you can now do things like this:
+
+llm --schema 'name,age int,short_bio' 'invent a cool dog'
+And get back:
+
+{
+  "name": "Zylo",
+  "age": 4,
+  "short_bio": "Zylo is a unique hybrid breed, a mix between a Siberian Husky and a Corgi. With striking blue eyes and a fluffy, colorful coat that changes shades with the seasons, Zylo embodies the spirit of winter and summer alike. Known for his playful personality and intelligence, Zylo can perform a variety of tricks and loves to fetch his favorite frisbee. Always ready for an adventure, he's just as happy hiking in the mountains as he is cuddling on the couch after a long day of play."
+}
+More details in the release notes and LLM schemas tutorial, which includes an example (extracting people from news articles) that’s even more useful than inventing dogs!
+
+Structured data extraction is a killer app for LLMs
+Designing this feature for LLM
+Reusing schemas and creating templates
+Doing more with the logged structured data
+Using schemas from LLM’s Python library
+What’s next for LLM schemas?
+Structured data extraction is a killer app for LLMs #
+I’ve suspected for a while that the single most commercially valuable application of LLMs is turning unstructured content into structured data. That’s the trick where you feed an LLM an article, or a PDF, or a screenshot and use it to turn that into JSON or CSV or some other structured format.
+
+It’s possible to achieve strong results on this with prompting alone: feed data into an LLM, give it an example of the output you would like and let it figure out the details.
+
+Many of the leading LLM providers now bake this in as a feature. OpenAI, Anthropic, Gemini and Mistral all offer variants of “structured output” as additional options through their API:
+
+OpenAI: Structured Outputs
+Gemini: Generate structured output with the Gemini API
+Mistral: Custom Structured Outputs
+Anthropic’s tool use can be used for this, as shown in their Extracting Structured JSON using Claude and Tool Use cookbook example.
+These mechanisms are all very similar: you pass a JSON schema to the model defining the shape that you would like, they then use that schema to guide the output of the model.
+
+How reliable that is can vary! Some providers use tricks along the lines of Jsonformer, compiling the JSON schema into code that interacts with the model’s next-token generation at runtime, limiting it to only generate tokens that are valid in the context of the schema.
+
+Other providers YOLO it—they trust that their model is “good enough” that showing it the schema will produce the right results!
+
+In practice, this means that you need to be aware that sometimes this stuff will go wrong. As with anything LLM, 100% reliability is never guaranteed.
+
+From my experiments so far, and depending on the model that you chose, these mistakes are rare. If you’re using a top tier model it will almost certainly do the right thing.
+
+Designing this feature for LLM #
+I’ve wanted this feature for ages. I see it as an important step on the way to full tool usage, which is something I’m very excited to bring to the CLI tool and Python library.
+
+LLM is designed as an abstraction layer over different models. This makes building new features much harder, because I need to figure out a common denominator and then build an abstraction that captures as much value as possible while still being general enough to work across multiple models.
+
+Support for structured output across multiple vendors has matured now to the point that I’m ready to commit to a design.
+
+My first version of this feature worked exclusively with JSON schemas. An earlier version of the tutorial started with this example:
+
+curl https://www.nytimes.com/ | uvx strip-tags | \
+  llm --schema '{
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "headline": {
+            "type": "string"
+          },
+          "short_summary": {
+            "type": "string"
+          },
+          "key_points": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["headline", "short_summary", "key_points"]
+      }
+    }
+  },
+  "required": ["items"]
+}' | jq
+Here we’re feeding a full JSON schema document to the new llm --schema option, then piping in the homepage of the New York Times (after running it through strip-tags) and asking for headline, short_summary and key_points for multiple items on the page.
+
+This example still works with the finished feature—you can see example JSON output here—but constructing those long-form schemas by hand was a big pain.
+
+So... I invented my own shortcut syntax.
+
+That earlier example is a simple illustration:
+
+llm --schema 'name,age int,short_bio' 'invent a cool dog'
+Here the schema is a comma-separated list of field names, with an optional space-separated type.
+
+The full concise schema syntax is described here. There’s a more complex example in the tutorial, which uses the newline-delimited form to extract information about people who are mentioned in a news article:
+
+curl 'https://apnews.com/article/trump-federal-employees-firings-a85d1aaf1088e050d39dcf7e3664bb9f' | \
+  uvx strip-tags | \
+  llm --schema-multi "
+name: the person's name
+organization: who they represent
+role: their job title or role
+learned: what we learned about them from this story
+article_headline: the headline of the story
+article_date: the publication date in YYYY-MM-DD
+" --system 'extract people mentioned in this article'
+The --schema-multi option here tells LLM to take that schema for a single object and upgrade it to an array of those objects (actually an object with a single "items" property that’s an array of objects), which is a quick way to request that the same schema be returned multiple times against a single input.
+
+Reusing schemas and creating templates #
+My original plan with schemas was to provide a separate llm extract command for running these kinds of operations. I ended up going in a different direction—I realized that adding --schema to the default llm prompt command would make it interoperable with other existing features (like attachments for feeding in images and PDFs).
+
+The most valuable way to apply schemas is across many different prompts, in order to gather the same structure of information from many different sources.
+
+I put a bunch of thought into the --schema option. It takes a variety of different values—quoting the documentation:
+
+This option can take multiple forms:
+
+A string providing a JSON schema: --schema '{"type": "object", ...}'
+A condensed schema definition: --schema 'name,age int'
+The name or path of a file on disk containing a JSON schema: --schema dogs.schema.json
+The hexadecimal ID of a previously logged schema: --schema 520f7aabb121afd14d0c6c237b39ba2d—these IDs can be found using the llm schemas command.
+A schema that has been saved in a template: --schema t:name-of-template
+The tutorial demonstrates saving a schema by using it once and then obtaining its ID through the new llm schemas command, then saving it to a template (along with the system prompt) like this:
+
+llm --schema 3b7702e71da3dd791d9e17b76c88730e \
+  --system 'extract people mentioned in this article' \
+  --save people
+And now we can feed in new articles using the llm -t people shortcut to apply that newly saved template:
+
+curl https://www.theguardian.com/commentisfree/2025/feb/27/billy-mcfarland-new-fyre-festival-fantasist | \
+  strip-tags | llm -t people
+Doing more with the logged structured data #
+Having run a few prompts that use the same schema, an obvious next step is to do something with the data that has been collected.
+
+I ended up implementing this on top of the existing llm logs mechanism.
+
+LLM already defaults to logging every prompt and response it makes to a SQLite database—mine contains over 4,747 of these records now, according to this query:
+
+sqlite3 "$(llm logs path)" 'select count(*) from responses'
+With schemas, an increasing portion of those are valid JSON.
+
+Since LLM records the schema that was used for each response—using the schema ID, which is derived from a content hash of the expanded JSON schema—it’s now possible to ask LLM for all responses that used a particular schema:
+
+llm logs --schema 3b7702e71da3dd791d9e17b76c88730e --short
+I got back:
+
+- model: gpt-4o-mini
+  datetime: '2025-02-28T07:37:18'
+  conversation: 01jn5qt397aaxskf1vjp6zxw2a
+  system: extract people mentioned in this article
+  prompt: Menu AP Logo Menu World U.S. Politics Sports Entertainment Business Science
+    Fact Check Oddities Be Well Newsletters N...
+- model: gpt-4o-mini
+  datetime: '2025-02-28T07:38:58'
+  conversation: 01jn5qx4q5he7yq803rnexp28p
+  system: extract people mentioned in this article
+  prompt: Skip to main contentSkip to navigationSkip to navigationPrint subscriptionsNewsletters
+    Sign inUSUS editionUK editionA...
+- model: gpt-4o
+  datetime: '2025-02-28T07:39:07'
+  conversation: 01jn5qxh20tksb85tf3bx2m3bd
+  system: extract people mentioned in this article
+  attachments:
+  - type: image/jpeg
+    url: https://static.simonwillison.net/static/2025/onion-zuck.jpg
+As you can see, I’ve run that example schema three times (while constructing the tutorial) using GPT-4o mini—twice against text content from curl ... | strip-tags and once against a screenshot JPEG to demonstrate attachment support.
+
+Extracting gathered JSON from the logs is clearly a useful next step... so I added several options to llm logs to support that use-case.
+
+The first is --data—adding that will cause LLM logs to output just the data that was gathered using a schema. Mix that with -c to see the JSON from the most recent response:
+
+llm logs -c --data
+Outputs:
+
+{"name": "Zap", "age": 5, "short_bio": ...
+Combining that with the --schema option is where things get really interesting. You can specify a schema using any of the mechanisms described earlier, which means you can see ALL of the data gathered using that schema by combining --data with --schema X (and -n 0 for everything).
+
+Here are all of the dogs I’ve invented:
+
+llm logs --schema 'name,age int,short_bio' --data -n 0
+Output (here truncated):
+
+{"name": "Zap", "age": 5, "short_bio": "Zap is a futuristic ..."}
+{"name": "Zephyr", "age": 3, "short_bio": "Zephyr is an adventurous..."}
+{"name": "Zylo", "age": 4, "short_bio": "Zylo is a unique ..."}
+Some schemas gather multiple items, producing output that looks like this (from the tutorial):
+
+{"items": [{"name": "Mark Zuckerberg", "organization": "...
+{"items": [{"name": "Billy McFarland", "organization": "...
+We can get back the individual objects by adding --data-key items. Here I’m also using the --schema t:people shortcut to specify the schema that was saved to the people template earlier on.
+
+llm logs --schema t:people --data-key items
+Output:
+
+{"name": "Katy Perry", "organization": ...
+{"name": "Gayle King", "organization": ...
+{"name": "Lauren Sanchez", "organization": ...
+This feature defaults to outputting newline-delimited JSON, but you can add the --data-array flag to get back a JSON array of objects instead.
+
+... which means you can pipe it into sqlite-utils insert to create a SQLite database!
+
+llm logs --schema t:people --data-key items --data-array | \
+  sqlite-utils insert data.db people -
+Add all of this together and we can construct a schema, run it against a bunch of sources and dump the resulting structured data into SQLite where we can explore it using SQL queries (and Datasette). It’s a really powerful combination.
+
+Using schemas from LLM’s Python library #
+The most popular way to work with schemas in Python these days is with Pydantic, to the point that many of the official API libraries for models directly incorporate Pydantic for this purpose.
+
+LLM depended on Pydantic already, and for this project I finally dropped my dual support for Pydantic v1 and v2 and committed to v2 only.
+
+A key reason Pydantic for this is so popular is that it’s trivial to use it to build a JSON schema document:
+
+import pydantic, json
+
+class Dog(pydantic.BaseModel):
+    name: str
+    age: int
+    bio: str
+
+schema = Dog.model_json_schema()
+print(json.dumps(schema, indent=2))
+Outputs:
+
+{
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "age": {
+      "title": "Age",
+      "type": "integer"
+    },
+    "bio": {
+      "title": "Bio",
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "age",
+    "bio"
+  ],
+  "title": "Dog",
+  "type": "object"
+}
+LLM’s Python library doesn’t require you to use Pydantic, but it supports passing either a Pydantic BaseModel subclass or a full JSON schema to the new model.prompt(schema=) parameter. Here’s the usage example from the documentation:
+
+import llm, json
+from pydantic import BaseModel
+
+class Dog(BaseModel):
+    name: str
+    age: int
+
+model = llm.get_model("gpt-4o-mini")
+response = model.prompt("Describe a nice dog", schema=Dog)
+dog = json.loads(response.text())
+print(dog)
+# {"name":"Buddy","age":3}
+What’s next for LLM schemas? #
+So far I’ve implemented schema support for models from OpenAI, Anthropic and Gemini. The plugin author documentation includes details on how to add this to further plugins—I’d love to see one of the local model plugins implement this pattern as well.
+
+Update llm-ollama now support schemas thanks to this PR by Adam Compton. And I’ve added support to llm-mistral.

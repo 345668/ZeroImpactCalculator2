@@ -20,6 +20,7 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (formData: FormData) => {
+      console.log('Uploading file:', formData.get('document')); // Debug log
       const res = await fetch('/api/upload-document', {
         method: 'POST',
         body: formData
@@ -39,9 +40,9 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
       // Extract relevant data from OCR results
       const extractedData = {
         language: data.language,
-        buildingSize: parseFloat(data.extractedData?.buildingSize) || undefined,
-        currentConsumption: parseFloat(data.extractedData?.currentConsumption) || undefined,
-        projectedConsumption: parseFloat(data.extractedData?.projectedConsumption) || undefined,
+        buildingSize: data.extractedData?.building_size || undefined,
+        currentConsumption: data.extractedData?.current_consumption || undefined,
+        projectedConsumption: data.extractedData?.projected_consumption || undefined,
       };
 
       onDataExtracted(extractedData);
@@ -52,12 +53,32 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
         description: error.message,
         variant: "destructive",
       });
+      setFile(null); // Reset file selection on error
     },
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      // Validate file type
+      if (!selectedFile.type.match('application/pdf|image/jpeg|image/png|image/jpg')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a PDF or image file (JPG, PNG)",
+          variant: "destructive",
+        });
+        return;
+      }
+      // Validate file size (10MB max)
+      if (selectedFile.size > 10 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please upload a file smaller than 10MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setFile(selectedFile);
     }
   };
 
@@ -72,7 +93,8 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
     }
 
     const formData = new FormData();
-    formData.append("document", file); // Make sure field name matches server expectation
+    formData.append("document", file);
+    console.log('Sending file:', file.name); // Debug log
     mutate(formData);
   };
 
