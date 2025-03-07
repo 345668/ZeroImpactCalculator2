@@ -12,10 +12,11 @@ interface DocumentUploadProps {
     projectedConsumption?: number;
     language?: string;
     heatingSystem?: string;
-    consultantName?: string;
-    consultantCompany?: string;
-    consultantId?: string;
-    consultantBafaNumber?: string;
+    energyConsultantName?: string;
+    energyConsultantCompany?: string;
+    energyConsultantId?: string;
+    energyConsultantBafaNumber?: string;
+    fileUrl?: string;
   }) => void;
 }
 
@@ -50,10 +51,11 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
         projectedConsumption: data.extractedData?.projected_consumption || undefined,
         heatingSystem: data.extractedData?.heating_system_type || undefined,
         // Add energy consultant information
-        consultantName: data.extractedData?.consultant_name || undefined,
-        consultantCompany: data.extractedData?.consultant_company || undefined,
-        consultantId: data.extractedData?.consultant_id || undefined,
-        consultantBafaNumber: data.extractedData?.consultant_bafa_number || undefined,
+        energyConsultantName: data.extractedData?.energy_consultant_name || undefined,
+        energyConsultantCompany: data.extractedData?.energy_consultant_company || undefined,
+        energyConsultantId: data.extractedData?.energy_consultant_id || undefined,
+        energyConsultantBafaNumber: data.extractedData?.energy_consultant_bafa_number || undefined,
+        fileUrl: data.fileUrl || undefined,
       };
 
       onDataExtracted(extractedData);

@@ -31,10 +31,11 @@ interface ExtractedData {
   projectedConsumption?: number;
   language?: string;
   heatingSystem?: string;
-  consultantName?: string;
-  consultantCompany?: string;
-  consultantId?: string;
-  consultantBafaNumber?: string;
+  energyConsultantName?: string; // Updated field names
+  energyConsultantCompany?: string;
+  energyConsultantId?: string;
+  energyConsultantBafaNumber?: string;
+  fileUrl?: string;
 }
 
 export const formSteps = [
@@ -82,12 +83,14 @@ export function CalculatorForm() {
       firstName: "",
       lastName: "",
       email: "",
+      address: "",
       acceptedTerms: false,
       gdprConsent: false,
-      consultantName: "", // Add new fields
-      consultantCompany: "",
-      consultantId: "",
-      consultantBafaNumber: ""
+      energyConsultantName: "", // Updated field names
+      energyConsultantCompany: "",
+      energyConsultantId: "",
+      energyConsultantBafaNumber: "",
+      fileUrl: ""
     }
   });
 
@@ -109,17 +112,20 @@ export function CalculatorForm() {
       form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
     }
     // Set energy consultant information if available
-    if (data.consultantName) {
-      form.setValue("consultantName", data.consultantName);
+    if (data.energyConsultantName) {
+      form.setValue("energyConsultantName", data.energyConsultantName);
     }
-    if (data.consultantCompany) {
-      form.setValue("consultantCompany", data.consultantCompany);
+    if (data.energyConsultantCompany) {
+      form.setValue("energyConsultantCompany", data.energyConsultantCompany);
     }
-    if (data.consultantId) {
-      form.setValue("consultantId", data.consultantId);
+    if (data.energyConsultantId) {
+      form.setValue("energyConsultantId", data.energyConsultantId);
     }
-    if (data.consultantBafaNumber) {
-      form.setValue("consultantBafaNumber", data.consultantBafaNumber);
+    if (data.energyConsultantBafaNumber) {
+      form.setValue("energyConsultantBafaNumber", data.energyConsultantBafaNumber);
+    }
+    if (data.fileUrl) {
+      form.setValue("fileUrl", data.fileUrl);
     }
     setIsDocumentUploaded(true);
     nextStep();
@@ -444,6 +450,20 @@ export function CalculatorForm() {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

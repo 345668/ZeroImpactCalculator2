@@ -251,7 +251,7 @@ export default function Dashboard() {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Consultant</TableHead>
+                <TableHead>Energy Consultant</TableHead>
                 <TableHead>Building Size</TableHead>
                 <TableHead>Energy Reduction</TableHead>
                 <TableHead>CO₂ Savings</TableHead>
@@ -272,13 +272,21 @@ export default function Dashboard() {
                     <span className="text-xs text-muted-foreground">{submission.address}</span>
                   </TableCell>
                   <TableCell>
-                    {submission.consultantName}
-                    <br />
-                    <span className="text-xs text-muted-foreground">
-                      {submission.consultantCompany}
-                      <br />
-                      ID: {submission.consultantId}
-                    </span>
+                    {submission.energyConsultantName ? (
+                      <>
+                        {submission.energyConsultantName}
+                        <br />
+                        <span className="text-xs text-muted-foreground">
+                          {submission.energyConsultantCompany}
+                          <br />
+                          ID: {submission.energyConsultantId}
+                          <br />
+                          BAFA: {submission.energyConsultantBafaNumber}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">No consultant info</span>
+                    )}
                   </TableCell>
                   <TableCell>{submission.buildingSize} m²</TableCell>
                   <TableCell>
@@ -288,14 +296,26 @@ export default function Dashboard() {
                   <TableCell>{Number(submission.carbonCredits).toFixed(2)}</TableCell>
                   <TableCell>€{Number(submission.financialValue).toFixed(2)}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.location.href = `/api/submissions/${submission.id}/report`}
-                    >
-                      <FileDown className="h-4 w-4 mr-1" />
-                      Report
-                    </Button>
+                    <div className="space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.location.href = `/api/submissions/${submission.id}/report`}
+                      >
+                        <FileDown className="h-4 w-4 mr-1" />
+                        Report
+                      </Button>
+                      {submission.fileUrl && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(submission.fileUrl, '_blank')}
+                        >
+                          <FileDown className="h-4 w-4 mr-1" />
+                          View Document
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

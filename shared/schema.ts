@@ -9,11 +9,11 @@ export const submissions = pgTable("submissions", {
   lastName: text("last_name").notNull(),
   address: text("address").notNull(),
 
-  // Energy Consultant Information
-  consultantName: text("consultant_name"),
-  consultantCompany: text("consultant_company"),
-  consultantId: text("consultant_id"),
-  consultantBafaNumber: text("consultant_bafa_number"),
+  // Energy Consultant Information (Optional)
+  energyConsultantName: text("energy_consultant_name"),
+  energyConsultantCompany: text("energy_consultant_company"),
+  energyConsultantId: text("energy_consultant_id"),
+  energyConsultantBafaNumber: text("energy_consultant_bafa_number"),
 
   // Building and Energy Information
   buildingOwnership: text("building_ownership").notNull(),
@@ -52,12 +52,12 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   }).refine((val) => val === true, {
     message: "You must consent to data processing under GDPR"
   }),
-  // Make consultant fields optional
-  consultantName: z.string().optional(),
-  consultantCompany: z.string().optional(),
-  consultantId: z.string().optional(),
-  consultantBafaNumber: z.string().optional(),
-  // Address is required
+  // Optional energy consultant fields
+  energyConsultantName: z.string().optional(),
+  energyConsultantCompany: z.string().optional(),
+  energyConsultantId: z.string().optional(),
+  energyConsultantBafaNumber: z.string().optional(),
+  // Required address
   address: z.string().min(1, "Address is required"),
   fileUrl: z.string().optional()
 }).omit({ 
