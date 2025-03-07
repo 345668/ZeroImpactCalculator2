@@ -2,7 +2,7 @@ import { pgTable, text, serial, numeric, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Step 1-4: Building and Energy Information Schema
+// Base calculation schema for validating extracted data
 export const calculationSchema = z.object({
   buildingSize: z.number().min(1, "Building size must be greater than 0"),
   currentConsumption: z.number().min(0, "Current consumption must be non-negative"),
@@ -11,7 +11,7 @@ export const calculationSchema = z.object({
   heatingSystem: z.enum(["gas", "oil", "electric", "other"])
 });
 
-// Keep the database table definition
+// Database table definition
 export const submissions = pgTable("submissions", {
   id: serial("id").primaryKey(),
   buildingOwnership: text("building_ownership").notNull(),
@@ -36,10 +36,7 @@ export const submissions = pgTable("submissions", {
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
-export type CalculationInput = z.infer<typeof calculationSchema>;
-export type Submission = typeof submissions.$inferSelect;
-
-// Contact information schema (Step 6)
+// Step 6: Contact Information Schema
 export const contactSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -62,3 +59,6 @@ export const insertSubmissionSchema = createInsertSchema(submissions)
     carbonCredits: true,
     financialValue: true 
   });
+
+export type CalculationInput = z.infer<typeof calculationSchema>;
+export type Submission = typeof submissions.$inferSelect;

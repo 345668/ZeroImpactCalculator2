@@ -24,11 +24,10 @@ import { MultiStepForm, formSteps } from "./multi-step-form";
 
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
-  const [documentLanguage, setDocumentLanguage] = useState<string>("en");
-  const { toast } = useToast();
-  const [, navigate] = useLocation();
   const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
   const [interimResults, setInterimResults] = useState<any>(null);
+  const { toast } = useToast();
+  const [, navigate] = useLocation();
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -130,20 +129,21 @@ export function CalculatorForm() {
         currentConsumption: Number(values.currentConsumption),
         projectedConsumption: Number(values.projectedConsumption),
         buildingOwnership: values.buildingOwnership,
-        heatingSystem: values.heatingSystem
+        heatingSystem: values.heatingSystem,
       };
 
       console.log('Sending calculation data:', calculationData);
 
       const response = await fetch("/api/calculate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(calculationData),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to calculate results");
+        throw new Error("Failed to calculate results");
       }
 
       const results = await response.json();
@@ -541,12 +541,13 @@ export function CalculatorForm() {
           {step === 7 && (
             <div className="space-y-6">
               <h2 className="text-xl font-semibold mb-4">Energy Consultant Details</h2>
+              {/* Make consultant fields optional */}
               <FormField
                 control={form.control}
                 name="consultantName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Consultant Name</FormLabel>
+                    <FormLabel>Consultant Name (Optional)</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -560,7 +561,7 @@ export function CalculatorForm() {
                 name="consultantCompany"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Consultant Company</FormLabel>
+                    <FormLabel>Consultant Company (Optional)</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -574,7 +575,7 @@ export function CalculatorForm() {
                 name="consultantId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Consultant ID</FormLabel>
+                    <FormLabel>Consultant ID (Optional)</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
@@ -588,7 +589,7 @@ export function CalculatorForm() {
                 name="consultantBafaNumber"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>BAFA Number</FormLabel>
+                    <FormLabel>BAFA Number (Optional)</FormLabel>
                     <FormControl>
                       <Input {...field} />
                     </FormControl>
