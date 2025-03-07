@@ -5,16 +5,39 @@ import * as schema from '@shared/schema';
 
 neonConfig.webSocketConstructor = ws;
 
+// Ensure DATABASE_URL is available
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
 }
 
-console.log('Initializing database connection...'); // Debug log
+// Configure connection pool with better error handling
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 5000,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  keepAlive: true
+});
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+// Create drizzle instance
+export const db = drizzle(pool, { schema });
 
-// Test the connection
-pool.connect()
-  .then(() => console.log('Database connection successful'))
-  .catch(err => console.error('Database connection error:', err));
+// Test and maintain the connection
+async function testConnection() {
+  try {
+    const client = await pool.connect();
+    console.log('Database connection successful');
+    client.release();
+  } catch (err) {
+    console.error('Database connection error:', err);
+    // Don't throw, just log the error
+  }
+}
+
+// Initial connection test
+testConnection();
+
+// Keep connection alive
+setInterval(testConnection, 30000);
+
+export { pool };
