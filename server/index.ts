@@ -1,9 +1,10 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { db, testDatabaseConnection } from "./db";
+import { registerRoutes } from "./routes.js";
+import { setupVite, serveStatic, log } from "./vite.js";
+import { db, testDatabaseConnection } from "./db.js";
 import path from "path";
 import { fileURLToPath } from 'url';
+import favicon from 'serve-favicon';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,9 +24,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 // Serve favicon
-app.get('/favicon.ico', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/favicon.ico'));
-});
+app.use(favicon(path.join(__dirname, '../client/public/favicon.svg')));
 
 // Add request logging middleware
 app.use((req, res, next) => {
