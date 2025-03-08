@@ -3,6 +3,10 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { db, testDatabaseConnection } from "./db";
 import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
@@ -79,7 +83,7 @@ app.get("/api/health", (req, res) => {
       log('Vite setup complete');
     } else {
       log('Setting up static file serving for production...');
-      const distPath = path.resolve(__dirname, "../dist/public");
+      const distPath = path.join(__dirname, "../dist/public");
       app.use(express.static(distPath));
 
       // Serve index.html for all routes except /api
