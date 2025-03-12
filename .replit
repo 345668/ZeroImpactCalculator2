@@ -11,7 +11,7 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [workflows]
-runButton = "Start Application"
+runButton = "Carbon Credit App"
 
 [[workflows.workflow]]
 name = "Project"
@@ -48,6 +48,15 @@ args = "npm run dev"
 
 [[workflows.workflow]]
 name = "Start Application"
+author = 33133283
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node start.js"
+
+[[workflows.workflow]]
+name = "Carbon Credit App"
 author = 33133283
 mode = "sequential"
 
