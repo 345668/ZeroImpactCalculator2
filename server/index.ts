@@ -104,53 +104,62 @@ app.get("/api/health", (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
 
-    // Start server with improved logging and port selection
-    // Check for PORT environment variable first, fallback to standard ports
-    const preferredPorts = [
-      parseInt(process.env.PORT || "0", 10),
-      5000,  // Primary port mapped to 80 in .replit
-      3001,  // Backup port explicitly configured in .replit
-      3000   // Common development port
-    ].filter(p => p > 0);
+    // Start server on a single port to avoid conflicts
+    const PORT = 5000; // Primary port mapped to 80 in .replit
     
-    log(`Available ports to try: ${preferredPorts.join(', ')}`);
+    log(`Starting server on port ${PORT}...`);
 
-    const startServer = (portIndex = 0) => {
-      if (portIndex >= preferredPorts.length) {
-        log('Error: All ports are in use. Please free up a port before starting the server.');
-        process.exit(1);
-        return;
-      }
-      
-      const attemptPort = preferredPorts[portIndex];
-      log(`Attempting to start server on port ${attemptPort}...`);
-      
-      const server_instance = server.listen({
-        port: attemptPort,
+    // First check if port is in use and force close any existing connections
+    import { exec } from 'child_process';
+    
+    try {
+      exec(`lsof -i :${PORT} -t`, (err, stdout) => {
+        if (stdout) {
+          const pids = stdout.trim().split('\n');
+          pids.forEach(pid => {
+            if (pid && pid !== process.pid.toString()) {
+              try {
+                process.kill(parseInt(pid), 'SIGTERM');
+                log(`Terminated existing process ${pid} on port ${PORT}`);
+              } catch (e) {
+                log(`Failed to terminate process ${pid}: ${e}`);
+              }
+            }
+          });
+        }
+        
+        // Start server after attempting to clear the port
+        startServerOnPort();
+      });
+    } catch (error) {
+      log(`Error checking for existing processes: ${error}`);
+      startServerOnPort();
+    }
+    
+    function startServerOnPort() {
+      server.listen({
+        port: PORT,
         host: "0.0.0.0", // Listen on all interfaces to be accessible externally
       }, () => {
-        log(`Server successfully started and listening on port ${attemptPort}`);
+        log(`Server successfully started and listening on port ${PORT}`);
         // Use REPL_SLUG environment variable to determine the URL
         if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
           log(`Visit your app at: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
         } else {
-          log(`Server running at http://0.0.0.0:${attemptPort}`);
+          log(`Server running at http://0.0.0.0:${PORT}`);
         }
       });
 
-      server_instance.on('error', (error: any) => {
+      server.on('error', (error: any) => {
         if (error.code === 'EADDRINUSE') {
-          log(`Port ${attemptPort} is already in use. Trying next port...`);
-          // Try the next port in the list
-          startServer(portIndex + 1);
+          log(`Port ${PORT} is already in use. Please restart the repl.`);
+          process.exit(1);
         } else {
           console.error('Server error:', error);
           process.exit(1);
         }
       });
-    };
-
-    startServer();
+    }
 
   } catch (error) {
     console.error('Fatal error during server startup:', error);
