@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Check, Mail, RefreshCw } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
+import { motion } from "framer-motion";
 
 // Import necessary UI components
 import {
@@ -324,98 +325,192 @@ export function CalculatorForm() {
 
           {step === 4 && (
             <div className="space-y-6">
-              <div className="text-center">
+              <motion.div 
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
                 <h2 className="text-2xl font-bold mb-2">Your Carbon Savings Results</h2>
                 <p className="text-muted-foreground mb-8">Here's the potential impact of your energy efficiency improvements</p>
-              </div>
+              </motion.div>
 
               <div className="grid gap-4 md:grid-cols-3">
-                <Card className="p-6 bg-primary/5 transition-all duration-300">
-                  <div className="transition-all duration-300">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="rounded-full bg-calmBlue-100 p-3">
-                        <Check className="w-6 h-6 text-calmBlue-600" />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                >
+                  <Card className="p-6 bg-primary/5 relative overflow-hidden">
+                    <div className="transition-all duration-300">
+                      <motion.div 
+                        className="absolute inset-0 bg-calmBlue-50"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                        style={{ transformOrigin: 'left' }}
+                      />
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-center mb-4">
+                          <motion.div 
+                            className="rounded-full bg-calmBlue-100 p-3"
+                            initial={{ rotate: -180, opacity: 0 }}
+                            animate={{ rotate: 0, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.3 }}
+                          >
+                            <Check className="w-6 h-6 text-calmBlue-600" />
+                          </motion.div>
+                        </div>
+                        <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
+                        <div className="text-3xl text-center font-bold mb-1 blur-lg">
+                          {calculateCO2Savings({
+                            currentConsumption: form.getValues("currentConsumption"),
+                            projectedConsumption: form.getValues("projectedConsumption")
+                          }).toFixed(2)}
+                        </div>
+                        <p className="text-sm text-center text-muted-foreground">Tons of CO₂ per year</p>
                       </div>
                     </div>
-                    <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
-                    <div className="text-3xl text-center font-bold mb-1 blur-lg">
-                      {calculateCO2Savings({
-                        currentConsumption: form.getValues("currentConsumption"),
-                        projectedConsumption: form.getValues("projectedConsumption")
-                      }).toFixed(2)}
-                    </div>
-                    <p className="text-sm text-center text-muted-foreground">Tons of CO₂ per year</p>
-                  </div>
-                </Card>
+                  </Card>
+                </motion.div>
 
-                <Card className="p-6 bg-primary/5 transition-all duration-300">
-                  <div className="transition-all duration-300">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="rounded-full bg-calmBlue-100 p-3">
-                        <Check className="w-6 h-6 text-calmBlue-600" />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                >
+                  <Card className="p-6 bg-primary/5 relative overflow-hidden">
+                    <div className="transition-all duration-300">
+                      <motion.div 
+                        className="absolute inset-0 bg-calmBlue-50"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 1, delay: 0.7 }}
+                        style={{ transformOrigin: 'left' }}
+                      />
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-center mb-4">
+                          <motion.div 
+                            className="rounded-full bg-calmBlue-100 p-3"
+                            initial={{ rotate: -180, opacity: 0 }}
+                            animate={{ rotate: 0, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.5 }}
+                          >
+                            <Check className="w-6 h-6 text-calmBlue-600" />
+                          </motion.div>
+                        </div>
+                        <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
+                        <div className="text-3xl text-center font-bold mb-1 blur-lg">
+                          {calculateCarbonCredits({
+                            currentConsumption: form.getValues("currentConsumption"),
+                            projectedConsumption: form.getValues("projectedConsumption")
+                          }).toFixed(2)}
+                        </div>
+                        <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
                       </div>
                     </div>
-                    <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
-                    <div className="text-3xl text-center font-bold mb-1 blur-lg">
-                      {calculateCarbonCredits({
-                        currentConsumption: form.getValues("currentConsumption"),
-                        projectedConsumption: form.getValues("projectedConsumption")
-                      }).toFixed(2)}
-                    </div>
-                    <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
-                  </div>
-                </Card>
+                  </Card>
+                </motion.div>
 
-                <Card className="p-6 bg-primary/5 transition-all duration-300">
-                  <div className="transition-all duration-300">
-                    <div className="flex items-center justify-center mb-4">
-                      <div className="rounded-full bg-calmBlue-100 p-3">
-                        <Check className="w-6 h-6 text-calmBlue-600" />
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.5, delay: 0.6 }}
+                >
+                  <Card className="p-6 bg-primary/5 relative overflow-hidden">
+                    <div className="transition-all duration-300">
+                      <motion.div 
+                        className="absolute inset-0 bg-calmBlue-50"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 1, delay: 0.9 }}
+                        style={{ transformOrigin: 'left' }}
+                      />
+                      <div className="relative z-10">
+                        <div className="flex items-center justify-center mb-4">
+                          <motion.div 
+                            className="rounded-full bg-calmBlue-100 p-3"
+                            initial={{ rotate: -180, opacity: 0 }}
+                            animate={{ rotate: 0, opacity: 1 }}
+                            transition={{ duration: 0.5, delay: 0.7 }}
+                          >
+                            <Check className="w-6 h-6 text-calmBlue-600" />
+                          </motion.div>
+                        </div>
+                        <h3 className="text-center font-semibold mb-1">Financial Value</h3>
+                        <div className="text-3xl text-center font-bold mb-1 blur-lg">
+                          €{calculateFinancialValue({
+                            currentConsumption: form.getValues("currentConsumption"),
+                            projectedConsumption: form.getValues("projectedConsumption")
+                          }).toFixed(2)}
+                        </div>
+                        <p className="text-sm text-center text-muted-foreground">Potential market value</p>
                       </div>
                     </div>
-                    <h3 className="text-center font-semibold mb-1">Financial Value</h3>
-                    <div className="text-3xl text-center font-bold mb-1 blur-lg">
-                      €{calculateFinancialValue({
-                        currentConsumption: form.getValues("currentConsumption"),
-                        projectedConsumption: form.getValues("projectedConsumption")
-                      }).toFixed(2)}
-                    </div>
-                    <p className="text-sm text-center text-muted-foreground">Potential market value</p>
-                  </div>
-                </Card>
+                  </Card>
+                </motion.div>
               </div>
 
-              <div className="mt-8 p-6 bg-gray-50 rounded-lg transition-all duration-300">
-                <div className="transition-all duration-300">
-                  <h3 className="text-lg font-semibold mb-4">Building Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Ownership Type</p>
-                      <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Building Size</p>
-                      <p className="font-medium blur-lg">{form.getValues("buildingSize")} m²</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Heating System</p>
-                      <p className="font-medium capitalize">{form.getValues("heatingSystem")}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
-                      <p className="font-medium blur-lg">
-                        {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
-                      </p>
+              <motion.div 
+                className="mt-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+              >
+                <div className="p-6 bg-gray-50 rounded-lg transition-all duration-300">
+                  <div className="transition-all duration-300">
+                    <h3 className="text-lg font-semibold mb-4">Building Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Ownership Type</p>
+                        <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Building Size</p>
+                        <p className="font-medium blur-lg">{form.getValues("buildingSize")} m²</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Heating System</p>
+                        <p className="font-medium capitalize">{form.getValues("heatingSystem")}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
+                        <motion.div
+                          className="h-2 bg-calmBlue-100 rounded-full mt-2 overflow-hidden"
+                          initial={{ width: "0%" }}
+                          animate={{ 
+                            width: "100%",
+                          }}
+                          transition={{ duration: 1, delay: 1 }}
+                        >
+                          <motion.div
+                            className="h-full bg-calmBlue-500"
+                            initial={{ width: "0%" }}
+                            animate={{ 
+                              width: `${(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%` 
+                            }}
+                            transition={{ duration: 1.5, delay: 1.2 }}
+                          />
+                        </motion.div>
+                        <p className="font-medium blur-lg mt-2">
+                          {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
 
-              <div className="text-center mt-8">
+              <motion.div 
+                className="text-center mt-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 1.4 }}
+              >
                 <p className="text-sm text-muted-foreground mb-4">
                   The detailed results will be sent to your email after completing the form.
                 </p>
-              </div>
+              </motion.div>
             </div>
           )}
 
