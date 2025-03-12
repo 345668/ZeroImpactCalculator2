@@ -1,8 +1,5 @@
 import sgMail from '@sendgrid/mail';
 import { AIService } from './ai.js';
-//import { db } from '../db.js';
-//import { submissions } from '@shared/schema';
-//import { eq } from 'drizzle-orm';
 
 if (!process.env.SENDGRID_API_KEY) {
   throw new Error("SENDGRID_API_KEY environment variable must be set");
@@ -10,7 +7,7 @@ if (!process.env.SENDGRID_API_KEY) {
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const SENDER_EMAIL = 'sandsneptune@gmail.com'; // Using verified sender email
+const SENDER_EMAIL = 'sandsneptune@gmail.com';
 
 export class EmailService {
   static async sendCarbonReport(data: any) {
@@ -33,27 +30,29 @@ export class EmailService {
 
       console.log('Email content generated successfully:', emailContent.substring(0, 100) + '...');
 
-      // Structure the message for SendGrid
+      // Structure the message according to SendGrid Web API format
       const msg = {
-        to: {
+        to: [{
           email: data.email,
           name: `${data.firstName} ${data.lastName}`
-        },
+        }],
         from: {
           email: SENDER_EMAIL,
           name: 'Radical Zero Carbon Credits'
         },
         subject: 'Your Carbon Savings Report from Radical Zero',
-        text: 'Your Carbon Credits Report',
-        html: emailContent,
-        trackingSettings: {
-          clickTracking: { enable: true },
-          openTracking: { enable: true }
+        content: [{
+          type: 'text/html',
+          value: emailContent
+        }],
+        tracking_settings: {
+          click_tracking: { enable: true },
+          open_tracking: { enable: true }
         },
         categories: ['carbon-report']
       };
 
-      console.log('Attempting to send email to:', data.email);
+      console.log('Attempting to send email with message:', JSON.stringify(msg, null, 2));
 
       try {
         const [response] = await sgMail.send(msg);
@@ -79,12 +78,14 @@ export class EmailService {
     }
   }
 
-  // Add a test method to verify SendGrid configuration
   static async sendTestEmail(toEmail: string) {
     try {
       const msg = {
         to: toEmail,
-        from: SENDER_EMAIL,
+        from: {
+          email: SENDER_EMAIL,
+          name: 'Radical Zero Carbon Credits'
+        },
         subject: 'Test Email from Radical Zero',
         text: 'This is a test email to verify SendGrid configuration',
         html: '<strong>This is a test email to verify SendGrid configuration</strong>'
