@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Mail, RefreshCw } from "lucide-react";
+import { Check } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
 
@@ -24,6 +24,20 @@ import { MultiStepForm } from "./multi-step-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
+
+interface ExtractedData {
+  buildingSize?: number;
+  currentConsumption?: number;
+  projectedConsumption?: number;
+  language?: string;
+  heatingSystem?: string;
+  energyConsultantName?: string;
+  energyConsultantCompany?: string;
+  energyConsultantId?: string;
+  energyConsultantBafaNumber?: string;
+  fileUrl?: string;
+}
+
 export const formSteps = [
   {
     title: "Building Information",
@@ -38,24 +52,25 @@ export const formSteps = [
     description: "Enter your expected energy usage after improvements"
   },
   {
-    title: "Results Preview",
-    description: "Review your potential savings"
-  },
-  {
     title: "Personal Information",
     description: "Tell us about yourself"
   },
   {
-    title: "Final Results",
-    description: "Your detailed carbon savings report"
+    title: "Results Analysis",
+    description: "Review your potential savings"
+  },
+  {
+    title: "Review & Submit",
+    description: "Review your information and submit"
   }
 ];
 
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
-  const [showResults, setShowResults] = useState(false);
+  const [documentLanguage, setDocumentLanguage] = useState<string>("en");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -70,20 +85,50 @@ export function CalculatorForm() {
       email: "",
       address: "",
       acceptedTerms: false,
-      gdprConsent: false
+      gdprConsent: false,
+      energyConsultantName: "",
+      energyConsultantCompany: "",
+      energyConsultantId: "",
+      energyConsultantBafaNumber: "",
+      fileUrl: ""
     }
   });
 
-  const nextStep = () => setStep(step + 1);
-  const previousStep = () => setStep(step - 1);
-  const startNewCalculation = () => {
-    setStep(1);
-    setShowResults(false);
-    form.reset();
-  };
-
-  const handleSendEmail = () => {
-    setStep(5); // Show personal information form
+  const handleExtractedData = (data: ExtractedData) => {
+    console.log('Received extracted data:', data);
+    if (data.language) {
+      setDocumentLanguage(data.language);
+    }
+    if (data.buildingSize) {
+      form.setValue("buildingSize", data.buildingSize);
+    }
+    if (data.currentConsumption) {
+      form.setValue("currentConsumption", data.currentConsumption);
+    }
+    if (data.projectedConsumption) {
+      form.setValue("projectedConsumption", data.projectedConsumption);
+    }
+    if (data.heatingSystem) {
+      form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
+    }
+    // Set energy consultant information if available
+    if (data.energyConsultantName) {
+      form.setValue("energyConsultantName", data.energyConsultantName);
+    }
+    if (data.energyConsultantCompany) {
+      form.setValue("energyConsultantCompany", data.energyConsultantCompany);
+    }
+    if (data.energyConsultantId) {
+      form.setValue("energyConsultantId", data.energyConsultantId);
+    }
+    if (data.energyConsultantBafaNumber) {
+      form.setValue("energyConsultantBafaNumber", data.energyConsultantBafaNumber);
+    }
+    if (data.fileUrl) {
+      form.setValue("fileUrl", data.fileUrl);
+    }
+    setIsDocumentUploaded(true);
+    nextStep();
   };
 
   const { mutate, isPending } = useMutation({
@@ -93,18 +138,23 @@ export function CalculatorForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          documentLanguage,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to submit calculation");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to submit calculation");
       }
 
       return response.json();
     },
-    onSuccess: () => {
-      setStep(6); // Show final results
-      setShowResults(true);
+    onSuccess: (data) => {
+      setLocation("/results", {
+        state: { result: data }
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -117,8 +167,20 @@ export function CalculatorForm() {
 
   const onSubmit = (data: InsertSubmission) => {
     console.log('Form submission started:', data);
-    mutate(data);
+
+    // Convert boolean values to strings
+    const submissionData = {
+      ...data,
+      acceptedTerms: String(data.acceptedTerms),
+      gdprConsent: String(data.gdprConsent)
+    };
+
+    console.log('Processed submission data:', submissionData);
+    mutate(submissionData);
   };
+
+  const nextStep = () => setStep(step + 1);
+  const previousStep = () => setStep(step - 1);
 
   function calculateCO2Savings(data: any): number {
     const savingsKwh = data.currentConsumption - data.projectedConsumption;
@@ -141,13 +203,31 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === formSteps.length}
+          isLastStep={step === 6}
           isSubmitting={isPending}
-          onStartNew={startNewCalculation}
-          onSendEmail={handleSendEmail}
         >
           {step === 1 && (
             <div className="space-y-6">
+              <div className="p-6 bg-primary/5 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Upload Energy Certificate</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  For faster results, upload your energy certificate or renovation plan to automatically fill the form
+                </p>
+                <DocumentUpload onDataExtracted={handleExtractedData} />
+                {isDocumentUploaded && (
+                  <p className="mt-2 text-sm text-primary">✓ Document processed successfully</p>
+                )}
+              </div>
+
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or fill manually</span>
+                </div>
+              </div>
+
               <FormField
                 control={form.control}
                 name="buildingOwnership"
@@ -254,72 +334,7 @@ export function CalculatorForm() {
           )}
 
           {step === 4 && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold mb-2">Your Carbon Savings Preview</h2>
-                <p className="text-muted-foreground">Here's an overview of your potential impact</p>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <Card className="p-6 bg-calmBlue-50/50">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="rounded-full bg-calmBlue-100 p-3">
-                      <Check className="w-6 h-6 text-calmBlue-600" />
-                    </div>
-                  </div>
-                  <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
-                  <div className="text-3xl text-center font-bold mb-1">
-                    {calculateCO2Savings(form.getValues()).toFixed(2)}
-                  </div>
-                  <p className="text-sm text-center text-muted-foreground">Tons of CO₂ per year</p>
-                </Card>
-
-                <Card className="p-6 bg-calmBlue-50/50">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="rounded-full bg-calmBlue-100 p-3">
-                      <Check className="w-6 h-6 text-calmBlue-600" />
-                    </div>
-                  </div>
-                  <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
-                  <div className="text-3xl text-center font-bold mb-1">
-                    {calculateCarbonCredits(form.getValues()).toFixed(2)}
-                  </div>
-                  <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
-                </Card>
-
-                <Card className="p-6 bg-calmBlue-50/50">
-                  <div className="flex items-center justify-center mb-4">
-                    <div className="rounded-full bg-calmBlue-100 p-3">
-                      <Check className="w-6 h-6 text-calmBlue-600" />
-                    </div>
-                  </div>
-                  <h3 className="text-center font-semibold mb-1">Financial Value</h3>
-                  <div className="text-3xl text-center font-bold mb-1">
-                    €{calculateFinancialValue(form.getValues()).toFixed(2)}
-                  </div>
-                  <p className="text-sm text-center text-muted-foreground">Potential market value</p>
-                </Card>
-              </div>
-              <div className="flex justify-center gap-4 pt-6">
-                <Button
-                  type="button"
-                  onClick={handleSendEmail}
-                  className="bg-calmBlue-600 hover:bg-calmBlue-700"
-                >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send Report to Email
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {step === 5 && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="text-center mb-8">
-                <h2 className="text-2xl font-bold mb-2">Personal Information</h2>
-                <p className="text-muted-foreground">Please provide your details to receive the report</p>
-              </div>
-
+            <>
               <FormField
                 control={form.control}
                 name="firstName"
@@ -417,82 +432,125 @@ export function CalculatorForm() {
                   </FormItem>
                 )}
               />
-
-              <div className="flex justify-end gap-4 pt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setStep(4)}
-                >
-                  Back
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-calmBlue-600 hover:bg-calmBlue-700"
-                  disabled={isPending}
-                >
-                  {isPending ? "Submitting..." : "Submit"}
-                </Button>
-              </div>
-            </div>
+            </>
           )}
 
-          {step === 6 && (
-            <div className="space-y-6 animate-fade-in">
+          {step === 5 && (
+            <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold mb-2">Your Carbon Savings Results</h2>
-                <p className="text-muted-foreground">Here's the detailed impact of your energy efficiency improvements</p>
+                <p className="text-muted-foreground">Here's the potential impact of your energy efficiency improvements</p>
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
-                <Card className="p-6 bg-calmBlue-50/50">
+                <Card className="p-6 bg-primary/5">
                   <div className="flex items-center justify-center mb-4">
-                    <div className="rounded-full bg-calmBlue-100 p-3">
-                      <Check className="w-6 h-6 text-calmBlue-600" />
+                    <div className="rounded-full bg-green-100 p-3">
+                      <Check className="w-6 h-6 text-green-600" />
                     </div>
                   </div>
                   <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
                   <div className="text-3xl text-center font-bold mb-1">
-                    {calculateCO2Savings(form.getValues()).toFixed(2)}
+                    {calculateCO2Savings({
+                      currentConsumption: form.getValues("currentConsumption"),
+                      projectedConsumption: form.getValues("projectedConsumption")
+                    }).toFixed(2)}
                   </div>
                   <p className="text-sm text-center text-muted-foreground">Tons of CO₂ per year</p>
                 </Card>
 
-                <Card className="p-6 bg-calmBlue-50/50">
+                <Card className="p-6 bg-primary/5">
                   <div className="flex items-center justify-center mb-4">
-                    <div className="rounded-full bg-calmBlue-100 p-3">
-                      <Check className="w-6 h-6 text-calmBlue-600" />
+                    <div className="rounded-full bg-green-100 p-3">
+                      <Check className="w-6 h-6 text-green-600" />
                     </div>
                   </div>
                   <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
                   <div className="text-3xl text-center font-bold mb-1">
-                    {calculateCarbonCredits(form.getValues()).toFixed(2)}
+                    {calculateCarbonCredits({
+                      currentConsumption: form.getValues("currentConsumption"),
+                      projectedConsumption: form.getValues("projectedConsumption")
+                    }).toFixed(2)}
                   </div>
                   <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
                 </Card>
 
-                <Card className="p-6 bg-calmBlue-50/50">
+                <Card className="p-6 bg-primary/5">
                   <div className="flex items-center justify-center mb-4">
-                    <div className="rounded-full bg-calmBlue-100 p-3">
-                      <Check className="w-6 h-6 text-calmBlue-600" />
+                    <div className="rounded-full bg-green-100 p-3">
+                      <Check className="w-6 h-6 text-green-600" />
                     </div>
                   </div>
                   <h3 className="text-center font-semibold mb-1">Financial Value</h3>
                   <div className="text-3xl text-center font-bold mb-1">
-                    €{calculateFinancialValue(form.getValues()).toFixed(2)}
+                    €{calculateFinancialValue({
+                      currentConsumption: form.getValues("currentConsumption"),
+                      projectedConsumption: form.getValues("projectedConsumption")
+                    }).toFixed(2)}
                   </div>
                   <p className="text-sm text-center text-muted-foreground">Potential market value</p>
                 </Card>
               </div>
 
+              <div className="mt-8 p-6 bg-gray-50 rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">Building Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Ownership Type</p>
+                    <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Building Size</p>
+                    <p className="font-medium">{form.getValues("buildingSize")} m²</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Heating System</p>
+                    <p className="font-medium capitalize">{form.getValues("heatingSystem")}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
+                    <p className="font-medium">
+                      {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-center mt-8">
+                <p className="text-sm text-muted-foreground mb-4">
+                  Review your information and proceed to submit.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {step === 6 && (
+            <div className="text-center space-y-6">
+              <img
+                src="/logo.png"
+                alt="Radical-Zero Logo"
+                className="mx-auto w-32 h-32 mb-8"
+              />
+
+              <div className="rounded-full bg-blue-100 w-16 h-16 mx-auto flex items-center justify-center mb-8">
+                <Check className="w-8 h-8 text-blue-500" />
+              </div>
+
+              <h2 className="text-2xl font-bold mb-2">Submission Successful!</h2>
+
+              <p className="text-gray-600 max-w-md mx-auto">
+                Thank you for your interest in carbon credits. A Radical-Zero representative
+                will contact you soon with more information about your potential carbon savings.
+              </p>
+
               <div className="flex justify-center gap-4 mt-8">
                 <Button
+                  type="button"
                   variant="outline"
-                  onClick={startNewCalculation}
+                  onClick={() => window.location.href = '/'}
                   className="px-6"
                 >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Start New Calculation
+                  Back to Home
                 </Button>
               </div>
             </div>
