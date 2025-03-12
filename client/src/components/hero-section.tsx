@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 export function HeroSection() {
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-radicalGreen-600 via-radicalGreen-500 to-radicalGreen-400">
+      <div className="absolute inset-0 bg-gradient-to-br from-calmBlue-600 via-calmBlue-500 to-calmBlue-400">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px] opacity-20" />
       </div>
 
@@ -21,7 +21,7 @@ export function HeroSection() {
             <Button
               size="lg"
               variant="secondary"
-              className="px-8 py-6 text-lg font-medium bg-white hover:bg-white/90 text-radicalGreen-600 transition-all duration-300 group"
+              className="px-8 py-6 text-lg font-medium bg-white hover:bg-white/90 text-calmBlue-600 transition-all duration-300 group"
               onClick={() => {
                 document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' });
               }}
@@ -34,7 +34,7 @@ export function HeroSection() {
           <div className="flex-1 flex justify-center lg:justify-end animate-slide-down">
             <div className="rounded-3xl p-8 sm:p-12 border border-white/10 bg-white/5 backdrop-blur-sm shadow-xl">
               <div className="w-full h-full min-h-[300px] flex items-center justify-center relative group">
-                <div className="absolute inset-0 bg-gradient-to-br from-radicalGreen-500/20 to-radicalBlue-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-br from-calmBlue-500/20 to-radicalBlue-500/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <svg className="w-40 h-40 text-white opacity-90 group-hover:scale-110 transition-transform duration-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                 </svg>

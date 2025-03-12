@@ -6,65 +6,65 @@
 
 @layer base {
   :root {
-    --background: 145 40% 98%;
-    --foreground: 145 40% 10%;
+    --background: 210 40% 98%;
+    --foreground: 210 40% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 145 40% 10%;
+    --card-foreground: 210 40% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 145 40% 10%;
+    --popover-foreground: 210 40% 10%;
 
-    --primary: 145 40% 30%;
+    --primary: 210 40% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 145 30% 96%;
-    --secondary-foreground: 145 40% 10%;
+    --secondary: 210 30% 96%;
+    --secondary-foreground: 210 40% 10%;
 
-    --muted: 145 30% 96%;
-    --muted-foreground: 145 30% 40%;
+    --muted: 210 30% 96%;
+    --muted-foreground: 210 30% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 145 40% 10%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 210 40% 10%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 145 20% 90%;
-    --input: 145 20% 90%;
-    --ring: 145 40% 30%;
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
+    --ring: 210 40% 40%;
 
     --radius: 0.8rem;
   }
 
   .dark {
-    --background: 145 40% 10%;
-    --foreground: 145 40% 98%;
+    --background: 210 40% 10%;
+    --foreground: 210 40% 98%;
 
-    --card: 145 40% 10%;
-    --card-foreground: 145 40% 98%;
+    --card: 210 40% 10%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 145 40% 10%;
-    --popover-foreground: 145 40% 98%;
+    --popover: 210 40% 10%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 145 40% 50%;
-    --primary-foreground: 145 40% 10%;
+    --primary: 210 40% 50%;
+    --primary-foreground: 210 40% 10%;
 
-    --secondary: 145 30% 15%;
-    --secondary-foreground: 145 40% 98%;
+    --secondary: 210 30% 15%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 145 30% 15%;
-    --muted-foreground: 145 30% 70%;
+    --muted: 210 30% 15%;
+    --muted-foreground: 210 30% 70%;
 
-    --accent: 145 30% 15%;
-    --accent-foreground: 145 40% 98%;
+    --accent: 210 30% 15%;
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 145 30% 15%;
-    --input: 145 30% 15%;
-    --ring: 145 40% 70%;
+    --border: 210 30% 15%;
+    --input: 210 30% 15%;
+    --ring: 210 40% 70%;
   }
 }
 
@@ -79,7 +79,7 @@
   }
 
   .glass-card {
-    @apply bg-white/80 backdrop-blur-md border border-radicalGreen-100/20 shadow-lg;
+    @apply bg-white/80 backdrop-blur-md border border-calmBlue-100/20 shadow-lg;
   }
 
   .form-container {
@@ -111,21 +111,21 @@
   }
 
   .input-container {
-    @apply w-full rounded-xl bg-white/95 dark:bg-gray-800/95 border border-radicalGreen-200 p-4 focus-within:ring-2 focus-within:ring-radicalGreen-500/20 transition-all duration-200;
+    @apply w-full rounded-xl bg-white/95 dark:bg-gray-800/95 border border-calmBlue-200 p-4 focus-within:ring-2 focus-within:ring-calmBlue-500/20 transition-all duration-200;
   }
 
   .results-card {
-    @apply p-8 rounded-2xl glass-card bg-gradient-to-br from-radicalGreen-50 to-radicalBlue-50 border border-radicalGreen-100;
+    @apply p-8 rounded-2xl glass-card bg-gradient-to-br from-calmBlue-50 to-radicalBlue-50 border border-calmBlue-100;
   }
 
   .hero-pattern {
     @apply relative;
-    background-image: radial-gradient(#3c9742 0.5px, transparent 0.5px);
+    background-image: radial-gradient(#3d8cde 0.5px, transparent 0.5px);
     background-size: 20px 20px;
   }
 
   .bg-gradient {
-    @apply bg-gradient-to-br from-radicalGreen-50 via-white to-radicalBlue-50;
+    @apply bg-gradient-to-br from-calmBlue-50 via-white to-radicalBlue-50;
   }
 }
 
