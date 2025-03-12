@@ -193,7 +193,8 @@ export function CalculatorForm() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to send email");
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to send email');
       }
 
       setIsEmailSent(true);
@@ -202,6 +203,7 @@ export function CalculatorForm() {
         description: "The detailed report has been sent to your email.",
       });
     } catch (error) {
+      console.error('Email sending error:', error);
       toast({
         title: "Error",
         description: "Failed to send email. Please try again.",
