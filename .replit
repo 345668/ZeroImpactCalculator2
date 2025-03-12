@@ -11,7 +11,7 @@ build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
 [workflows]
-runButton = "Run Application"
+runButton = "Start Application"
 
 [[workflows.workflow]]
 name = "Project"
@@ -45,6 +45,15 @@ mode = "sequential"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run dev"
+
+[[workflows.workflow]]
+name = "Start Application"
+author = 33133283
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "node start.js"
 
 [[ports]]
 localPort = 3000
