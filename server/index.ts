@@ -80,33 +80,24 @@ app.get("/api/health", (req, res) => {
       log('Vite setup complete');
     }
 
-    // Try different ports if 5000 is in use
-    const tryPort = async (port: number): Promise<void> => {
-      try {
-        log(`Attempting to start server on port ${port}...`);
-        await new Promise<void>((resolve, reject) => {
-          server.listen({
-            port,
-            host: "0.0.0.0",
-          }, () => {
-            log(`Server started successfully on port ${port}`);
-            resolve();
-          }).once('error', (err) => {
-            log(`Error starting server on port ${port}: ${err.message}`);
-            reject(err);
-          });
-        });
-      } catch (error: any) {
-        if (error.code === 'EADDRINUSE' && port < 5010) {
-          log(`Port ${port} in use, trying ${port + 1}...`);
-          await tryPort(port + 1);
-        } else {
-          throw error;
-        }
-      }
-    };
+    // Start server on port 5000
+    const PORT = 5000;
+    log(`Starting server on port ${PORT}...`);
 
-    await tryPort(5000);
+    server.listen({
+      port: PORT,
+      host: "0.0.0.0",
+    }, () => {
+      log(`Server started successfully on port ${PORT}`);
+    }).on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use. Please ensure no other application is using this port.`);
+        process.exit(1);
+      } else {
+        console.error('Fatal error during server startup:', error);
+        process.exit(1);
+      }
+    });
 
   } catch (error) {
     console.error('Fatal error during server startup:', error);
