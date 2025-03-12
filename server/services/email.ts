@@ -37,9 +37,28 @@ export class EmailService {
         },
         subject: 'Your Carbon Savings Report from Radical Zero',
         html: emailContent,
-        trackingSettings: {
-          clickTracking: { enable: true },
-          openTracking: { enable: true }
+        personalizations: [
+          {
+            to: [{ email: data.email }],
+            dynamic_template_data: {
+              firstName: data.firstName,
+              lastName: data.lastName,
+              co2Savings: data.co2Savings,
+              carbonCredits: data.carbonCredits,
+              financialValue: data.financialValue,
+              buildingSize: data.buildingSize,
+              currentConsumption: data.currentConsumption,
+              projectedConsumption: data.projectedConsumption,
+              heatingSystem: data.heatingSystem
+            }
+          }
+        ],
+        tracking_settings: {
+          click_tracking: { enable: true },
+          open_tracking: { enable: true }
+        },
+        mail_settings: {
+          sandbox_mode: { enable: false }
         }
       };
 
