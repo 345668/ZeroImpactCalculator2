@@ -10,11 +10,17 @@ async function main() {
   
   try {
     // Test database connection
-    const dbConnected = await testDatabaseConnection();
-    if (!dbConnected) {
-      console.warn('Warning: Database connection failed, but continuing startup');
-    } else {
-      log('Database connection successful');
+    let dbConnected = false;
+    try {
+      dbConnected = await testDatabaseConnection();
+      if (!dbConnected) {
+        console.warn('Warning: Database connection failed, but continuing startup');
+      } else {
+        log('Database connection successful');
+      }
+    } catch (dbError) {
+      console.warn('Database connection error:', dbError.message);
+      console.warn('Continuing without database connection');
     }
 
     // Create Express application
@@ -22,15 +28,29 @@ async function main() {
     
     // Configure middleware
     app.use(cors());
-    app.use(express.json());
+    app.use(express.json({ limit: '50mb' })); // Increase JSON limit for large requests
+    app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+    
+    // Set up error handling for all routes
+    app.use((err, req, res, next) => {
+      console.error('Express middleware error:', err);
+      res.status(500).json({ error: 'Server error', message: err.message });
+    });
     
     // Set up Vite dev server in development mode or serve static files in production
     if (process.env.NODE_ENV === 'production') {
       serveStatic(app);
       log('Running in production mode - serving static files');
     } else {
-      await setupVite(app);
-      log('Running in development mode - Vite middleware activated');
+      try {
+        await setupVite(app);
+        log('Running in development mode - Vite middleware activated');
+      } catch (viteError) {
+        console.error('Failed to set up Vite middleware:', viteError);
+        // Fall back to static file serving if Vite fails
+        serveStatic(app);
+        log('Falling back to static file serving due to Vite error');
+      }
     }
     
     // Register all routes
