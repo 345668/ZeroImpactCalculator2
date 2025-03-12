@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
-import { NavigationBar } from "./navigation-bar";
 
 interface LayoutProps {
   children: ReactNode;
@@ -21,7 +20,6 @@ export function Layout({ children }: LayoutProps) {
         }}
         className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90"
       >
-        <NavigationBar />
         {children}
       </motion.div>
     </AnimatePresence>
