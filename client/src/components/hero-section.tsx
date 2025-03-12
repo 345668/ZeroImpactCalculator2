@@ -6,17 +6,11 @@ export function HeroSection() {
   return (
     <div className="relative overflow-hidden">
       <motion.div 
-        className="absolute inset-0 bg-gradient-to-br from-calmBlue-600 via-calmBlue-500 to-calmBlue-400"
+        className="absolute inset-0 bg-calmBlue-600"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1 }}
       >
-        <motion.div 
-          className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 0.2 }}
-          transition={{ duration: 1, delay: 0.5 }}
-        />
       </motion.div>
 
       <div className="container mx-auto px-4 py-24 relative">
@@ -66,7 +60,6 @@ export function HeroSection() {
               </Button>
             </motion.div>
           </div>
-
           <motion.div 
             className="flex-1 flex justify-center lg:justify-end"
             initial={{ opacity: 0, scale: 0.8 }}
