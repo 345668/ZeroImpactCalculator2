@@ -17,7 +17,6 @@ const emailRequestSchema = z.object({
   heatingSystem: z.string().min(1, "Heating system is required")
 });
 
-// Add test endpoint
 router.post("/test-email", async (req, res) => {
   try {
     const { email } = req.body;

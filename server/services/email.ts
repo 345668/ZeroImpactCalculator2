@@ -13,7 +13,6 @@ export class EmailService {
   static async sendCarbonReport(data: any) {
     try {
       console.log('Starting email generation process for:', data.email);
-      console.log('Input data:', JSON.stringify(data, null, 2));
 
       // Generate personalized content using Mistral AI
       const emailContent = await AIService.generateEmailContent({
@@ -28,50 +27,38 @@ export class EmailService {
         heatingSystem: data.heatingSystem
       });
 
-      console.log('Email content generated successfully:', emailContent.substring(0, 100) + '...');
+      console.log('Email content generated successfully');
 
       // Structure the message according to SendGrid Web API format
       const msg = {
-        to: [{
+        to: {
           email: data.email,
           name: `${data.firstName} ${data.lastName}`
-        }],
+        },
         from: {
           email: SENDER_EMAIL,
           name: 'Radical Zero Carbon Credits'
         },
         subject: 'Your Carbon Savings Report from Radical Zero',
-        content: [{
-          type: 'text/html',
-          value: emailContent
-        }],
-        tracking_settings: {
-          click_tracking: { enable: true },
-          open_tracking: { enable: true }
+        html: emailContent,
+        trackingSettings: {
+          clickTracking: { enable: true },
+          openTracking: { enable: true }
         },
         categories: ['carbon-report']
       };
 
-      console.log('Attempting to send email with message:', JSON.stringify(msg, null, 2));
+      console.log('Attempting to send email with configured message');
 
-      try {
-        const [response] = await sgMail.send(msg);
-        console.log('SendGrid response:', response.statusCode);
+      const [response] = await sgMail.send(msg);
+      console.log('SendGrid response status:', response.statusCode);
 
-        if (response.statusCode !== 202) {
-          throw new Error(`SendGrid API error: ${response.statusCode}`);
-        }
-
-        console.log('Email sent successfully to:', data.email);
-        return { success: true, message: 'Email sent successfully' };
-      } catch (sendError: any) {
-        console.error('SendGrid sending error:', {
-          error: sendError.message,
-          code: sendError.code,
-          response: sendError.response?.body
-        });
-        throw new Error(`Failed to send email: ${sendError.message}`);
+      if (response.statusCode !== 202) {
+        throw new Error(`SendGrid API error: ${response.statusCode}`);
       }
+
+      console.log('Email sent successfully to:', data.email);
+      return { success: true, message: 'Email sent successfully' };
     } catch (error) {
       console.error('Email service error:', error);
       throw error;
