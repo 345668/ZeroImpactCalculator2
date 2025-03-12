@@ -1,12 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
-import { setupVite, serveStatic, log } from "./vite.js";
+import { setupVite, log } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
-import path from "path";
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -36,31 +31,12 @@ app.use('/api', (req, res, next) => {
 // Add request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
+    if (req.path.startsWith("/api")) {
+      log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
     }
   });
-
   next();
 });
 
@@ -88,10 +64,10 @@ app.get("/api/health", (req, res) => {
 
     // Global error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
       console.error('Server error:', err);
-      res.status(status).json({ message });
+      res.status(500).json({ 
+        message: err.message || "Internal Server Error"
+      });
     });
 
     // Setup environment-specific middleware
@@ -102,41 +78,35 @@ app.get("/api/health", (req, res) => {
       log('Setting up Vite for development...');
       await setupVite(app, server);
       log('Vite setup complete');
-    } else {
-      log('Setting up static file serving for production...');
-      const distPath = path.join(__dirname, "../dist/public");
-
-      // Serve static files except for API routes
-      app.use((req, res, next) => {
-        if (req.path.startsWith('/api')) {
-          return next();
-        }
-        express.static(distPath, {
-          maxAge: '1y',
-          etag: true,
-          lastModified: true
-        })(req, res, next);
-      });
-
-      // Serve index.html for all non-API routes
-      app.get('*', (req, res, next) => {
-        if (req.path.startsWith('/api')) {
-          return next();
-        }
-        res.sendFile(path.join(distPath, 'index.html'));
-      });
-      log('Static file serving setup complete');
     }
 
-    // Start the server
-    const port = process.env.PORT || 5000;
-    server.listen({
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    }, () => {
-      log(`Server started successfully on port ${port}`);
-    });
+    // Try different ports if 5000 is in use
+    const tryPort = async (port: number): Promise<void> => {
+      try {
+        log(`Attempting to start server on port ${port}...`);
+        await new Promise<void>((resolve, reject) => {
+          server.listen({
+            port,
+            host: "0.0.0.0",
+          }, () => {
+            log(`Server started successfully on port ${port}`);
+            resolve();
+          }).once('error', (err) => {
+            log(`Error starting server on port ${port}: ${err.message}`);
+            reject(err);
+          });
+        });
+      } catch (error: any) {
+        if (error.code === 'EADDRINUSE' && port < 5010) {
+          log(`Port ${port} in use, trying ${port + 1}...`);
+          await tryPort(port + 1);
+        } else {
+          throw error;
+        }
+      }
+    };
+
+    await tryPort(5000);
 
   } catch (error) {
     console.error('Fatal error during server startup:', error);
