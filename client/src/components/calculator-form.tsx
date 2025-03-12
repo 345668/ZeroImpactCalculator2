@@ -38,16 +38,12 @@ export const formSteps = [
     description: "Enter your expected energy usage after improvements"
   },
   {
-    title: "Personal Information",
-    description: "Tell us about yourself"
-  },
-  {
     title: "Results Analysis",
     description: "Review your potential savings"
   },
   {
-    title: "Personal Details",
-    description: "Provide your contact information and submit"
+    title: "Contact Details",
+    description: "Please provide your contact information to receive the report"
   }
 ];
 
@@ -169,7 +165,7 @@ export function CalculatorForm() {
     setIsSubmitSuccess(false);
   };
   const handleSendEmail = () => {
-    setStep(6);
+    setStep(5); // Update to go to the final step
   };
 
   function calculateCO2Savings(data: any): number {
@@ -193,7 +189,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 6}
+          isLastStep={step === 5}
           isSubmitting={isPending}
           onStartNew={startNewCalculation}
           onSendEmail={handleSendEmail}
@@ -326,108 +322,6 @@ export function CalculatorForm() {
           )}
 
           {step === 4 && (
-            <>
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="acceptedTerms"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        I accept the terms and conditions and agree that Radical Zero can contact me via email
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="gdprConsent"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        I consent to the processing of my personal data in accordance with GDPR regulations
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </>
-          )}
-
-          {step === 5 && (
             <div className="space-y-6">
               <div className="text-center">
                 <h2 className="text-2xl font-bold mb-2">Your Carbon Savings Results</h2>
@@ -524,7 +418,7 @@ export function CalculatorForm() {
             </div>
           )}
 
-          {step === 6 && (
+          {step === 5 && (
             <div className="space-y-6">
               {!isSubmitSuccess ? (
                 <>
