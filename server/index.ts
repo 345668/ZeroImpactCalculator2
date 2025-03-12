@@ -1,46 +1,32 @@
-import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes.js";
+import express from "express";
 import { log } from "./vite.js";
 
 const app = express();
 
-// Parse JSON and URL-encoded bodies
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// Add API route middleware to ensure proper Content-Type
-app.use('/api', (req, res, next) => {
-  res.setHeader('Content-Type', 'application/json');
-  next();
+// Single test endpoint
+app.get("/test", (req, res) => {
+  res.json({ message: "Server is running" });
 });
 
-// Basic health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
-});
+const port = 5000;
+log(`Starting absolutely minimal server on port ${port}...`);
 
 try {
-  const port = 5000;
-  log(`Attempting to start server on port ${port}...`);
-
-  // Register routes
-  log('Registering routes...');
-  const server = await registerRoutes(app);
-  log('Routes registered successfully');
-
-  server.listen(port, "0.0.0.0", () => {
-    log(`Server started successfully on port ${port}`);
+  const server = app.listen(port, "0.0.0.0", () => {
+    log(`Test server successfully started on port ${port}`);
   });
 
   server.on("error", (error: any) => {
+    log(`Detailed server error: ${error.message}`);
     if (error.code === "EADDRINUSE") {
-      log(`Error: Port ${port} is already in use. Please free it before starting the server.`);
+      log(`Port ${port} is already in use. Attempting to force close...`);
+      process.exit(1);
     } else {
-      console.error("Server error:", error);
+      console.error("Unexpected server error:", error);
+      process.exit(1);
     }
-    process.exit(1);
   });
 } catch (error) {
-  console.error("Fatal error during server startup:", error);
+  console.error("Fatal error during minimal server startup:", error);
   process.exit(1);
 }
