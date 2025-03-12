@@ -8,6 +8,12 @@ import { extractTextFromDocument, processWithMistral } from "./utils/document-pr
 import { sendReportEmail } from "./utils/email-service.js";
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
+import { 
+  calculateCO2Savings, 
+  calculateCarbonCredits, 
+  calculateFinancialValue,
+  heatingSystemSchema
+} from "./utils/carbon-calculator.js";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -100,21 +106,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = insertSubmissionSchema.parse(req.body);
       console.log('Validation successful:', validatedData);
 
-      // Calculate annual savings
-      const consumptionDiff = Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption);
-      const annualCO2Savings = Number((consumptionDiff * 0.2).toFixed(2)); // tons of CO2 per year
+      // Parse heating system type
+      const heatingSystem = heatingSystemSchema.parse(validatedData.heatingSystem.toLowerCase());
 
-      // Project over 10 years
-      const co2Savings = (annualCO2Savings * 10).toString(); // 10 year projection
-      const carbonCredits = co2Savings; // 1:1 ratio with CO2 savings
-      const financialValue = (Number(carbonCredits) * 50).toString(); // €50 per credit
+      // Calculate CO2 savings using the new utility functions
+      const annualCO2Savings = calculateCO2Savings(
+        heatingSystem,
+        Number(validatedData.currentConsumption),
+        Number(validatedData.projectedConsumption)
+      );
+
+      // Calculate carbon credits and financial value
+      const carbonCredits = calculateCarbonCredits(annualCO2Savings);
+      const financialValue = calculateFinancialValue(carbonCredits);
 
       // Add calculations to the submission data
       const submissionData = {
         ...validatedData,
-        co2Savings,
-        carbonCredits,
-        financialValue
+        co2Savings: annualCO2Savings.toString(),
+        carbonCredits: carbonCredits.toString(),
+        financialValue: financialValue.toString()
       };
 
       const result = await storage.createSubmission(submissionData);
