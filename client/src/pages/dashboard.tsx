@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-// Add chart configuration
+// Chart configuration
 const chartConfig = {
   theme: {
     background: "transparent",
@@ -40,21 +40,13 @@ export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [timeRange, setTimeRange] = useState("all");
+  const [timeRange, setTimeRange] = useState("month"); // Default to month view
 
   // Enhanced query with error handling
   const { data: submissions = [], isLoading, error } = useQuery<Submission[]>({
     queryKey: ["/api/submissions"],
     retry: 3,
-    staleTime: 30000, // Consider data stale after 30 seconds
-    onError: (error) => {
-      console.error('Error fetching submissions:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load dashboard data. Please try refreshing.",
-        variant: "destructive",
-      });
-    }
+    staleTime: 30000,
   });
 
   // Add refresh function
@@ -77,6 +69,78 @@ export default function Dashboard() {
       setIsRefreshing(false);
     }
   };
+
+  // Filter submissions for last 30 days
+  const last30DaysSubmissions = submissions.filter(submission => {
+    const submissionDate = new Date(submission.submittedAt || "");
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return submissionDate >= thirtyDaysAgo;
+  });
+
+  // Calculate metrics for CO2 savings
+  const co2Metrics = last30DaysSubmissions.reduce((acc, submission) => {
+    const co2Savings = Number(submission.co2Savings);
+    return {
+      totalCO2: acc.totalCO2 + co2Savings,
+      count: acc.count + 1
+    };
+  }, { totalCO2: 0, count: 0 });
+
+  // Calculate metrics for projects
+  const projectMetrics = last30DaysSubmissions.reduce((acc, submission) => {
+    const buildingSize = Number(submission.buildingSize);
+    return {
+      totalSize: acc.totalSize + buildingSize,
+      count: acc.count + 1
+    };
+  }, { totalSize: 0, count: 0 });
+
+  // Prepare data for CO2 savings graph (daily aggregation)
+  const co2GraphData = last30DaysSubmissions.reduce((acc: any[], submission) => {
+    const date = new Date(submission.submittedAt || "").toLocaleDateString();
+    const existingDay = acc.find(day => day.date === date);
+
+    if (existingDay) {
+      existingDay.totalCO2 += Number(submission.co2Savings);
+      existingDay.projectCount += 1;
+    } else {
+      acc.push({
+        date,
+        totalCO2: Number(submission.co2Savings),
+        projectCount: 1,
+        averageCO2: Number(submission.co2Savings)
+      });
+    }
+
+    return acc;
+  }, []).map(day => ({
+    ...day,
+    averageCO2: day.totalCO2 / day.projectCount
+  }));
+
+  // Prepare data for projects graph
+  const projectGraphData = last30DaysSubmissions.reduce((acc: any[], submission) => {
+    const date = new Date(submission.submittedAt || "").toLocaleDateString();
+    const existingDay = acc.find(day => day.date === date);
+
+    if (existingDay) {
+      existingDay.totalSize += Number(submission.buildingSize);
+      existingDay.projectCount += 1;
+    } else {
+      acc.push({
+        date,
+        totalSize: Number(submission.buildingSize),
+        projectCount: 1,
+        averageSize: Number(submission.buildingSize)
+      });
+    }
+
+    return acc;
+  }, []).map(day => ({
+    ...day,
+    averageSize: day.totalSize / day.projectCount
+  }));
 
   // Filter submissions based on time range
   const filteredSubmissions = submissions.filter(submission => {
@@ -139,7 +203,6 @@ export default function Dashboard() {
       energyReduction: Number(submission.currentConsumption) - Number(submission.projectedConsumption),
     }));
 
-  // Add refresh button in the header
   return (
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -187,30 +250,29 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total CO₂ Savings</CardTitle>
+            <CardTitle className="text-sm font-medium">Total CO₂ Savings (30 Days)</CardTitle>
             <Factory className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalCO2Savings.toFixed(2)} tons</div>
+            <div className="text-2xl font-bold">{co2Metrics.totalCO2.toFixed(2)} tons</div>
             <p className="text-xs text-muted-foreground">
-              Average: {(metrics.totalCO2Savings / (filteredSubmissions.length || 1)).toFixed(2)} tons per building
+              Average: {(co2Metrics.totalCO2 / (co2Metrics.count || 1)).toFixed(2)} tons per project
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Carbon Credits</CardTitle>
-            <BarChart2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Projects (30 Days)</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalCarbonCredits.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{projectMetrics.count}</div>
             <p className="text-xs text-muted-foreground">
-              Market Impact: €{metrics.totalFinancialValue.toFixed(2)}
+              Average Size: {(projectMetrics.totalSize / (projectMetrics.count || 1)).toFixed(0)} m²
             </p>
           </CardContent>
         </Card>
-
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Energy Reduction</CardTitle>
@@ -239,21 +301,58 @@ export default function Dashboard() {
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>CO₂ Savings Trend</CardTitle>
+            <CardTitle>CO₂ Savings Trend (30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer className="h-[300px]" config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
+                <LineChart data={co2GraphData}>
                   <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
+                  <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
+                  <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col">
+                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                Total CO₂
+                              </span>
+                              <span className="font-bold text-muted-foreground">
+                                {payload[0].value?.toFixed(2)} tons
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                Average
+                              </span>
+                              <span className="font-bold text-muted-foreground">
+                                {payload[1].value?.toFixed(2)} tons
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }} />
                   <Line
+                    yAxisId="left"
                     type="monotone"
-                    dataKey="co2Savings"
-                    name="CO₂ Savings (tons)"
+                    dataKey="totalCO2"
+                    name="Total CO₂ Savings"
                     stroke="hsl(var(--primary))"
                     strokeWidth={2}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="averageCO2"
+                    name="Average CO₂ per Project"
+                    stroke="hsl(var(--muted-foreground))"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -263,20 +362,57 @@ export default function Dashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Energy Reduction Analysis</CardTitle>
+            <CardTitle>Project Statistics (30 Days)</CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer className="h-[300px]" config={chartConfig}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
+                <BarChart data={projectGraphData}>
                   <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
+                  <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
+                  <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+                  <Tooltip content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      return (
+                        <div className="rounded-lg border bg-background p-2 shadow-sm">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="flex flex-col">
+                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                Projects
+                              </span>
+                              <span className="font-bold text-muted-foreground">
+                                {payload[0].value}
+                              </span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                Avg. Size
+                              </span>
+                              <span className="font-bold text-muted-foreground">
+                                {payload[1].value?.toFixed(0)} m²
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }} />
                   <Bar
-                    dataKey="energyReduction"
-                    name="Energy Reduction (kWh)"
+                    yAxisId="left"
+                    dataKey="projectCount"
+                    name="Number of Projects"
                     fill="hsl(var(--primary))"
                     radius={[4, 4, 0, 0]}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="averageSize"
+                    name="Average Building Size"
+                    stroke="hsl(var(--muted-foreground))"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
                   />
                 </BarChart>
               </ResponsiveContainer>
