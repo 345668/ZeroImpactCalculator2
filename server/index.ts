@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -95,14 +96,30 @@ app.get("/api/health", (req, res) => {
     });
 
     // Serve static files
-    const distPath = path.join(__dirname, "../dist/public");
-    app.use(express.static(distPath));
-    app.get('*', (req, res, next) => {
-      if (req.path.startsWith('/api')) {
-        return next();
+    const distPath = path.join(__dirname, "../client");
+    
+    // Check if we're in development or production mode
+    const isDev = process.env.NODE_ENV !== 'production';
+    
+    if (!isDev) {
+      // In production, serve from dist directory if it exists
+      const prodDistPath = path.join(__dirname, "../dist/public");
+      if (fs.existsSync(prodDistPath)) {
+        app.use(express.static(prodDistPath));
+        app.get('*', (req, res, next) => {
+          if (req.path.startsWith('/api')) {
+            return next();
+          }
+          res.sendFile(path.join(prodDistPath, 'index.html'));
+        });
+      } else {
+        console.warn("Production build directory not found. Using development mode.");
+        // Fall back to development setup below
       }
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    } else {
+      // We're in development, so we'll let Vite handle the static files
+      console.log("Running in development mode - Vite will handle static files");
+    }
 
     // Start server with improved logging
     const port = 5000; // Always use port 5000 for Replit workflow
