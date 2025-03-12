@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { Check } from "lucide-react";
+import { Check, Mail, RefreshCw } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
 
@@ -23,20 +23,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MultiStepForm } from "./multi-step-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-
-
-interface ExtractedData {
-  buildingSize?: number;
-  currentConsumption?: number;
-  projectedConsumption?: number;
-  language?: string;
-  heatingSystem?: string;
-  energyConsultantName?: string;
-  energyConsultantCompany?: string;
-  energyConsultantId?: string;
-  energyConsultantBafaNumber?: string;
-  fileUrl?: string;
-}
 
 export const formSteps = [
   {
@@ -61,11 +47,7 @@ export const formSteps = [
   },
   {
     title: "Personal Details",
-    description: "Provide your contact information"
-  },
-  {
-    title: "Review & Submit",
-    description: "Review your information and submit"
+    description: "Provide your contact information and submit"
   }
 ];
 
@@ -75,6 +57,7 @@ export function CalculatorForm() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
+  const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -99,7 +82,6 @@ export function CalculatorForm() {
   });
 
   const handleExtractedData = (data: ExtractedData) => {
-    console.log('Received extracted data:', data);
     if (data.language) {
       setDocumentLanguage(data.language);
     }
@@ -115,7 +97,6 @@ export function CalculatorForm() {
     if (data.heatingSystem) {
       form.setValue("heatingSystem", data.heatingSystem.toLowerCase());
     }
-    // Set energy consultant information if available
     if (data.energyConsultantName) {
       form.setValue("energyConsultantName", data.energyConsultantName);
     }
@@ -156,8 +137,10 @@ export function CalculatorForm() {
       return response.json();
     },
     onSuccess: (data) => {
-      setLocation("/results", {
-        state: { result: data }
+      setIsSubmitSuccess(true);
+      toast({
+        title: "Success!",
+        description: "Your calculation has been submitted. Check your email for the detailed report.",
       });
     },
     onError: (error: Error) => {
@@ -170,16 +153,11 @@ export function CalculatorForm() {
   });
 
   const onSubmit = (data: InsertSubmission) => {
-    console.log('Form submission started:', data);
-
-    // Convert boolean values to strings
     const submissionData = {
       ...data,
       acceptedTerms: String(data.acceptedTerms),
       gdprConsent: String(data.gdprConsent)
     };
-
-    console.log('Processed submission data:', submissionData);
     mutate(submissionData);
   };
 
@@ -188,9 +166,9 @@ export function CalculatorForm() {
   const startNewCalculation = () => {
     form.reset();
     setStep(1);
+    setIsSubmitSuccess(false);
   };
   const handleSendEmail = () => {
-    // Move to personal details page
     setStep(6);
   };
 
@@ -215,7 +193,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 7}
+          isLastStep={step === 6}
           isSubmitting={isPending}
           onStartNew={startNewCalculation}
           onSendEmail={handleSendEmail}
@@ -547,142 +525,149 @@ export function CalculatorForm() {
           )}
 
           {step === 6 && (
-            <>
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-6">
+              {!isSubmitSuccess ? (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>First Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Last Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="address"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Address</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="acceptedTerms"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        I accept the terms and conditions and agree that Radical Zero can contact me via email
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
+                  <FormField
+                    control={form.control}
+                    name="acceptedTerms"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            I accept the terms and conditions and agree that Radical Zero can contact me via email
+                          </FormLabel>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
 
-              <FormField
-                control={form.control}
-                name="gdprConsent"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <div className="space-y-1 leading-none">
-                      <FormLabel>
-                        I consent to the processing of my personal data in accordance with GDPR regulations
-                      </FormLabel>
-                      <FormMessage />
-                    </div>
-                  </FormItem>
-                )}
-              />
-            </>
-          )}
+                  <FormField
+                    control={form.control}
+                    name="gdprConsent"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel>
+                            I consent to the processing of my personal data in accordance with GDPR regulations
+                          </FormLabel>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" className="w-full">Submit</Button>
+                </>
+              ) : (
+                <div className="text-center space-y-6">
+                  <div className="rounded-full bg-calmBlue-100 w-16 h-16 mx-auto flex items-center justify-center mb-8">
+                    <Check className="w-8 h-8 text-calmBlue-500" />
+                  </div>
 
-          {step === 7 && (
-            <div className="text-center space-y-6">
-              <img
-                src="/logo.png"
-                alt="Radical-Zero Logo"
-                className="mx-auto w-32 h-32 mb-8"
-              />
+                  <h2 className="text-2xl font-bold mb-2">Submission Successful!</h2>
 
-              <div className="rounded-full bg-calmBlue-100 w-16 h-16 mx-auto flex items-center justify-center mb-8">
-                <Check className="w-8 h-8 text-calmBlue-500" />
-              </div>
+                  <p className="text-gray-600 max-w-md mx-auto">
+                    Thank you for your interest in carbon credits. A detailed report has been sent to your email.
+                    A Radical-Zero representative will contact you soon with more information about your potential carbon savings.
+                  </p>
 
-              <h2 className="text-2xl font-bold mb-2">Submission Successful!</h2>
-
-              <p className="text-gray-600 max-w-md mx-auto">
-                Thank you for your interest in carbon credits. A Radical-Zero representative
-                will contact you soon with more information about your potential carbon savings.
-              </p>
-              <div className="flex justify-center gap-4 mt-8">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={startNewCalculation}
-                  className="px-6"
-                >
-                  Start New Calculation
-                </Button>
-                <Button type="button" variant="default" onClick={handleSendEmail} className="px-6">
-                  Send Report to Email
-                </Button>
-              </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={startNewCalculation}
+                    className="px-6"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Start New Calculation
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </MultiStepForm>
       </form>
     </Form>
   );
+}
+
+interface ExtractedData {
+  buildingSize?: number;
+  currentConsumption?: number;
+  projectedConsumption?: number;
+  language?: string;
+  heatingSystem?: string;
+  energyConsultantName?: string;
+  energyConsultantCompany?: string;
+  energyConsultantId?: string;
+  energyConsultantBafaNumber?: string;
+  fileUrl?: string;
 }
