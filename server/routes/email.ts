@@ -36,7 +36,7 @@ router.post("/send-report", async (req, res) => {
       .orderBy(submissions.submittedAt, 'desc')
       .limit(1);
 
-    if (existingSubmission?.emailSent) {
+    if (existingSubmission?.emailSent === "yes") {
       return res.json({ 
         success: true, 
         message: "Report was already sent to this email" 

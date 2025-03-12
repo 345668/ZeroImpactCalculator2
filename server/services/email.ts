@@ -30,6 +30,14 @@ export class EmailService {
         throw new Error('No submission found for this email');
       }
 
+      // Check if email was already sent
+      if (submission.emailSent === "yes") {
+        return { 
+          success: true, 
+          message: "Email was already sent to this customer" 
+        };
+      }
+
       // Generate personalized content using Mistral AI
       const emailContent = await AIService.generateEmailContent({
         firstName: submission.firstName,
@@ -89,7 +97,10 @@ export class EmailService {
         // Update submission with email sent status
         await db
           .update(submissions)
-          .set({ emailSent: true, emailSentAt: new Date() })
+          .set({ 
+            emailSent: "yes", 
+            emailSentAt: new Date() 
+          })
           .where(eq(submissions.id, submission.id));
 
         console.log('Email sent successfully to:', submission.email);

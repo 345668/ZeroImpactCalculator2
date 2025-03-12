@@ -32,6 +32,11 @@ export const submissions = pgTable("submissions", {
   acceptedTerms: text("accepted_terms").notNull(),
   gdprConsent: text("gdpr_consent").notNull(),
   fileUrl: text("file_url"),
+
+  // Email Tracking
+  emailSent: text("email_sent").notNull().default("no"),
+  emailSentAt: timestamp("email_sent_at"),
+
   submittedAt: timestamp("submitted_at").defaultNow(),
 });
 
@@ -50,6 +55,8 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
 }).omit({ 
   id: true,
   submittedAt: true,
+  emailSent: true,
+  emailSentAt: true,
   co2Savings: true,
   carbonCredits: true,
   financialValue: true 
