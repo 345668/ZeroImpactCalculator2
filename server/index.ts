@@ -1,6 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
-import { setupVite, serveStatic, log } from "./vite.js";
+import { setupVite } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
 import path from "path";
 import fs from "fs";
@@ -28,40 +28,15 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Add API route middleware to ensure proper Content-Type
+// Add API route middleware
 app.use('/api', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json');
   next();
 });
 
-// Add request logging middleware
+// Simple request logging
 app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      log(logLine);
-    }
-  });
-
+  console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
   next();
 });
 
@@ -72,74 +47,54 @@ app.get("/api/health", (req, res) => {
 
 (async () => {
   try {
-    log('Starting server initialization...');
+    console.log('Starting minimal server on port 5000...');
 
-    // Test database connection first
-    log('Testing database connection...');
-    const dbConnected = await testDatabaseConnection();
-    if (!dbConnected) {
-      throw new Error('Failed to connect to database');
-    }
-    log('Database connection successful');
+    // Test database connection
+    console.log('Testing database connection...');
+    await testDatabaseConnection();
+    console.log('Database connection successful');
 
     // Register routes and get http server
-    log('Registering routes...');
     const server = await registerRoutes(app);
-    log('Routes registered successfully');
 
-    // Global error handler
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      console.error('Server error:', err);
-      res.status(status).json({ message });
-    });
-
-    // Serve static files
-    const distPath = path.join(__dirname, "../client");
-    
-    // Check if we're in development or production mode
+    // Set up development mode with Vite
     const isDev = process.env.NODE_ENV !== 'production';
-    
-    if (!isDev) {
-      // In production, serve from dist directory if it exists
-      const prodDistPath = path.join(__dirname, "../dist/public");
-      if (fs.existsSync(prodDistPath)) {
-        app.use(express.static(prodDistPath));
+    if (isDev) {
+      console.log('Setting up Vite for development mode');
+      await setupVite(app, server);
+    } else {
+      // Production mode - serve static files
+      console.log('Setting up static file serving for production');
+      const distPath = path.join(__dirname, "../dist/public");
+
+      if (fs.existsSync(distPath)) {
+        app.use(express.static(distPath));
         app.get('*', (req, res, next) => {
           if (req.path.startsWith('/api')) {
             return next();
           }
-          res.sendFile(path.join(prodDistPath, 'index.html'));
+          const indexPath = path.join(distPath, 'index.html');
+          if (fs.existsSync(indexPath)) {
+            res.sendFile(indexPath);
+          } else {
+            res.status(404).send('Index file not found');
+          }
         });
       } else {
-        console.warn("Production build directory not found. Using development mode.");
-        // Fall back to development setup below
+        console.log(`Warning: Production build directory not found at ${distPath}`);
       }
-    } else {
-      // We're in development, so we'll let Vite handle the static files
-      console.log("Running in development mode - Vite will handle static files");
     }
 
-    // Start server with improved logging
-    const port = 5000; // Always use port 5000 for Replit workflow
-    log(`Attempting to start server on port ${port}...`);
-
-    const server_instance = server.listen({
-      port,
-      host: "0.0.0.0",
-    }, () => {
-      log(`Server successfully started and listening on port ${port}`);
+    // Global error handler
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      console.error('Server error:', err);
+      res.status(500).json({ message: "Internal Server Error" });
     });
 
-    server_instance.on('error', (error: any) => {
-      if (error.code === 'EADDRINUSE') {
-        log(`Error: Port ${port} is already in use. Please free it before starting the server.`);
-        process.exit(1);
-      } else {
-        console.error('Server error:', error);
-        process.exit(1);
-      }
+    // Start server
+    const port = 5000;
+    server.listen(port, "0.0.0.0", () => {
+      console.log(`Server successfully started and listening on port ${port}`);
     });
 
   } catch (error) {
