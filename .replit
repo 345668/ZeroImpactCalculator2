@@ -10,8 +10,11 @@ deploymentTarget = "cloudrun"
 build = ["npm", "run", "build"]
 run = ["npm", "run", "start"]
 
+[[ports]]
+localPort = 5000
+externalPort = 80
+
 [workflows]
-runButton = "Carbon Credit App"
 
 [[workflows.workflow]]
 name = "Project"
@@ -36,50 +39,3 @@ task = "packager.installForAll"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
-
-[[workflows.workflow]]
-name = "Run Application"
-author = 33133283
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "npm run dev"
-
-[[workflows.workflow]]
-name = "Start Application"
-author = 33133283
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node start.js"
-
-[[workflows.workflow]]
-name = "Carbon Credit App"
-author = 33133283
-mode = "sequential"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "node start.js"
-
-[[ports]]
-localPort = 3000
-externalPort = 3000
-
-[[ports]]
-localPort = 3001
-externalPort = 3001
-
-[[ports]]
-localPort = 5000
-externalPort = 80
-
-[[ports]]
-localPort = 5173
-externalPort = 5173
-
-[[ports]]
-localPort = 24678
-externalPort = 3002

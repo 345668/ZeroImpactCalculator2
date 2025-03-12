@@ -407,26 +407,3 @@ export default function Dashboard() {
     </div>
   );
 }
-import React from "react";
-
-export default function Dashboard() {
-  return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-card rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Carbon Footprint</h2>
-          <p>Your current carbon footprint is displayed here.</p>
-        </div>
-        <div className="bg-card rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Reduction Potential</h2>
-          <p>Potential carbon reduction after implementing recommendations.</p>
-        </div>
-        <div className="bg-card rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Actions</h2>
-          <p>Recommended actions to reduce your carbon footprint.</p>
-        </div>
-      </div>
-    </div>
-  );
-}

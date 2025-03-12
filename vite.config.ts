@@ -9,14 +9,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export default defineConfig({
-  server: {
-    hmr: { clientPort: 443 },
-    host: '0.0.0.0',
-    allowedHosts: [
-      '80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
-      '.replit.dev'
-    ]
-  },
   plugins: [
     react(),
     runtimeErrorOverlay(),

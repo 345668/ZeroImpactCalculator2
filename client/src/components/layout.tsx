@@ -1,7 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ReactNode } from "react";
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 
 interface LayoutProps {
   children: ReactNode;
@@ -22,34 +20,8 @@ export function Layout({ children }: LayoutProps) {
         }}
         className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90"
       >
-        {/* Add navigation header */}
-        <header className="fixed top-0 right-0 p-4 z-50">
-          <nav className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
-              <Link href="/">Home</Link>
-            </Button>
-            <Button variant="ghost" asChild>
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
-          </nav>
-        </header>
         {children}
       </motion.div>
     </AnimatePresence>
-  );
-}
-import React from "react";
-
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-export function Layout({ children }: LayoutProps) {
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto py-4">
-        {children}
-      </div>
-    </div>
   );
 }

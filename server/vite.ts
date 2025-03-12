@@ -1,48 +1,88 @@
-import express, { Express } from "express";
-import { resolve } from "path";
+import express, { type Express } from "express";
+import fs from "fs";
+import path, { dirname } from "path";
 import { fileURLToPath } from "url";
-import { createServer as createViteServer } from "vite";
+import { createServer as createViteServer, createLogger } from "vite";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+import { type Server } from "http";
+import viteConfig from "../vite.config";
+import { nanoid } from "nanoid";
 
-const __dirname = fileURLToPath(new URL(".", import.meta.url));
+const viteLogger = createLogger();
 
-export function log(message: string) {
-  console.log(`${new Date().toLocaleTimeString()} [express] ${message}`);
-}
-
-// Production mode - serve static files
-export function serveStatic(app: Express) {
-  const clientDistPath = resolve(__dirname, "../client/dist");
-  app.use(express.static(clientDistPath));
-
-  // SPA fallback
-  app.get("*", (req, res) => {
-    res.sendFile(resolve(clientDistPath, "index.html"));
+export function log(message: string, source = "express") {
+  const formattedTime = new Date().toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
   });
+
+  console.log(`${formattedTime} [${source}] ${message}`);
 }
 
-// Development mode - use Vite middleware
-export async function setupVite(app: Express) {
+export async function setupVite(app: Express, server: Server) {
+  const serverOptions = {
+    middlewareMode: true,
+    hmr: { server },
+    allowedHosts: true,
+  };
+
   const vite = await createViteServer({
-    server: { middlewareMode: true },
-    root: resolve(__dirname, "../client"),
-    appType: "spa",
+    ...viteConfig,
+    configFile: false,
+    customLogger: {
+      ...viteLogger,
+      error: (msg, options) => {
+        viteLogger.error(msg, options);
+        process.exit(1);
+      },
+    },
+    server: serverOptions,
+    appType: "custom",
   });
 
   app.use(vite.middlewares);
-
-  // Fallback for SPA routing
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
 
     try {
-      // Always send back the index.html for SPA client-side routing
-      let template = await vite.transformIndexHtml(url, "");
-      res.status(200).set({ "Content-Type": "text/html" }).end(template);
+      const clientTemplate = path.resolve(
+        __dirname,
+        "..",
+        "client",
+        "index.html",
+      );
+
+      // always reload the index.html file from disk incase it changes
+      let template = await fs.promises.readFile(clientTemplate, "utf-8");
+      template = template.replace(
+        `src="/src/main.tsx"`,
+        `src="/src/main.tsx?v=${nanoid()}"`,
+      );
+      const page = await vite.transformIndexHtml(url, template);
+      res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
     }
   });
+}
 
-  return vite;
+export function serveStatic(app: Express) {
+  const distPath = path.resolve(__dirname, "public");
+
+  if (!fs.existsSync(distPath)) {
+    throw new Error(
+      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+    );
+  }
+
+  app.use(express.static(distPath));
+
+  // fall through to index.html if the file doesn't exist
+  app.use("*", (_req, res) => {
+    res.sendFile(path.resolve(distPath, "index.html"));
+  });
 }

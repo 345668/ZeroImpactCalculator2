@@ -1,90 +1,145 @@
+import express, { type Request, Response, NextFunction } from "express";
+import { registerRoutes } from "./routes.js";
+import { setupVite, serveStatic, log } from "./vite.js";
+import { db, testDatabaseConnection } from "./db.js";
+import path from "path";
+import { fileURLToPath } from 'url';
 
-import express from "express";
-import cors from "cors";
-import { testDatabaseConnection } from './db.js';
-import { registerRoutes } from './routes.js';
-import { setupVite, serveStatic, log } from './vite.js';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-async function main() {
-  log('Starting Carbon Credit Calculator server...');
-  
+const app = express();
+
+// Disable x-powered-by header
+app.disable('x-powered-by');
+
+// Add security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
+// Parse JSON and URL-encoded bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Add API route middleware to ensure proper Content-Type
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
+// Add request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  const path = req.path;
+  let capturedJsonResponse: Record<string, any> | undefined = undefined;
+
+  const originalResJson = res.json;
+  res.json = function (bodyJson, ...args) {
+    capturedJsonResponse = bodyJson;
+    return originalResJson.apply(res, [bodyJson, ...args]);
+  };
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    if (path.startsWith("/api")) {
+      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
+      if (capturedJsonResponse) {
+        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
+      }
+
+      if (logLine.length > 80) {
+        logLine = logLine.slice(0, 79) + "…";
+      }
+
+      log(logLine);
+    }
+  });
+
+  next();
+});
+
+// Add health check endpoint
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
+
+(async () => {
   try {
-    // Test database connection
-    let dbConnected = false;
-    try {
-      dbConnected = await testDatabaseConnection();
-      if (!dbConnected) {
-        console.warn('Warning: Database connection failed, but continuing startup');
-      } else {
-        log('Database connection successful');
-      }
-    } catch (dbError) {
-      console.warn('Database connection error:', dbError.message);
-      console.warn('Continuing without database connection');
-    }
+    log('Starting server initialization...');
 
-    // Create Express application
-    const app = express();
-    
-    // Configure middleware
-    app.use(cors());
-    app.use(express.json({ limit: '50mb' })); // Increase JSON limit for large requests
-    app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-    
-    // Set up error handling for all routes
-    app.use((err, req, res, next) => {
-      console.error('Express middleware error:', err);
-      res.status(500).json({ error: 'Server error', message: err.message });
-    });
-    
-    // Set up Vite dev server in development mode or serve static files in production
-    if (process.env.NODE_ENV === 'production') {
-      serveStatic(app);
-      log('Running in production mode - serving static files');
-    } else {
-      try {
-        await setupVite(app);
-        log('Running in development mode - Vite middleware activated');
-      } catch (viteError) {
-        console.error('Failed to set up Vite middleware:', viteError);
-        // Fall back to static file serving if Vite fails
-        serveStatic(app);
-        log('Falling back to static file serving due to Vite error');
-      }
+    // Test database connection first
+    log('Testing database connection...');
+    const dbConnected = await testDatabaseConnection();
+    if (!dbConnected) {
+      throw new Error('Failed to connect to database');
     }
-    
-    // Register all routes
+    log('Database connection successful');
+
+    // Register routes and get http server
+    log('Registering routes...');
     const server = await registerRoutes(app);
-    
-    // Start the server
-    const PORT = process.env.PORT || 5173;
-    server.listen(PORT, '0.0.0.0', () => {
-      log(`Server running at http://0.0.0.0:${PORT}`);
-      log('Server started successfully');
-    });
-    
-    // Handle termination signals
-    process.on('SIGINT', () => {
-      log('Shutting down server gracefully');
-      server.close(() => {
-        log('Server shut down');
-        process.exit(0);
-      });
+    log('Routes registered successfully');
+
+    // Global error handler
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      console.error('Server error:', err);
+      res.status(status).json({ message });
     });
 
-    process.on('uncaughtException', (error) => {
-      log(`Uncaught exception: ${error.message}`);
-      console.error(error);
+    // Setup environment-specific middleware
+    const env = app.get("env");
+    log(`Setting up server for ${env} environment...`);
+
+    if (env === "development") {
+      log('Setting up Vite for development...');
+      await setupVite(app, server);
+      log('Vite setup complete');
+    } else {
+      log('Setting up static file serving for production...');
+      const distPath = path.join(__dirname, "../dist/public");
+
+      // Serve static files except for API routes
+      app.use((req, res, next) => {
+        if (req.path.startsWith('/api')) {
+          return next();
+        }
+        express.static(distPath, {
+          maxAge: '1y',
+          etag: true,
+          lastModified: true
+        })(req, res, next);
+      });
+
+      // Serve index.html for all non-API routes
+      app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api')) {
+          return next();
+        }
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+      log('Static file serving setup complete');
+    }
+
+    // Start the server
+    const port = process.env.PORT || 5000;
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`Server started successfully on port ${port}`);
     });
-    
+
   } catch (error) {
-    console.error('Fatal error during startup:', error);
+    console.error('Fatal error during server startup:', error);
     process.exit(1);
   }
-}
-
-// Execute the main function
-main().catch(error => {
-  console.error('Unhandled error in main:', error);
-  process.exit(1);
-});
+})();

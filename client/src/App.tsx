@@ -6,7 +6,21 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import { ResultsPage } from "@/pages/ResultsPage";
-import { Layout } from "@/components/layout";
+import { SidebarProvider, Sidebar, SidebarContent, SidebarInset } from "@/components/ui/sidebar";
+import { Link } from "wouter";
+
+function Navigation() {
+  return (
+    <Sidebar>
+      <SidebarContent>
+        <nav className="flex flex-col space-y-2 p-2">
+          <Link href="/" className="px-4 py-2 rounded-md hover:bg-accent">Home</Link>
+          <Link href="/dashboard" className="px-4 py-2 rounded-md hover:bg-accent">Dashboard</Link>
+        </nav>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
 
 function Router() {
   return (
@@ -22,10 +36,15 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Layout>
-        <Router />
-      </Layout>
-      <Toaster />
+      <SidebarProvider>
+        <div className="flex min-h-screen">
+          <Navigation />
+          <SidebarInset>
+            <Router />
+          </SidebarInset>
+        </div>
+        <Toaster />
+      </SidebarProvider>
     </QueryClientProvider>
   );
 }
