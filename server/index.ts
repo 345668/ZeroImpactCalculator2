@@ -104,26 +104,37 @@ app.get("/api/health", (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
 
-    // Start server with improved logging
-    const port = 5000; // Always use port 5000 for Replit workflow
+    // Start server with improved logging and port fallback
+    let port = 5000; // Primary port for Replit workflow
     log(`Attempting to start server on port ${port}...`);
 
-    const server_instance = server.listen({
-      port,
-      host: "0.0.0.0",
-    }, () => {
-      log(`Server successfully started and listening on port ${port}`);
-    });
+    const startServer = (attemptPort: number) => {
+      const server_instance = server.listen({
+        port: attemptPort,
+        host: "0.0.0.0",
+      }, () => {
+        log(`Server successfully started and listening on port ${attemptPort}`);
+        log(`Visit your app at: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+      });
 
-    server_instance.on('error', (error: any) => {
-      if (error.code === 'EADDRINUSE') {
-        log(`Error: Port ${port} is already in use. Please free it before starting the server.`);
-        process.exit(1);
-      } else {
-        console.error('Server error:', error);
-        process.exit(1);
-      }
-    });
+      server_instance.on('error', (error: any) => {
+        if (error.code === 'EADDRINUSE') {
+          log(`Port ${attemptPort} is already in use. Attempting to use fallback port...`);
+          // Try another port
+          if (attemptPort === 5000) {
+            startServer(3001);
+          } else {
+            log(`Error: Alternative port is also in use. Please free the ports before starting the server.`);
+            process.exit(1);
+          }
+        } else {
+          console.error('Server error:', error);
+          process.exit(1);
+        }
+      });
+    };
+
+    startServer(port);
 
   } catch (error) {
     console.error('Fatal error during server startup:', error);
