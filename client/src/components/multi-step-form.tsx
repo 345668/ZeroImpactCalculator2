@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check } from "lucide-react";
+import { Check, Mail, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Step {
@@ -17,6 +17,8 @@ interface MultiStepFormProps {
   onPrevious?: () => void;
   isLastStep: boolean;
   isSubmitting?: boolean;
+  onStartNew?: () => void;
+  onSendEmail?: () => void;
 }
 
 const slideAnimation = {
@@ -34,6 +36,8 @@ export function MultiStepForm({
   onPrevious,
   isLastStep,
   isSubmitting = false,
+  onStartNew,
+  onSendEmail,
 }: MultiStepFormProps) {
   return (
     <Card className="max-w-2xl mx-auto backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 shadow-xl" id="calculator">
@@ -109,7 +113,7 @@ export function MultiStepForm({
 
         {/* Navigation buttons */}
         <div className="flex justify-between mt-6 gap-4">
-          {currentStep > 1 && (
+          {!isLastStep && currentStep > 1 && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
@@ -142,19 +146,39 @@ export function MultiStepForm({
           )}
 
           {isLastStep && (
-            <motion.div
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="ml-auto"
-            >
-              <Button
-                type="submit"
-                className="min-w-[100px] bg-calmBlue-600 hover:bg-calmBlue-700"
-                disabled={isSubmitting}
+            <div className="flex gap-4 w-full justify-center">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
               >
-                {isSubmitting ? "Submitting..." : "Submit"}
-              </Button>
-            </motion.div>
+                <Button
+                  type="button"
+                  onClick={onSendEmail}
+                  className="bg-calmBlue-600 hover:bg-calmBlue-700 px-6"
+                  disabled={isSubmitting}
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  Send Report to Email
+                </Button>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Button
+                  type="button"
+                  onClick={onStartNew}
+                  variant="outline"
+                  className="px-6"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Start New Calculation
+                </Button>
+              </motion.div>
+            </div>
           )}
         </div>
       </CardContent>
@@ -180,7 +204,7 @@ export const formSteps: Step[] = [
     description: "Tell us about yourself"
   },
   {
-    title: "Review & Submit",
-    description: "Review your information and submit"
+    title: "Review & Results",
+    description: "Review your carbon savings calculation"
   }
 ];
