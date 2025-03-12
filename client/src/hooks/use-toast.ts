@@ -189,3 +189,47 @@ function useToast() {
 }
 
 export { useToast, toast }
+import { useState, useEffect, useCallback } from "react";
+
+interface ToastProps {
+  id: string;
+  title?: string;
+  description?: string;
+  action?: React.ReactNode;
+  duration?: number;
+}
+
+export function useToast() {
+  const [toasts, setToasts] = useState<ToastProps[]>([]);
+
+  const toast = useCallback(
+    ({ title, description, action, duration = 5000 }: Omit<ToastProps, "id">) => {
+      const id = Math.random().toString(36).substring(2, 9);
+      setToasts((toasts) => [...toasts, { id, title, description, action, duration }]);
+      return id;
+    },
+    []
+  );
+
+  const dismiss = useCallback((id: string) => {
+    setToasts((toasts) => toasts.filter((toast) => toast.id !== id));
+  }, []);
+
+  useEffect(() => {
+    const timers = toasts.map((toast) => {
+      return setTimeout(() => {
+        dismiss(toast.id);
+      }, toast.duration);
+    });
+
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [toasts, dismiss]);
+
+  return {
+    toasts,
+    toast,
+    dismiss
+  };
+}

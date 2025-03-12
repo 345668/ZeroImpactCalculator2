@@ -24,3 +24,21 @@ export default function Home() {
     </Layout>
   );
 }
+import React from "react";
+
+export default function HomePage() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[calc(100vh-2rem)]">
+      <h1 className="text-4xl font-bold mb-4">Carbon Credit Calculator</h1>
+      <p className="text-xl mb-8">Calculate your carbon footprint and explore reduction strategies</p>
+      <div className="grid gap-4">
+        <a 
+          href="/dashboard" 
+          className="px-6 py-3 bg-primary text-primary-foreground rounded-md text-center hover:bg-primary/90"
+        >
+          Get Started
+        </a>
+      </div>
+    </div>
+  );
+}

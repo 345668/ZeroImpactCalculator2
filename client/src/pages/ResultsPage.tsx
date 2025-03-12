@@ -144,3 +144,34 @@ export function ResultsPage() {
     </div>
   );
 }
+import React from "react";
+
+export default function ResultsPage() {
+  return (
+    <div className="container mx-auto py-8">
+      <h1 className="text-3xl font-bold mb-6">Carbon Calculation Results</h1>
+      <div className="bg-card rounded-lg shadow p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">Summary</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="font-medium">Current Carbon Emissions:</p>
+            <p className="text-2xl font-bold">1,200 kg CO₂e/year</p>
+          </div>
+          <div>
+            <p className="font-medium">Potential Reduction:</p>
+            <p className="text-2xl font-bold text-green-600">-800 kg CO₂e/year</p>
+          </div>
+        </div>
+      </div>
+      
+      <div className="bg-card rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4">Recommendations</h2>
+        <ul className="space-y-2">
+          <li className="p-3 bg-background rounded-md">Upgrade heating system</li>
+          <li className="p-3 bg-background rounded-md">Improve insulation</li>
+          <li className="p-3 bg-background rounded-md">Install solar panels</li>
+        </ul>
+      </div>
+    </div>
+  );
+}

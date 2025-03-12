@@ -36,7 +36,7 @@ try {
     stdio: 'inherit',
     env: { 
       ...process.env, 
-      PORT: '3000',
+      PORT: '5173',
       // Force Node to use a single thread which can be more stable in Replit
       NODE_OPTIONS: '--max-old-space-size=2048'
     }

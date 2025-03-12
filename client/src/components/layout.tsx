@@ -38,3 +38,18 @@ export function Layout({ children }: LayoutProps) {
     </AnimatePresence>
   );
 }
+import React from "react";
+
+interface LayoutProps {
+  children: React.ReactNode;
+}
+
+export function Layout({ children }: LayoutProps) {
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto py-4">
+        {children}
+      </div>
+    </div>
+  );
+}
