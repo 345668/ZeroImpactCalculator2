@@ -3,7 +3,6 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
 import path from "path";
-import fs from "fs";
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -95,64 +94,36 @@ app.get("/api/health", (req, res) => {
       res.status(status).json({ message });
     });
 
-    // Serve static files if the dist directory exists
+    // Serve static files
     const distPath = path.join(__dirname, "../dist/public");
-    
-    // Check if the dist directory exists
-    if (fs.existsSync(distPath)) {
-      log('Static files directory found, serving static content');
-      app.use(express.static(distPath));
-      app.get('*', (req, res, next) => {
-        if (req.path.startsWith('/api')) {
-          return next();
-        }
-        res.sendFile(path.join(distPath, 'index.html'));
-      });
-    } else {
-      log('Static files directory not found, skipping static file serving');
-      // For non-API routes, return a simple message indicating build is needed
-      app.get('*', (req, res, next) => {
-        if (req.path.startsWith('/api')) {
-          return next();
-        }
-        res.status(200).send('Server is running in development mode. Please build the client first with "npm run build" or use the development server.');
-      });
-    }
+    app.use(express.static(distPath));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) {
+        return next();
+      }
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
 
     // Start server with improved logging
-    let port = 5000; // Primary port
-    const tryStartServer = (retryPort = false) => {
-      if (retryPort) {
-        port = 3000; // Fallback port
-      }
-      
-      log(`Attempting to start server on port ${port}...`);
-      
-      const server_instance = server.listen({
-        port,
-        host: "0.0.0.0",
-      }, () => {
-        log(`Server successfully started and listening on port ${port}`);
-      });
+    const port = 5000; // Always use port 5000 for Replit workflow
+    log(`Attempting to start server on port ${port}...`);
 
-      server_instance.on('error', (error: any) => {
-        if (error.code === 'EADDRINUSE') {
-          log(`Port ${port} is already in use.`);
-          if (!retryPort) {
-            log(`Trying fallback port...`);
-            tryStartServer(true);
-          } else {
-            log(`All ports are in use. Please free a port before starting the server.`);
-            process.exit(1);
-          }
-        } else {
-          console.error('Server error:', error);
-          process.exit(1);
-        }
-      });
-    };
-    
-    tryStartServer();
+    const server_instance = server.listen({
+      port,
+      host: "0.0.0.0",
+    }, () => {
+      log(`Server successfully started and listening on port ${port}`);
+    });
+
+    server_instance.on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        log(`Error: Port ${port} is already in use. Please free it before starting the server.`);
+        process.exit(1);
+      } else {
+        console.error('Server error:', error);
+        process.exit(1);
+      }
+    });
 
   } catch (error) {
     console.error('Fatal error during server startup:', error);
