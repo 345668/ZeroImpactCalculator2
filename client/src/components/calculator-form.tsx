@@ -60,6 +60,10 @@ export const formSteps = [
     description: "Review your potential savings"
   },
   {
+    title: "Personal Details",
+    description: "Provide your contact information"
+  },
+  {
     title: "Review & Submit",
     description: "Review your information and submit"
   }
@@ -181,6 +185,14 @@ export function CalculatorForm() {
 
   const nextStep = () => setStep(step + 1);
   const previousStep = () => setStep(step - 1);
+  const startNewCalculation = () => {
+    form.reset();
+    setStep(1);
+  };
+  const handleSendEmail = () => {
+    // Move to personal details page
+    setStep(6);
+  };
 
   function calculateCO2Savings(data: any): number {
     const savingsKwh = data.currentConsumption - data.projectedConsumption;
@@ -203,8 +215,10 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 6}
+          isLastStep={step === 7}
           isSubmitting={isPending}
+          onStartNew={startNewCalculation}
+          onSendEmail={handleSendEmail}
         >
           {step === 1 && (
             <div className="space-y-6">
@@ -525,6 +539,108 @@ export function CalculatorForm() {
           )}
 
           {step === 6 && (
+            <>
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="acceptedTerms"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        I accept the terms and conditions and agree that Radical Zero can contact me via email
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="gdprConsent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        I consent to the processing of my personal data in accordance with GDPR regulations
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
+
+          {step === 7 && (
             <div className="text-center space-y-6">
               <img
                 src="/logo.png"
@@ -532,8 +648,8 @@ export function CalculatorForm() {
                 className="mx-auto w-32 h-32 mb-8"
               />
 
-              <div className="rounded-full bg-blue-100 w-16 h-16 mx-auto flex items-center justify-center mb-8">
-                <Check className="w-8 h-8 text-blue-500" />
+              <div className="rounded-full bg-calmBlue-100 w-16 h-16 mx-auto flex items-center justify-center mb-8">
+                <Check className="w-8 h-8 text-calmBlue-500" />
               </div>
 
               <h2 className="text-2xl font-bold mb-2">Submission Successful!</h2>
@@ -542,15 +658,17 @@ export function CalculatorForm() {
                 Thank you for your interest in carbon credits. A Radical-Zero representative
                 will contact you soon with more information about your potential carbon savings.
               </p>
-
               <div className="flex justify-center gap-4 mt-8">
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => window.location.href = '/'}
+                  onClick={startNewCalculation}
                   className="px-6"
                 >
-                  Back to Home
+                  Start New Calculation
+                </Button>
+                <Button type="button" variant="default" onClick={handleSendEmail} className="px-6">
+                  Send Report to Email
                 </Button>
               </div>
             </div>
