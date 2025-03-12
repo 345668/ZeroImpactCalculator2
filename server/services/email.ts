@@ -7,9 +7,13 @@ if (!process.env.SENDGRID_API_KEY) {
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+const SENDER_EMAIL = 'reports@radical-zero.com'; // Make sure this email is verified in SendGrid
+
 export class EmailService {
   static async sendCarbonReport(data: any) {
     try {
+      console.log('Starting email generation process for:', data.email);
+
       // Generate personalized content using Mistral AI
       const emailContent = await AIService.generateEmailContent({
         firstName: data.firstName,
@@ -23,17 +27,38 @@ export class EmailService {
         heatingSystem: data.heatingSystem
       });
 
+      console.log('Email content generated successfully');
+
       const msg = {
         to: data.email,
-        from: 'noreply@radical-zero.com', // Replace with your verified sender
+        from: {
+          email: SENDER_EMAIL,
+          name: 'Radical Zero Carbon Credits'
+        },
         subject: 'Your Carbon Savings Report from Radical Zero',
         html: emailContent,
+        trackingSettings: {
+          clickTracking: { enable: true },
+          openTracking: { enable: true }
+        }
       };
 
-      await sgMail.send(msg);
-      return true;
+      console.log('Attempting to send email to:', data.email);
+
+      try {
+        await sgMail.send(msg);
+        console.log('Email sent successfully to:', data.email);
+        return { success: true, message: 'Email sent successfully' };
+      } catch (sendError: any) {
+        console.error('SendGrid sending error:', {
+          error: sendError.message,
+          code: sendError.code,
+          response: sendError.response?.body
+        });
+        throw new Error(`Failed to send email: ${sendError.message}`);
+      }
     } catch (error) {
-      console.error('SendGrid email error:', error);
+      console.error('Email service error:', error);
       throw error;
     }
   }

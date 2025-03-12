@@ -678,7 +678,7 @@ export function CalculatorForm() {
                       variant="default"
                       onClick={handleSendEmail}
                       className={`bg-calmBlue-600 hover:bg-calmBlue-700 px-6 relative ${
-                        isEmailSent ? 'bg-green-600 hover:bg-green-700' : ''
+                        isEmailSent ? 'bg-calmBlue-700 hover:bg-calmBlue-800' : ''
                       }`}
                       disabled={isEmailSending || isEmailSent}
                     >
