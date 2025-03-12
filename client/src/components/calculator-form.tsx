@@ -38,14 +38,21 @@ export const formSteps = [
     description: "Enter your expected energy usage after improvements"
   },
   {
-    title: "Results Review",
+    title: "Results Preview",
     description: "Review your potential savings"
+  },
+  {
+    title: "Personal Information",
+    description: "Tell us about yourself"
+  },
+  {
+    title: "Final Results",
+    description: "Your detailed carbon savings report"
   }
 ];
 
 export function CalculatorForm() {
   const [step, setStep] = useState(1);
-  const [showPersonalInfo, setShowPersonalInfo] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -71,13 +78,12 @@ export function CalculatorForm() {
   const previousStep = () => setStep(step - 1);
   const startNewCalculation = () => {
     setStep(1);
-    setShowPersonalInfo(false);
     setShowResults(false);
     form.reset();
   };
 
   const handleSendEmail = () => {
-    setShowPersonalInfo(true);
+    setStep(5); // Show personal information form
   };
 
   const { mutate, isPending } = useMutation({
@@ -97,6 +103,7 @@ export function CalculatorForm() {
       return response.json();
     },
     onSuccess: () => {
+      setStep(6); // Show final results
       setShowResults(true);
     },
     onError: (error: Error) => {
@@ -124,197 +131,6 @@ export function CalculatorForm() {
 
   function calculateFinancialValue(data: any): number {
     return calculateCarbonCredits(data) * 50;
-  }
-
-  if (showResults) {
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Your Carbon Savings Results</h2>
-          <p className="text-muted-foreground">Here's the potential impact of your energy efficiency improvements</p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card className="p-6 bg-calmBlue-50/50">
-            <div className="flex items-center justify-center mb-4">
-              <div className="rounded-full bg-calmBlue-100 p-3">
-                <Check className="w-6 h-6 text-calmBlue-600" />
-              </div>
-            </div>
-            <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
-            <div className="text-3xl text-center font-bold mb-1">
-              {calculateCO2Savings(form.getValues()).toFixed(2)}
-            </div>
-            <p className="text-sm text-center text-muted-foreground">Tons of CO₂ per year</p>
-          </Card>
-
-          <Card className="p-6 bg-calmBlue-50/50">
-            <div className="flex items-center justify-center mb-4">
-              <div className="rounded-full bg-calmBlue-100 p-3">
-                <Check className="w-6 h-6 text-calmBlue-600" />
-              </div>
-            </div>
-            <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
-            <div className="text-3xl text-center font-bold mb-1">
-              {calculateCarbonCredits(form.getValues()).toFixed(2)}
-            </div>
-            <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
-          </Card>
-
-          <Card className="p-6 bg-calmBlue-50/50">
-            <div className="flex items-center justify-center mb-4">
-              <div className="rounded-full bg-calmBlue-100 p-3">
-                <Check className="w-6 h-6 text-calmBlue-600" />
-              </div>
-            </div>
-            <h3 className="text-center font-semibold mb-1">Financial Value</h3>
-            <div className="text-3xl text-center font-bold mb-1">
-              €{calculateFinancialValue(form.getValues()).toFixed(2)}
-            </div>
-            <p className="text-sm text-center text-muted-foreground">Potential market value</p>
-          </Card>
-        </div>
-
-        <div className="flex justify-center gap-4 mt-8">
-          <Button
-            variant="outline"
-            onClick={startNewCalculation}
-            className="px-6"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Start New Calculation
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (showPersonalInfo) {
-    return (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 animate-fade-in">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-2">Personal Information</h2>
-            <p className="text-muted-foreground">Please provide your details to receive the report</p>
-          </div>
-
-          <FormField
-            control={form.control}
-            name="firstName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>First Name</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="lastName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Last Name</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input type="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="address"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Address</FormLabel>
-                <FormControl>
-                  <Input {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="acceptedTerms"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
-                    I accept the terms and conditions and agree that Radical Zero can contact me via email
-                  </FormLabel>
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="gdprConsent"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>
-                    I consent to the processing of my personal data in accordance with GDPR regulations
-                  </FormLabel>
-                  <FormMessage />
-                </div>
-              </FormItem>
-            )}
-          />
-
-          <div className="flex justify-end gap-4 pt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowPersonalInfo(false)}
-            >
-              Back
-            </Button>
-            <Button
-              type="submit"
-              className="bg-calmBlue-600 hover:bg-calmBlue-700"
-              disabled={isPending}
-            >
-              {isPending ? "Submitting..." : "Submit"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    );
   }
 
   return (
@@ -484,13 +300,199 @@ export function CalculatorForm() {
                   <p className="text-sm text-center text-muted-foreground">Potential market value</p>
                 </Card>
               </div>
-              <div className="flex justify-end gap-4 pt-6">
+              <div className="flex justify-center gap-4 pt-6">
                 <Button
                   type="button"
                   onClick={handleSendEmail}
                   className="bg-calmBlue-600 hover:bg-calmBlue-700"
                 >
+                  <Mail className="mr-2 h-4 w-4" />
                   Send Report to Email
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center mb-8">
+                <h2 className="text-2xl font-bold mb-2">Personal Information</h2>
+                <p className="text-muted-foreground">Please provide your details to receive the report</p>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="acceptedTerms"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        I accept the terms and conditions and agree that Radical Zero can contact me via email
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="gdprConsent"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        I consent to the processing of my personal data in accordance with GDPR regulations
+                      </FormLabel>
+                      <FormMessage />
+                    </div>
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-4 pt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep(4)}
+                >
+                  Back
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-calmBlue-600 hover:bg-calmBlue-700"
+                  disabled={isPending}
+                >
+                  {isPending ? "Submitting..." : "Submit"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {step === 6 && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="text-center">
+                <h2 className="text-2xl font-bold mb-2">Your Carbon Savings Results</h2>
+                <p className="text-muted-foreground">Here's the detailed impact of your energy efficiency improvements</p>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <Card className="p-6 bg-calmBlue-50/50">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="rounded-full bg-calmBlue-100 p-3">
+                      <Check className="w-6 h-6 text-calmBlue-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
+                  <div className="text-3xl text-center font-bold mb-1">
+                    {calculateCO2Savings(form.getValues()).toFixed(2)}
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">Tons of CO₂ per year</p>
+                </Card>
+
+                <Card className="p-6 bg-calmBlue-50/50">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="rounded-full bg-calmBlue-100 p-3">
+                      <Check className="w-6 h-6 text-calmBlue-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
+                  <div className="text-3xl text-center font-bold mb-1">
+                    {calculateCarbonCredits(form.getValues()).toFixed(2)}
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
+                </Card>
+
+                <Card className="p-6 bg-calmBlue-50/50">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="rounded-full bg-calmBlue-100 p-3">
+                      <Check className="w-6 h-6 text-calmBlue-600" />
+                    </div>
+                  </div>
+                  <h3 className="text-center font-semibold mb-1">Financial Value</h3>
+                  <div className="text-3xl text-center font-bold mb-1">
+                    €{calculateFinancialValue(form.getValues()).toFixed(2)}
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">Potential market value</p>
+                </Card>
+              </div>
+
+              <div className="flex justify-center gap-4 mt-8">
+                <Button
+                  variant="outline"
+                  onClick={startNewCalculation}
+                  className="px-6"
+                >
+                  <RefreshCw className="mr-2 h-4 w-4" />
+                  Start New Calculation
                 </Button>
               </div>
             </div>
