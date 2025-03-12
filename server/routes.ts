@@ -1,11 +1,12 @@
 import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
-import { storage } from "./storage";
-import { insertSubmissionSchema } from "@shared/schema";
+import { storage } from "./storage.js";
+import { insertSubmissionSchema } from "@shared/schema.js";
 import { fromZodError } from "zod-validation-error";
-import { extractTextFromDocument, processWithMistral } from "./utils/document-processor";
-import { sendReportEmail } from "./utils/email-service";
+import { extractTextFromDocument, processWithMistral } from "./utils/document-processor.js";
+import { sendReportEmail } from "./utils/email-service.js";
+import aiRouter from "./routes/ai.js";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -43,6 +44,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.header('Content-Type', 'application/json');
     next();
   });
+
+  // Register AI routes
+  app.use('/api/ai', aiRouter);
 
   // GET all submissions endpoint
   app.get("/api/submissions", async (req, res) => {
@@ -138,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       console.error('Calculation error:', error);
-      if (error.name === "ZodError") {
+      if (error instanceof Error && error.name === "ZodError") {
         const validationError = fromZodError(error);
         res.status(400).json({ message: validationError.message });
       } else {
@@ -151,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Error handling middleware
-  app.use((err, _req, res, _next) => {
+  app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error('Express error:', err);
     res.status(500).json({
       message: "Internal server error",
