@@ -63,11 +63,24 @@ export class AIService {
             content: `You are an expert in carbon credits and energy efficiency. Write a professional and personalized email to explain the carbon savings calculation results. Use a friendly but professional tone.
 
 The email should follow this HTML styling:
-1. Title banner should be a rich blue color (#0066CC)
-2. All highlighted or emphasized text should use the same blue color (#0066CC)
-3. Use a clean, modern layout with proper spacing
-4. Important numbers and statistics should be in bold and blue
-5. Include a blue accent line under the main sections`
+1. Main container should have a light grey background (#f5f5f5) with padding and rounded corners
+2. Title banner should be a rich blue color (#0066CC) with white text
+3. Content section should have a white background with padding and subtle border
+4. All highlighted or emphasized text should use the same blue color (#0066CC)
+5. Important numbers and statistics should be in bold and blue (#0066CC)
+6. Include divider lines between sections using a light grey color
+7. Use proper spacing between paragraphs and sections
+8. All numerical values should be formatted with commas for thousands and include proper units in blue
+
+Example HTML structure:
+<div style="background-color: #f5f5f5; padding: 30px; border-radius: 8px; font-family: Arial, sans-serif;">
+  <div style="background-color: #0066CC; color: white; padding: 20px; border-radius: 4px 4px 0 0;">
+    <h1 style="margin: 0;">Your Carbon Savings Report</h1>
+  </div>
+  <div style="background-color: white; padding: 30px; border: 1px solid #e0e0e0; border-radius: 0 0 4px 4px;">
+    [Content goes here with blue highlights for numbers]
+  </div>
+</div>`
           },
           {
             role: "user",
@@ -83,13 +96,21 @@ The email should follow this HTML styling:
 
             The email should include:
             1. A blue (#0066CC) header banner with the Radical Zero logo and title
-            2. Personal greeting
-            3. Summary of their potential savings (with blue highlighted numbers)
-            4. Explanation of how carbon credits work
-            5. Next steps
+            2. Personal greeting using their first name
+            3. Summary section highlighting their key metrics in blue:
+               - Building size
+               - Current and projected energy consumption
+               - CO2 savings with 10-year projection
+               - Number of carbon credits
+               - Financial value in euros
+            4. Clear explanation of how their energy savings translate to carbon credits
+            5. Next steps section with bullet points
             6. Professional closing
 
-            Format the email in clean HTML with proper styling and blue color scheme.`
+            Format all numbers with:
+            - Comma separators for thousands
+            - Appropriate units in blue
+            - Bold and blue highlighting for emphasis`
           }
         ],
         max_tokens: 1000,

@@ -1,7 +1,18 @@
-import express from "express";
+import express, { type Request, Response, NextFunction } from "express";
+import { registerRoutes } from "./routes.js";
 import { log } from "./vite.js";
 
 const app = express();
+
+// Parse JSON and URL-encoded bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Add API route middleware to ensure proper Content-Type
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
 
 // Basic health check endpoint
 app.get("/api/health", (req, res) => {
@@ -10,9 +21,14 @@ app.get("/api/health", (req, res) => {
 
 try {
   const port = 5000;
-  log(`Attempting to start minimal server on port ${port}...`);
+  log(`Attempting to start server on port ${port}...`);
 
-  const server = app.listen(port, "0.0.0.0", () => {
+  // Register routes
+  log('Registering routes...');
+  const server = await registerRoutes(app);
+  log('Routes registered successfully');
+
+  server.listen(port, "0.0.0.0", () => {
     log(`Server started successfully on port ${port}`);
   });
 
