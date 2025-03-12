@@ -4,10 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Mail, RefreshCw } from "lucide-react";
+import { Check, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Import necessary UI components
 import {
@@ -55,6 +55,8 @@ export function CalculatorForm() {
   const [, setLocation] = useLocation();
   const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
+  const [isEmailSending, setIsEmailSending] = useState(false);
+  const [isEmailSent, setIsEmailSent] = useState(false);
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -166,8 +168,48 @@ export function CalculatorForm() {
     setStep(1);
     setIsSubmitSuccess(false);
   };
-  const handleSendEmail = () => {
-    setStep(5); // Update to go to the final step
+  const handleSendEmail = async () => {
+    if (isEmailSent) return;
+
+    setIsEmailSending(true);
+    try {
+      const response = await fetch("/api/email/send-report", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: form.getValues("firstName"),
+          lastName: form.getValues("lastName"),
+          email: form.getValues("email"),
+          co2Savings: calculateCO2Savings(form.getValues()),
+          carbonCredits: calculateCarbonCredits(form.getValues()),
+          financialValue: calculateFinancialValue(form.getValues()),
+          buildingSize: form.getValues("buildingSize"),
+          currentConsumption: form.getValues("currentConsumption"),
+          projectedConsumption: form.getValues("projectedConsumption"),
+          heatingSystem: form.getValues("heatingSystem")
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send email");
+      }
+
+      setIsEmailSent(true);
+      toast({
+        title: "Success!",
+        description: "The detailed report has been sent to your email.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send email. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsEmailSending(false);
+    }
   };
 
   function calculateCO2Savings(data: any): number {
@@ -635,10 +677,47 @@ export function CalculatorForm() {
                       type="button"
                       variant="default"
                       onClick={handleSendEmail}
-                      className="bg-calmBlue-600 hover:bg-calmBlue-700 px-6"
+                      className={`bg-calmBlue-600 hover:bg-calmBlue-700 px-6 relative ${
+                        isEmailSent ? 'bg-green-600 hover:bg-green-700' : ''
+                      }`}
+                      disabled={isEmailSending || isEmailSent}
                     >
-                      <Mail className="mr-2 h-4 w-4" />
-                      Send Report to Email
+                      <AnimatePresence mode="wait">
+                        {isEmailSending ? (
+                          <motion.div
+                            key="loading"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center"
+                          >
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Sending Report...
+                          </motion.div>
+                        ) : isEmailSent ? (
+                          <motion.div
+                            key="success"
+                            initial={{ opacity: 0, scale: 0.5 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center"
+                          >
+                            <Check className="mr-2 h-4 w-4" />
+                            Report Sent
+                          </motion.div>
+                        ) : (
+                          <motion.div
+                            key="default"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="flex items-center"
+                          >
+                            <Mail className="mr-2 h-4 w-4" />
+                            Send Report to Email
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </Button>
                   </div>
                 </div>
