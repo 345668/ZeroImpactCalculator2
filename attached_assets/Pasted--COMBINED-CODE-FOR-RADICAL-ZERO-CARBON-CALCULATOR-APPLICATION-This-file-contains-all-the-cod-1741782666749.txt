@@ -1,0 +1,329 @@
+/*
+ * COMBINED CODE FOR RADICAL ZERO CARBON CALCULATOR APPLICATION
+ * This file contains all the code from the application merged into a single file.
+ * It's intended for reference or download purposes only and is not meant to be used directly in the application.
+ */
+// ========================= IMPORTS =========================
+import React, { useState, useEffect, useRef } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Check, ChevronRight, ChevronLeft } from 'lucide-react';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "./components/ui/toaster";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { TooltipProvider } from "./components/ui/tooltip";
+import { toast } from 'sonner';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+// ========================= UTILITY FUNCTIONS =========================
+// CALCULATION UTILITIES
+// Energy consumption factors based on heating system type
+const emissionFactors = {
+  gas: 0.202, // kg CO2 per kWh
+  oil: 0.266, // kg CO2 per kWh
+  pellet: 0.023, // kg CO2 per kWh
+  other: 0.15, // kg CO2 per kWh (average)
+};
+// Conversion factors to kWh
+const conversionFactors = {
+  gas: 10, // 1 m³ of natural gas ≈ 10 kWh
+  oil: 10.5, // 1 liter of heating oil ≈ 10.5 kWh
+  pellet: 4.9, // 1 kg of wood pellets ≈ 4.9 kWh
+  other: 1, // already in kWh
+};
+// Carbon credit value in EUR per ton of CO2
+const carbonCreditValue = 50;
+// Convert original fuel consumption to kWh
+const convertToKWh = (
+  fuelType: keyof typeof conversionFactors,
+  amount: number
+): number => {
+  return amount * conversionFactors[fuelType];
+};
+// Calculate CO2 savings based on input data
+const calculateCO2Savings = (
+  oldSystem: keyof typeof emissionFactors,
+  oldConsumption: number,
+  newConsumption: number
+): number => {
+  // Convert old consumption to kWh first
+  const oldConsumptionInKWh = convertToKWh(oldSystem, oldConsumption);
+  
+  // Calculate CO2 emissions in tons (converting from kg)
+  const oldEmissions = (oldConsumptionInKWh * emissionFactors[oldSystem]) / 1000;
+  
+  // For new consumption (electricity), use average emission factor
+  // The emission factor for electricity varies by country and energy mix
+  const electricityEmissionFactor = 0.25; // kg CO2 per kWh (example value, can be adjusted)
+  const newEmissions = (newConsumption * electricityEmissionFactor) / 1000;
+  
+  // Calculate savings (tons of CO2)
+  return Math.max(0, oldEmissions - newEmissions);
+};
+// Calculate carbon credits (1:1 with CO2 savings)
+const calculateCarbonCredits = (co2Savings: number): number => {
+  return co2Savings;
+};
+// Calculate financial value in EUR
+const calculateFinancialValue = (carbonCredits: number): number => {
+  return carbonCredits * carbonCreditValue;
+};
+// Format numbers to have 2 decimal places
+const formatNumber = (num: number): string => {
+  return num.toLocaleString("en-US", { 
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2 
+  });
+};
+// Format currency values
+const formatCurrency = (amount: number): string => {
+  return amount.toLocaleString("en-US", { 
+    style: "currency", 
+    currency: "EUR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+};
+// GENERAL UTILITY FUNCTIONS
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+// ========================= TYPES =========================
+interface CalculationResults {
+  ownershipType: 'owner' | 'tenant';
+  buildingSize: number;
+  heatingSystem: 'gas' | 'oil' | 'pellet' | 'other';
+  currentConsumption: number;
+  projectedConsumption: number;
+  co2Savings: number;
+  carbonCredits: number;
+  financialValue: number;
+  consumptionUnit: string;
+  newEnergySystem: string;
+}
+interface ContactFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  company?: string;
+  message?: string;
+}
+// ========================= COMPONENTS =========================
+// HERO COMPONENT
+const Hero = ({ onGetStarted }: { onGetStarted: () => void }) => {
+  return (
+    <div className="flex flex-col-reverse lg:flex-row items-center justify-between py-16 gap-12">
+      <div className="flex-1 text-left">
+        <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+          Convert Energy Savings to <span className="text-radicalBlue-600">Carbon Credits</span>
+        </h1>
+        <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
+          Calculate your potential carbon savings and convert them into valuable carbon credits with our simple calculator.
+        </p>
+        <button
+          onClick={onGetStarted}
+          className="px-8 py-4 rounded-xl text-lg font-medium bg-radicalBlue-600 text-white 
+                   hover:bg-radicalBlue-700 transition-colors shadow-md flex items-center gap-2"
+        >
+          Get Started <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+      
+      <div className="flex-1 flex justify-center lg:justify-end">
+        <div className="hero-pattern rounded-3xl p-8 sm:p-20 border border-gray-100 bg-white shadow-xl">
+          <img 
+            src="/lovable-uploads/68ed5295-f319-4617-9268-139ff01c89b9.png" 
+            alt="Radical-Zero Logo" 
+            className="max-w-xs lg:max-w-md"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+// CARBON CALCULATOR COMPONENT
+const CarbonCalculator = ({ onComplete }: { onComplete: (results: CalculationResults) => void }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState<Omit<CalculationResults, 'co2Savings' | 'carbonCredits' | 'financialValue'>>({
+    ownershipType: 'owner',
+    buildingSize: 0,
+    heatingSystem: 'gas',
+    currentConsumption: 0,
+    projectedConsumption: 0,
+    consumptionUnit: 'm³',
+    newEnergySystem: 'electricity',
+  });
+  
+  const consumptionUnits: {[key: string]: string} = {
+    'gas': 'm³',
+    'oil': 'liters',
+    'pellet': 'kg',
+    'other': 'kWh',
+  };
+  
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      consumptionUnit: consumptionUnits[prev.heatingSystem]
+    }));
+  }, [formData.heatingSystem]);
+  
+  const formRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [currentStep]);
+  
+  const handleInputChange = (field: keyof typeof formData, value: any) => {
+    setFormData({
+      ...formData,
+      [field]: value,
+    });
+  };
+  
+  const handleNext = () => {
+    if (validateCurrentStep()) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+  
+  const handlePrevious = () => {
+    setCurrentStep(currentStep - 1);
+  };
+  
+  const validateCurrentStep = (): boolean => {
+    switch (currentStep) {
+      case 1:
+        return !!formData.ownershipType;
+      case 2:
+        return !!formData.buildingSize && formData.buildingSize > 0;
+      case 3:
+        return !!formData.heatingSystem;
+      case 4:
+        return !!formData.currentConsumption && formData.currentConsumption > 0;
+      case 5:
+        return !!formData.projectedConsumption && formData.projectedConsumption >= 0;
+      default:
+        return true;
+    }
+  };
+  
+  const handleSubmit = () => {
+    if (validateCurrentStep()) {
+      const co2Savings = calculateCO2Savings(
+        formData.heatingSystem,
+        formData.currentConsumption,
+        formData.projectedConsumption
+      );
+      
+      const carbonCredits = calculateCarbonCredits(co2Savings);
+      const financialValue = calculateFinancialValue(carbonCredits);
+      
+      onComplete({
+        ...formData,
+        co2Savings,
+        carbonCredits,
+        financialValue,
+      });
+    }
+  };
+  
+  return (
+    <div ref={formRef} className="form-container">
+      <div className="mb-8">
+        <div className="flex justify-between mb-2">
+          {[1, 2, 3, 4, 5].map((step) => (
+            <div 
+              key={step}
+              className={`h-2 rounded-full transition-all duration-500 flex-1 mx-1 ${
+                step === currentStep
+                  ? 'bg-radicalBlue-500'
+                  : step < currentStep
+                  ? 'bg-radicalBlue-300'
+                  : 'bg-gray-200'
+              }`}
+            />
+          ))}
+        </div>
+        <div className="text-sm text-muted-foreground text-right">
+          Step {currentStep} of 5
+        </div>
+      </div>
+      
+      {/* Step 1: Ownership Type */}
+      <div className={`form-step ${currentStep === 1 ? 'active' : 'inactive'}`}>
+        <h2 className="form-title">Building Ownership</h2>
+        <p className="form-subtitle">Do you own the building or are you a tenant?</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div
+            className={`input-container cursor-pointer flex items-center p-6 ${
+              formData.ownershipType === 'owner'
+                ? 'ring-2 ring-radicalBlue-500 border-radicalBlue-200'
+                : ''
+            }`}
+            onClick={() => handleInputChange('ownershipType', 'owner')}
+          >
+            <div className="w-full">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-medium">Building Owner</h3>
+                {formData.ownershipType === 'owner' && (
+                  <div className="h-6 w-6 rounded-full bg-radicalBlue-500 flex items-center justify-center">
+                    <Check className="h-4 w-4 text-white" />
+                  </div>
+                )}
+              </div>
+              <p className="text-muted-foreground mt-2">
+                I own the building and can implement energy efficiency measures.
+              </p>
+            </div>
+          </div>
+          
+          <div
+            className={`input-container cursor-pointer flex items-center p-6 ${
+              formData.ownershipType === 'tenant'
+                ? 'ring-2 ring-radicalBlue-500 border-radicalBlue-200'
+                : ''
+            }`}
+            onClick={() => handleInputChange('ownershipType', 'tenant')}
+          >
+            <div className="w-full">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-medium">Tenant</h3>
+                {formData.ownershipType === 'tenant' && (
+                  <div className="h-6 w-6 rounded-full bg-radicalBlue-500 flex items-center justify-center">
+                    <Check className="h-4 w-4 text-white" />
+                  </div>
+                )}
+              </div>
+              <p className="text-muted-foreground mt-2">
+                I rent the building and want to explore energy efficiency options.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-end mt-8">
+          <button
+            onClick={handleNext}
+            disabled={!validateCurrentStep()}
+            className={`px-6 py-3 rounded-xl font-medium flex items-center gap-2 ${
+              validateCurrentStep()
+                ? 'bg-radicalBlue-600 text-white hover:bg-radicalBlue-700 transition-colors'
+                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            Continue <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+      
+      {/* Step 2: Building Size */}
+      <div className={`form-step ${currentStep === 2 ? 'active' : 'inactive'}`}>
+        <h2 className="form-title">Building Size</h2>
+        <p className="form-subtitle">What is the size of your building in square meters?</p>
+        
+        <div className="...
