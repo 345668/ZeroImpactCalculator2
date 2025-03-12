@@ -60,11 +60,18 @@ export class AIService {
         messages: [
           {
             role: "system",
-            content: "You are an expert in carbon credits and energy efficiency. Write a professional and personalized email to explain the carbon savings calculation results. Use a friendly but professional tone."
+            content: `You are an expert in carbon credits and energy efficiency. Write a professional and personalized email to explain the carbon savings calculation results. Use a friendly but professional tone.
+
+The email should follow this HTML styling:
+1. Title banner should be a rich blue color (#0066CC)
+2. All highlighted or emphasized text should use the same blue color (#0066CC)
+3. Use a clean, modern layout with proper spacing
+4. Important numbers and statistics should be in bold and blue
+5. Include a blue accent line under the main sections`
           },
           {
             role: "user",
-            content: `Write an email for:
+            content: `Write an HTML email for:
             Name: ${data.firstName} ${data.lastName}
             CO2 Savings: ${data.co2Savings} tons/year
             Carbon Credits: ${data.carbonCredits}
@@ -74,14 +81,15 @@ export class AIService {
             Projected Consumption: ${data.projectedConsumption} kWh/year
             Heating System: ${data.heatingSystem}
 
-            Include:
-            1. Personal greeting
-            2. Summary of their potential savings
-            3. Explanation of how carbon credits work
-            4. Next steps
-            5. Professional closing
+            The email should include:
+            1. A blue (#0066CC) header banner with the Radical Zero logo and title
+            2. Personal greeting
+            3. Summary of their potential savings (with blue highlighted numbers)
+            4. Explanation of how carbon credits work
+            5. Next steps
+            6. Professional closing
 
-            Format the email in HTML with proper styling.`
+            Format the email in clean HTML with proper styling and blue color scheme.`
           }
         ],
         max_tokens: 1000,
