@@ -118,4 +118,24 @@ export class EmailService {
       throw error;
     }
   }
+
+  // Add a test method to verify SendGrid configuration
+  static async sendTestEmail(toEmail: string) {
+    try {
+      const msg = {
+        to: toEmail,
+        from: SENDER_EMAIL,
+        subject: 'Test Email from Radical Zero',
+        text: 'This is a test email to verify SendGrid configuration',
+        html: '<strong>This is a test email to verify SendGrid configuration</strong>'
+      };
+
+      const [response] = await sgMail.send(msg);
+      console.log('Test email response:', response.statusCode);
+      return response.statusCode === 202;
+    } catch (error) {
+      console.error('Test email error:', error);
+      throw error;
+    }
+  }
 }

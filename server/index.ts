@@ -24,11 +24,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Parse JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-
-// Serve favicon
-app.use(favicon(path.join(__dirname, '../client/public/favicon.svg')));
 
 // Add request logging middleware
 app.use((req, res, next) => {
@@ -108,7 +106,7 @@ app.get("/api/health", (req, res) => {
         lastModified: true
       }));
 
-      // Serve index.html for all routes except /api
+      // Serve index.html for all non-API routes
       app.get('*', (req, res, next) => {
         if (req.path.startsWith('/api')) {
           next();
