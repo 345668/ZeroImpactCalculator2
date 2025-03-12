@@ -4,7 +4,6 @@ import { setupVite, serveStatic, log } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
 import path from "path";
 import { fileURLToPath } from 'url';
-import favicon from 'serve-favicon';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,6 +26,12 @@ app.use((req, res, next) => {
 // Parse JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add API route middleware to ensure proper Content-Type
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
 
 // Add request logging middleware
 app.use((req, res, next) => {
@@ -89,7 +94,7 @@ app.get("/api/health", (req, res) => {
       res.status(status).json({ message });
     });
 
-    // Setup Vite in development or serve static files in production
+    // Setup environment-specific middleware
     const env = app.get("env");
     log(`Setting up server for ${env} environment...`);
 
@@ -100,17 +105,23 @@ app.get("/api/health", (req, res) => {
     } else {
       log('Setting up static file serving for production...');
       const distPath = path.join(__dirname, "../dist/public");
-      app.use(express.static(distPath, {
-        maxAge: '1y',
-        etag: true,
-        lastModified: true
-      }));
+
+      // Serve static files except for API routes
+      app.use((req, res, next) => {
+        if (req.path.startsWith('/api')) {
+          return next();
+        }
+        express.static(distPath, {
+          maxAge: '1y',
+          etag: true,
+          lastModified: true
+        })(req, res, next);
+      });
 
       // Serve index.html for all non-API routes
       app.get('*', (req, res, next) => {
         if (req.path.startsWith('/api')) {
-          next();
-          return;
+          return next();
         }
         res.sendFile(path.join(distPath, 'index.html'));
       });
