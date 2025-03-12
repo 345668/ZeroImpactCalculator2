@@ -1,4 +1,4 @@
-import express, { type Request, Response, NextFunction } from "express";
+import express from "express";
 import { registerRoutes } from "./routes.js";
 import { log } from "./vite.js";
 
@@ -8,15 +8,10 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Add API route middleware to ensure proper Content-Type
+// Add API route middleware
 app.use('/api', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json');
   next();
-});
-
-// Basic health check endpoint
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
 try {
@@ -28,11 +23,12 @@ try {
   const server = await registerRoutes(app);
   log('Routes registered successfully');
 
-  server.listen(port, "0.0.0.0", () => {
-    log(`Server started successfully on port ${port}`);
+  const server_instance = server.listen(port, "0.0.0.0", () => {
+    log(`Server successfully started and listening on port ${port}`);
   });
 
-  server.on("error", (error: any) => {
+  server_instance.on("error", (error: any) => {
+    log(`Server error encountered: ${error.code}`);
     if (error.code === "EADDRINUSE") {
       log(`Error: Port ${port} is already in use. Please free it before starting the server.`);
     } else {
@@ -41,6 +37,7 @@ try {
     process.exit(1);
   });
 } catch (error) {
+  log(`Fatal error during server startup: ${error}`);
   console.error("Fatal error during server startup:", error);
   process.exit(1);
 }

@@ -64,20 +64,28 @@ export class AIService {
 
 The email should follow this HTML styling:
 1. Main container should have a light grey background (#f5f5f5) with padding and rounded corners
-2. Title banner should be a rich blue color (#0066CC) with white text
-3. Content section should have a white background with padding and subtle border
+2. Title banner should be a prominent blue (#0066CC) section with:
+   - Larger font size (24px)
+   - Centered text in white
+   - Good padding (30px)
+   - Rounded top corners (8px)
+3. Content section should have:
+   - White background
+   - Generous padding (30px)
+   - Subtle border
+   - Rounded bottom corners (8px)
 4. All highlighted or emphasized text should use the same blue color (#0066CC)
 5. Important numbers and statistics should be in bold and blue (#0066CC)
 6. Include divider lines between sections using a light grey color
 7. Use proper spacing between paragraphs and sections
-8. All numerical values should be formatted with commas for thousands and include proper units in blue
+8. All numerical values should be formatted with commas for thousands and proper units
 
 Example HTML structure:
 <div style="background-color: #f5f5f5; padding: 30px; border-radius: 8px; font-family: Arial, sans-serif;">
-  <div style="background-color: #0066CC; color: white; padding: 20px; border-radius: 4px 4px 0 0;">
-    <h1 style="margin: 0;">Your Carbon Savings Report</h1>
+  <div style="background-color: #0066CC; color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center;">
+    <h1 style="margin: 0; font-size: 24px; font-weight: 600;">Your Carbon Savings Report</h1>
   </div>
-  <div style="background-color: white; padding: 30px; border: 1px solid #e0e0e0; border-radius: 0 0 4px 4px;">
+  <div style="background-color: white; padding: 30px; border: 1px solid #e0e0e0; border-radius: 0 0 8px 8px;">
     [Content goes here with blue highlights for numbers]
   </div>
 </div>`
@@ -95,7 +103,7 @@ Example HTML structure:
             Heating System: ${data.heatingSystem}
 
             The email should include:
-            1. A blue (#0066CC) header banner with the Radical Zero logo and title
+            1. A prominent blue (#0066CC) header banner with centered title
             2. Personal greeting using their first name
             3. Summary section highlighting their key metrics in blue:
                - Building size
