@@ -1,6 +1,6 @@
 
-const { spawn, execSync } = require('child_process');
-const path = require('path');
+import { spawn, execSync } from 'child_process';
+import path from 'path';
 
 console.log('Starting Carbon Credit Calculator application...');
 
