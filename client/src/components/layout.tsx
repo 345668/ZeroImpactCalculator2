@@ -18,7 +18,7 @@ export function Layout({ children }: LayoutProps) {
           damping: 20,
           duration: 0.3
         }}
-        className="min-h-screen bg-gradient-to-br from-background via-background/95 to-background/90"
+        className="min-h-screen w-full fixed inset-0 bg-gradient-to-br from-background via-background/95 to-background/90 overflow-y-auto"
       >
         {children}
       </motion.div>
