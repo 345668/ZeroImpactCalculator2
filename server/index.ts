@@ -94,48 +94,35 @@ app.get("/api/health", (req, res) => {
       res.status(status).json({ message });
     });
 
-    // Setup environment-specific middleware
-    const env = app.get("env");
-    log(`Setting up server for ${env} environment...`);
+    // Serve static files
+    const distPath = path.join(__dirname, "../dist/public");
+    app.use(express.static(distPath));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) {
+        return next();
+      }
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
 
-    if (env === "development") {
-      log('Setting up Vite for development...');
-      await setupVite(app, server);
-      log('Vite setup complete');
-    } else {
-      log('Setting up static file serving for production...');
-      const distPath = path.join(__dirname, "../dist/public");
+    // Start server with improved logging
+    const port = 5000; // Always use port 5000 for Replit workflow
+    log(`Attempting to start server on port ${port}...`);
 
-      // Serve static files except for API routes
-      app.use((req, res, next) => {
-        if (req.path.startsWith('/api')) {
-          return next();
-        }
-        express.static(distPath, {
-          maxAge: '1y',
-          etag: true,
-          lastModified: true
-        })(req, res, next);
-      });
-
-      // Serve index.html for all non-API routes
-      app.get('*', (req, res, next) => {
-        if (req.path.startsWith('/api')) {
-          return next();
-        }
-        res.sendFile(path.join(distPath, 'index.html'));
-      });
-      log('Static file serving setup complete');
-    }
-
-    // Start the server
-    const port = process.env.PORT || 5000;
-    server.listen({
+    const server_instance = server.listen({
       port,
       host: "0.0.0.0",
-      reusePort: true,
     }, () => {
-      log(`Server started successfully on port ${port}`);
+      log(`Server successfully started and listening on port ${port}`);
+    });
+
+    server_instance.on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        log(`Error: Port ${port} is already in use. Please free it before starting the server.`);
+        process.exit(1);
+      } else {
+        console.error('Server error:', error);
+        process.exit(1);
+      }
     });
 
   } catch (error) {
