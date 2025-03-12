@@ -7,7 +7,7 @@ if (!process.env.SENDGRID_API_KEY) {
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-const SENDER_EMAIL = 'reports@radical-zero.com'; // Make sure this email is verified in SendGrid
+const SENDER_EMAIL = 'sandsneptune@gmail.com'; // Using verified sender email
 
 export class EmailService {
   static async sendCarbonReport(data: any) {
