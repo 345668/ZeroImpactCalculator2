@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, serveStatic, log } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -94,15 +95,29 @@ app.get("/api/health", (req, res) => {
       res.status(status).json({ message });
     });
 
-    // Serve static files
+    // Serve static files if the dist directory exists
     const distPath = path.join(__dirname, "../dist/public");
-    app.use(express.static(distPath));
-    app.get('*', (req, res, next) => {
-      if (req.path.startsWith('/api')) {
-        return next();
-      }
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
+    
+    // Check if the dist directory exists
+    if (fs.existsSync(distPath)) {
+      log('Static files directory found, serving static content');
+      app.use(express.static(distPath));
+      app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api')) {
+          return next();
+        }
+        res.sendFile(path.join(distPath, 'index.html'));
+      });
+    } else {
+      log('Static files directory not found, skipping static file serving');
+      // For non-API routes, return a simple message indicating build is needed
+      app.get('*', (req, res, next) => {
+        if (req.path.startsWith('/api')) {
+          return next();
+        }
+        res.status(200).send('Server is running in development mode. Please build the client first with "npm run build" or use the development server.');
+      });
+    }
 
     // Start server with improved logging
     const port = 5000; // Always use port 5000 for Replit workflow
