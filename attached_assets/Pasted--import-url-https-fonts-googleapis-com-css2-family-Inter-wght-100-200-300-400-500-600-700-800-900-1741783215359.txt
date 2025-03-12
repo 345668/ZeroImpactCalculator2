@@ -35,6 +35,15 @@
     --ring: 145 40% 30%;
 
     --radius: 0.8rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
   .dark {
@@ -65,6 +74,14 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
 
@@ -111,59 +128,20 @@
   }
 
   .input-container {
-    @apply w-full rounded-xl bg-white/95 dark:bg-gray-800/95 border border-border p-4 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-200;
+    @apply w-full rounded-xl bg-white border border-border p-4 focus-within:ring-2 focus-within:ring-primary/20 transition-all duration-200;
   }
 
   .results-card {
-    @apply p-8 rounded-2xl glass-card bg-gradient-to-br from-green-50 to-blue-50 border border-green-100;
+    @apply p-8 rounded-2xl glass-card bg-gradient-to-br from-radicalGreen-50 to-radicalBlue-50 border border-radicalGreen-100;
   }
 
   .hero-pattern {
-    @apply relative;
-    background-image: radial-gradient(#3c9742 0.5px, transparent 0.5px);
+    background-color: #ffffff;
+    background-image: radial-gradient(#3c9742 0.5px, #ffffff 0.5px);
     background-size: 20px 20px;
   }
 
   .bg-gradient {
-    @apply bg-gradient-to-br from-green-50 via-white to-blue-50;
+    @apply bg-gradient-to-br from-radicalGreen-50 via-white to-radicalBlue-50;
   }
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slide-down {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.5s ease-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.5s ease-out;
-}
-
-.animate-slide-down {
-  animation: slide-down 0.5s ease-out;
 }
