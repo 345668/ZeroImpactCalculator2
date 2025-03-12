@@ -190,19 +190,11 @@ export const formSteps: Step[] = [
     description: "Enter your expected energy usage after improvements"
   },
   {
-    title: "Personal Information",
-    description: "Tell us about yourself"
-  },
-  {
     title: "Review & Results",
     description: "Review your carbon savings calculation"
   },
   {
     title: "Contact Details",
     description: "Please provide your contact information to receive the report"
-  },
-  {
-    title: "Final Results",
-    description: "Review your complete analysis and submit"
   }
 ];
