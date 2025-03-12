@@ -33,9 +33,7 @@ app.use((req, res, next) => {
   const start = Date.now();
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (req.path.startsWith("/api")) {
-      log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
-    }
+    log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
   });
   next();
 });
