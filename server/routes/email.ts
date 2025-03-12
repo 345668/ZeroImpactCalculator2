@@ -20,10 +20,10 @@ const emailRequestSchema = z.object({
 
 router.post("/send-report", async (req, res) => {
   try {
-    console.log('Received email request:', req.body);
+    console.log('Received email request body:', JSON.stringify(req.body, null, 2));
 
     const data = emailRequestSchema.parse(req.body);
-    console.log('Validation passed, sending email report');
+    console.log('Validation passed, parsed data:', JSON.stringify(data, null, 2));
 
     // Send email with results
     const result = await EmailService.sendCarbonReport({

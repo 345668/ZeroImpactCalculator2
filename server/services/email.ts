@@ -13,6 +13,7 @@ export class EmailService {
   static async sendCarbonReport(data: any) {
     try {
       console.log('Starting email generation process for:', data.email);
+      console.log('Input data:', JSON.stringify(data, null, 2));
 
       // Generate personalized content using Mistral AI
       const emailContent = await AIService.generateEmailContent({
@@ -27,7 +28,7 @@ export class EmailService {
         heatingSystem: data.heatingSystem
       });
 
-      console.log('Email content generated successfully');
+      console.log('Email content generated successfully:', emailContent.substring(0, 100) + '...');
 
       // Structure the message exactly as shown in SendGrid documentation
       const msg = {
@@ -53,7 +54,7 @@ export class EmailService {
         }
       };
 
-      console.log('Attempting to send email with payload:', JSON.stringify(msg));
+      console.log('Attempting to send email with message:', JSON.stringify(msg, null, 2));
 
       try {
         const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
