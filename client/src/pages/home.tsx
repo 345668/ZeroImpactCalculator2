@@ -1,11 +1,13 @@
 import { HeroSection } from "@/components/hero-section";
 import { CalculatorForm } from "@/components/calculator-form";
 import { Layout } from "@/components/layout";
+import { NavigationBar } from "@/components/navigation-bar";
 import { motion } from "framer-motion";
 
 export default function Home() {
   return (
     <Layout>
+      <NavigationBar />
       <HeroSection />
       <main className="container mx-auto px-4 py-12">
         <motion.div
