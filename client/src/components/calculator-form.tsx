@@ -457,15 +457,15 @@ export function CalculatorForm() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-3">
-                <Card className="p-6 bg-primary/5 group hover:bg-white/50 transition-all duration-300">
-                  <div className="backdrop-blur-sm group-hover:backdrop-blur-0 transition-all duration-300">
+                <Card className="p-6 bg-primary/5 transition-all duration-300">
+                  <div className="transition-all duration-300">
                     <div className="flex items-center justify-center mb-4">
                       <div className="rounded-full bg-calmBlue-100 p-3">
                         <Check className="w-6 h-6 text-calmBlue-600" />
                       </div>
                     </div>
                     <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
-                    <div className="text-3xl text-center font-bold mb-1 blur-sm group-hover:blur-none transition-all duration-300">
+                    <div className="text-3xl text-center font-bold mb-1 blur-lg">
                       {calculateCO2Savings({
                         currentConsumption: form.getValues("currentConsumption"),
                         projectedConsumption: form.getValues("projectedConsumption")
@@ -475,15 +475,15 @@ export function CalculatorForm() {
                   </div>
                 </Card>
 
-                <Card className="p-6 bg-primary/5 group hover:bg-white/50 transition-all duration-300">
-                  <div className="backdrop-blur-sm group-hover:backdrop-blur-0 transition-all duration-300">
+                <Card className="p-6 bg-primary/5 transition-all duration-300">
+                  <div className="transition-all duration-300">
                     <div className="flex items-center justify-center mb-4">
                       <div className="rounded-full bg-calmBlue-100 p-3">
                         <Check className="w-6 h-6 text-calmBlue-600" />
                       </div>
                     </div>
                     <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
-                    <div className="text-3xl text-center font-bold mb-1 blur-sm group-hover:blur-none transition-all duration-300">
+                    <div className="text-3xl text-center font-bold mb-1 blur-lg">
                       {calculateCarbonCredits({
                         currentConsumption: form.getValues("currentConsumption"),
                         projectedConsumption: form.getValues("projectedConsumption")
@@ -493,15 +493,15 @@ export function CalculatorForm() {
                   </div>
                 </Card>
 
-                <Card className="p-6 bg-primary/5 group hover:bg-white/50 transition-all duration-300">
-                  <div className="backdrop-blur-sm group-hover:backdrop-blur-0 transition-all duration-300">
+                <Card className="p-6 bg-primary/5 transition-all duration-300">
+                  <div className="transition-all duration-300">
                     <div className="flex items-center justify-center mb-4">
                       <div className="rounded-full bg-calmBlue-100 p-3">
                         <Check className="w-6 h-6 text-calmBlue-600" />
                       </div>
                     </div>
                     <h3 className="text-center font-semibold mb-1">Financial Value</h3>
-                    <div className="text-3xl text-center font-bold mb-1 blur-sm group-hover:blur-none transition-all duration-300">
+                    <div className="text-3xl text-center font-bold mb-1 blur-lg">
                       €{calculateFinancialValue({
                         currentConsumption: form.getValues("currentConsumption"),
                         projectedConsumption: form.getValues("projectedConsumption")
@@ -512,8 +512,8 @@ export function CalculatorForm() {
                 </Card>
               </div>
 
-              <div className="mt-8 p-6 bg-gray-50 rounded-lg group hover:bg-white/50 transition-all duration-300">
-                <div className="backdrop-blur-sm group-hover:backdrop-blur-0 transition-all duration-300">
+              <div className="mt-8 p-6 bg-gray-50 rounded-lg transition-all duration-300">
+                <div className="transition-all duration-300">
                   <h3 className="text-lg font-semibold mb-4">Building Information</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -522,7 +522,7 @@ export function CalculatorForm() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Building Size</p>
-                      <p className="font-medium blur-sm group-hover:blur-none transition-all duration-300">{form.getValues("buildingSize")} m²</p>
+                      <p className="font-medium blur-lg">{form.getValues("buildingSize")} m²</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Heating System</p>
@@ -530,7 +530,7 @@ export function CalculatorForm() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
-                      <p className="font-medium blur-sm group-hover:blur-none transition-all duration-300">
+                      <p className="font-medium blur-lg">
                         {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
                       </p>
                     </div>
@@ -540,7 +540,7 @@ export function CalculatorForm() {
 
               <div className="text-center mt-8">
                 <p className="text-sm text-muted-foreground mb-4">
-                  Hover over the cards to see your detailed results.
+                  The detailed results will be sent to your email after completing the form.
                 </p>
               </div>
             </div>
