@@ -1,0 +1,100 @@
+Web API vs. SMTP for Sending Email
+
+
+
+
+There are two ways to programmatically send email with SendGrid: via HTTP using the SendGrid Web API, and via SMTP (Simple Mail Transfer Protocol). For most email use cases, the SendGrid Web API offers the richest feature set and can integrate with your existing applications. SMTP is often used as a quick way to forward email from one server to another.
+
+This document describes how email is sent with the Web API and SMTP, which option might be better for your use case, and how to get started with both.
+
+
+(information)
+Info
+SendGrid also offers a UI-based, no-code option for sending email. If you want to get started sending email with little to no coding, try out Marketing Campaigns.
+Web API
+
+
+
+
+
+The SendGrid Web API uses HTTP to send messages. This is the fastest, most flexible, and most secure option for sending mail with SendGrid.
+
+The primary HTTP endpoint for sending mail is the Mail Send endpoint. The process involves the following steps:
+
+Your server sends an HTTP POST request to SendGrid containing a JSON request body with the information you would like to send in the email.
+SendGrid responds to the request indicating that it has accepted the email for processing.
+The SendGrid server processes the request and sends it to the intended recipients' email providers.
+SendGrid can respond back to your server with a webhook that contains either a 250 status message, indicating that the message was accepted by the receiving server, or a 400 or 500 message, indicating that something went wrong while trying to send the message. You can also check the delivery status of an email on the Email Activity page in the SendGrid Console
+
+.
+
+(warning)
+Warning
+A 250 message does not guarantee that the email will reach the recipient's inbox; it means that the email provider has accepted the message. Once accepted, the provider then determines if the email should be placed in the recipient's inbox, junk folder, spam folder, or if it should defer the message entirely.
+In addition to SendGrid's Mail Send endpoint, SendGrid's API includes other features like scheduled sends, templates, webhooks, and tools for enhanced deliverability such as email address validation. You can use the API to retrieve information about your account and the messages you've sent to your recipients, including the ratio of delivered messages to bounced ones and how many unsubscribes there have been to your messages.
+
+SMTP
+
+
+
+
+
+SMTP is an internet protocol that has been used since 1982 for sending email. Sending email via SMTP relay, or Simple Mail Transfer Protocol, requires more back and forth conversation to deliver a message to the intended recipient than with HTTP.
+
+There are four main actors in the SMTP mail transfer process: the sender's mail client, SendGrid's SMTP service, the recipient's email server, and the recipient's mail client. The general process includes these steps:
+
+Your mail client connects to the SendGrid SMTP server and has a conversation with the server to verify your authentication and relay the message information.
+The SendGrid server takes the message information from your request, then repeats the conversation with the recipient's mail server.
+Your recipient's mail server checks the sending address, recipient address, and message content. It also checks the sending domain for any potential DNS issues.
+If there are no problems, the recipient's mail server retrieves the email and delivers the message to its intended recipient.
+For a more detailed overview of the SMTP email delivery process, check out this blog post, "SMTP: Servers and Sending Emails".
+
+
+SendGrid functions primarily as a third party SMTP service, which means that SendGrid sends emails on behalf of its users and its users' clients to help improve their delivery. SendGrid's SMTP service removes customers' needs to manage their own SMTP clients and servers. Often, customers use SendGrid SMTP as a "set it and forget it" mail forwarder.
+
+SendGrid's SMTP services also allow you to track data like opens, clicks, and subscriptions.
+
+When to use the Web API vs. SMTP
+
+
+
+
+
+For most email use cases, and if you are just getting started with sending emails with SendGrid, we recommend that you use the Web API over SMTP.
+
+The SendGrid Web API offers three major advantages over SMTP:
+
+The communication between your server and SendGrid is faster than over SMTP because HTTP APIs require fewer back-and-forth commands to authenticate the sender and recipient
+SendGrid's APIs offer functionality that isn't available using SMTP, such as deliverability tooling (e.g., email validation APIs and IP warmup) and account information
+SendGrid's API makes it easier to introduce new functionality for users
+The Web API is generally better suited for developers who are building their own web or mobile applications. SMTP is better suited for those integrating with their existing mail clients
+Because SMTP requires more back-and-forth communication between the sending and receiving servers, there are more potential failure points along the pathway. The additional chatter with SMTP can also introduce latency for customers.
+
+On the other hand, SMTP is a universal email standard and can be used to connect with an existing application like a CRM system or a mail client like Outlook. Customers using SendGrid's SMTP servers typically use it to relay their email through SendGrid for scale and reliability instead of managing their own servers.
+
+How to get started
+
+
+
+
+
+You can follow the guides below to get started using SendGrid's Web API and SMTP options:
+
+Web API
+
+
+
+
+
+SendGrid's email onboarding guide walks through the whole process of getting started with email and the Web API, from understanding core email concepts to building your application and monitoring and optimizing its performance
+See the Mail Send API endpoint documentation
+Review the limitations of sending email with the Web API
+SMTP
+
+
+
+
+
+Integrate SendGrid with your existing email client
+Learn about building email content with the X-SMTPAPI Header
+Review the rate limits when sending email with SMTP

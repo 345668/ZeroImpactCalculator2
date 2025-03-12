@@ -1,8 +1,8 @@
 import sgMail from '@sendgrid/mail';
 import { AIService } from './ai.js';
-import { db } from '../db.js';
-import { submissions } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+//import { db } from '../db.js';
+//import { submissions } from '@shared/schema';
+//import { eq } from 'drizzle-orm';
 
 if (!process.env.SENDGRID_API_KEY) {
   throw new Error("SENDGRID_API_KEY environment variable must be set");
@@ -18,73 +18,42 @@ export class EmailService {
       console.log('Starting email generation process for:', data.email);
       console.log('Input data:', JSON.stringify(data, null, 2));
 
-      // First check if submission exists in database
-      const [submission] = await db
-        .select()
-        .from(submissions)
-        .where(eq(submissions.email, data.email))
-        .orderBy(submissions.submittedAt, 'desc')
-        .limit(1);
-
-      if (!submission) {
-        throw new Error('No submission found for this email');
-      }
-
-      // Check if email was already sent
-      if (submission.emailSent === "yes") {
-        return { 
-          success: true, 
-          message: "Email was already sent to this customer" 
-        };
-      }
-
       // Generate personalized content using Mistral AI
       const emailContent = await AIService.generateEmailContent({
-        firstName: submission.firstName,
-        lastName: submission.lastName,
-        co2Savings: submission.co2Savings,
-        carbonCredits: submission.carbonCredits,
-        financialValue: submission.financialValue,
-        buildingSize: submission.buildingSize,
-        currentConsumption: submission.currentConsumption,
-        projectedConsumption: submission.projectedConsumption,
-        heatingSystem: submission.heatingSystem
+        firstName: data.firstName,
+        lastName: data.lastName,
+        co2Savings: data.co2Savings,
+        carbonCredits: data.carbonCredits,
+        financialValue: data.financialValue,
+        buildingSize: data.buildingSize,
+        currentConsumption: data.currentConsumption,
+        projectedConsumption: data.projectedConsumption,
+        heatingSystem: data.heatingSystem
       });
 
       console.log('Email content generated successfully:', emailContent.substring(0, 100) + '...');
 
-      // Structure the message exactly as shown in SendGrid documentation
+      // Structure the message for SendGrid
       const msg = {
-        personalizations: [{
-          to: [{ 
-            email: submission.email,
-            name: `${submission.firstName} ${submission.lastName}`
-          }],
-          subject: 'Your Carbon Savings Report from Radical Zero',
-          dynamic_template_data: {
-            firstName: submission.firstName,
-            lastName: submission.lastName,
-            co2Savings: submission.co2Savings,
-            carbonCredits: submission.carbonCredits,
-            financialValue: submission.financialValue
-          }
-        }],
+        to: {
+          email: data.email,
+          name: `${data.firstName} ${data.lastName}`
+        },
         from: {
           email: SENDER_EMAIL,
           name: 'Radical Zero Carbon Credits'
         },
-        content: [{
-          type: "text/html",
-          value: emailContent
-        }],
-        tracking_settings: {
-          click_tracking: { enable: true },
-          open_tracking: { enable: true }
+        subject: 'Your Carbon Savings Report from Radical Zero',
+        text: 'Your Carbon Credits Report',
+        html: emailContent,
+        trackingSettings: {
+          clickTracking: { enable: true },
+          openTracking: { enable: true }
         },
         categories: ['carbon-report']
       };
 
-      console.log('Attempting to send email with message:', JSON.stringify(msg, null, 2));
+      console.log('Attempting to send email to:', data.email);
 
       try {
         const [response] = await sgMail.send(msg);
@@ -94,16 +63,7 @@ export class EmailService {
           throw new Error(`SendGrid API error: ${response.statusCode}`);
         }
 
-        // Update submission with email sent status
-        await db
-          .update(submissions)
-          .set({ 
-            emailSent: "yes", 
-            emailSentAt: new Date() 
-          })
-          .where(eq(submissions.id, submission.id));
-
-        console.log('Email sent successfully to:', submission.email);
+        console.log('Email sent successfully to:', data.email);
         return { success: true, message: 'Email sent successfully' };
       } catch (sendError: any) {
         console.error('SendGrid sending error:', {
