@@ -114,15 +114,21 @@ export function CalculatorForm() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: InsertSubmission) => {
+      const submissionData = {
+        ...data,
+        acceptedTerms: String(data.acceptedTerms),
+        gdprConsent: String(data.gdprConsent),
+        co2Savings: calculateCO2Savings(data),
+        carbonCredits: calculateCarbonCredits(data),
+        financialValue: calculateFinancialValue(data),
+      };
+
       const response = await fetch("/api/calculate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...data,
-          documentLanguage,
-        }),
+        body: JSON.stringify(submissionData),
       });
 
       if (!response.ok) {
@@ -136,7 +142,7 @@ export function CalculatorForm() {
       setIsSubmitSuccess(true);
       toast({
         title: "Success!",
-        description: "Your calculation has been submitted. Check your email for the detailed report.",
+        description: "Your calculation has been submitted. A detailed report has been sent to your email.",
       });
     },
     onError: (error: Error) => {
@@ -149,12 +155,7 @@ export function CalculatorForm() {
   });
 
   const onSubmit = (data: InsertSubmission) => {
-    const submissionData = {
-      ...data,
-      acceptedTerms: String(data.acceptedTerms),
-      gdprConsent: String(data.gdprConsent)
-    };
-    mutate(submissionData);
+    mutate(data);
   };
 
   const nextStep = () => setStep(step + 1);
