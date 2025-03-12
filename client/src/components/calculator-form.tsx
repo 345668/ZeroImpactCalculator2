@@ -533,15 +533,6 @@ export function CalculatorForm() {
                     Thank you for your interest in carbon credits. A detailed report has been sent to your email.
                     A Radical-Zero representative will contact you soon with more information about your potential carbon savings.
                   </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={startNewCalculation}
-                    className="px-6"
-                  >
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Start New Calculation
-                  </Button>
                 </div>
               )}
             </div>

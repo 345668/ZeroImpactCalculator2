@@ -43,7 +43,7 @@ export function MultiStepForm({
     <Card className="max-w-2xl mx-auto backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 shadow-xl" id="calculator">
       <CardContent className="pt-6">
         {/* Step counter */}
-        <motion.div 
+        <motion.div
           className="text-sm text-muted-foreground mb-4"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -56,8 +56,8 @@ export function MultiStepForm({
         <div className="mb-8">
           <div className="flex justify-between mb-2">
             {steps.map((step, index) => (
-              <motion.div 
-                key={index} 
+              <motion.div
+                key={index}
                 className="flex-1"
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
@@ -100,7 +100,7 @@ export function MultiStepForm({
 
         {/* Form content */}
         <AnimatePresence mode="wait">
-          <motion.div 
+          <motion.div
             key={currentStep}
             {...slideAnimation}
             className="mb-6"
@@ -113,38 +113,25 @@ export function MultiStepForm({
 
         {/* Navigation buttons */}
         <div className="flex justify-between mt-6 gap-4">
-          {currentStep === 5 && (
+          {currentStep === 5 && isSubmitting === false && (
             <div className="flex gap-4 w-full justify-center">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.1 }}
-              >
-                <Button
-                  type="button"
-                  onClick={onSendEmail}
-                  className="bg-calmBlue-600 hover:bg-calmBlue-700 px-6"
+              {isLastStep && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2 }}
                 >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send Report to Email
-                </Button>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Button
-                  type="button"
-                  onClick={onStartNew}
-                  variant="outline"
-                  className="px-6"
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Start New Calculation
-                </Button>
-              </motion.div>
+                  <Button
+                    type="button"
+                    onClick={onStartNew}
+                    variant="outline"
+                    className="px-6"
+                  >
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                    Start New Calculation
+                  </Button>
+                </motion.div>
+              )}
             </div>
           )}
 
@@ -178,22 +165,6 @@ export function MultiStepForm({
                     className="min-w-[100px] bg-calmBlue-600 hover:bg-calmBlue-700"
                   >
                     Continue
-                  </Button>
-                </motion.div>
-              )}
-
-              {isLastStep && (
-                <motion.div
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="ml-auto"
-                >
-                  <Button
-                    type="submit"
-                    className="min-w-[100px] bg-calmBlue-600 hover:bg-calmBlue-700"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Submitting..." : "Submit"}
                   </Button>
                 </motion.div>
               )}
