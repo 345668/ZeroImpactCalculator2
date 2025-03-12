@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 export function HeroSection() {
   return (
-    <div className="relative overflow-hidden bg-blue-500"> {/* Added solid blue background */}
+    <div className="relative overflow-hidden">
       <div className="container mx-auto px-4 py-24 relative">
         <div className="flex flex-col-reverse lg:flex-row items-center justify-between gap-12">
           <div className="flex-1 text-left">
@@ -42,7 +42,7 @@ export function HeroSection() {
               <Button
                 size="lg"
                 variant="secondary"
-                className="px-8 py-6 text-lg font-medium bg-white hover:bg-white/90 text-calmBlue-600 transition-all duration-300 group"
+                className="px-8 py-6 text-lg font-medium bg-white hover:bg-white/90 text-hero-blue transition-all duration-300 group"
                 onClick={() => {
                   document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' });
                 }}
