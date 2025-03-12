@@ -29,43 +29,52 @@ export class EmailService {
 
       console.log('Email content generated successfully');
 
+      // Structure the message exactly as shown in SendGrid documentation
       const msg = {
-        to: data.email,
+        personalizations: [
+          {
+            to: [{ email: data.email }],
+            subject: 'Your Carbon Savings Report from Radical Zero'
+          }
+        ],
         from: {
           email: SENDER_EMAIL,
           name: 'Radical Zero Carbon Credits'
         },
-        subject: 'Your Carbon Savings Report from Radical Zero',
-        html: emailContent,
-        personalizations: [
+        content: [
           {
-            to: [{ email: data.email }],
-            dynamic_template_data: {
-              firstName: data.firstName,
-              lastName: data.lastName,
-              co2Savings: data.co2Savings,
-              carbonCredits: data.carbonCredits,
-              financialValue: data.financialValue,
-              buildingSize: data.buildingSize,
-              currentConsumption: data.currentConsumption,
-              projectedConsumption: data.projectedConsumption,
-              heatingSystem: data.heatingSystem
-            }
+            type: "text/html",
+            value: emailContent
           }
         ],
         tracking_settings: {
           click_tracking: { enable: true },
           open_tracking: { enable: true }
-        },
-        mail_settings: {
-          sandbox_mode: { enable: false }
         }
       };
 
-      console.log('Attempting to send email to:', data.email);
+      console.log('Attempting to send email with payload:', JSON.stringify(msg));
 
       try {
-        await sgMail.send(msg);
+        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(msg)
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          console.error('SendGrid API error response:', {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorBody
+          });
+          throw new Error(`SendGrid API error: ${response.status} ${response.statusText}`);
+        }
+
         console.log('Email sent successfully to:', data.email);
         return { success: true, message: 'Email sent successfully' };
       } catch (sendError: any) {
