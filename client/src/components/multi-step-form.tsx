@@ -113,7 +113,7 @@ export function MultiStepForm({
 
         {/* Navigation buttons */}
         <div className="flex justify-between mt-6 gap-4">
-          {currentStep === 5 && (
+          {currentStep === steps.length && (
             <div className="flex gap-4 w-full justify-center">
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -148,7 +148,7 @@ export function MultiStepForm({
             </div>
           )}
 
-          {currentStep !== 5 && (
+          {currentStep !== steps.length && (
             <>
               {currentStep > 1 && (
                 <motion.div
@@ -181,22 +181,6 @@ export function MultiStepForm({
                   </Button>
                 </motion.div>
               )}
-
-              {isLastStep && (
-                <motion.div
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="ml-auto"
-                >
-                  <Button
-                    type="submit"
-                    className="min-w-[100px] bg-calmBlue-600 hover:bg-calmBlue-700"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "Submitting..." : "Submit"}
-                  </Button>
-                </motion.div>
-              )}
             </>
           )}
         </div>
@@ -225,13 +209,5 @@ export const formSteps: Step[] = [
   {
     title: "Review & Results",
     description: "Review your carbon savings calculation"
-  },
-  {
-    title: "Contact Details",
-    description: "Please provide your contact information to receive the report"
-  },
-  {
-    title: "Final Results",
-    description: "Review your complete analysis and submit"
   }
 ];
