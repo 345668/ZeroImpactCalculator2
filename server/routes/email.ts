@@ -2,6 +2,9 @@ import { Router } from "express";
 import { AIService } from "../services/ai.js";
 import { EmailService } from "../services/email.js";
 import { z } from "zod";
+import { submissions } from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import { db } from '../db.js';
 
 const router = Router();
 
@@ -25,6 +28,21 @@ router.post("/send-report", async (req, res) => {
     const data = emailRequestSchema.parse(req.body);
     console.log('Validation passed, parsed data:', JSON.stringify(data, null, 2));
 
+    // Check if we've already sent an email for this submission recently
+    const [existingSubmission] = await db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.email, data.email))
+      .orderBy(submissions.submittedAt, 'desc')
+      .limit(1);
+
+    if (existingSubmission?.emailSent) {
+      return res.json({ 
+        success: true, 
+        message: "Report was already sent to this email" 
+      });
+    }
+
     // Validate email address with SendGrid
     try {
       const validationResponse = await fetch('https://api.sendgrid.com/v3/validations/email', {
@@ -43,7 +61,7 @@ router.post("/send-report", async (req, res) => {
       const validationResult = await validationResponse.json();
       console.log('Email validation result:', validationResult);
 
-      if (!validationResult.result.verdict === 'Valid') {
+      if (validationResult.result?.verdict !== 'Valid') {
         throw new Error('Invalid email address');
       }
     } catch (validationError) {
@@ -52,20 +70,12 @@ router.post("/send-report", async (req, res) => {
     }
 
     // Send email with results
-    const result = await EmailService.sendCarbonReport({
-      firstName: data.firstName,
-      lastName: data.lastName,
-      email: data.email,
-      co2Savings: data.co2Savings,
-      carbonCredits: data.carbonCredits,
-      financialValue: data.financialValue,
-      buildingSize: data.buildingSize,
-      currentConsumption: data.currentConsumption,
-      projectedConsumption: data.projectedConsumption,
-      heatingSystem: data.heatingSystem
-    });
+    const result = await EmailService.sendCarbonReport(data);
 
-    res.json({ success: true, message: "Report sent successfully", ...result });
+    res.json({ 
+      success: true, 
+      message: "Report sent successfully"
+    });
   } catch (error) {
     console.error('Error in send-report route:', error);
 
