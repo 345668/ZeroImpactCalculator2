@@ -104,29 +104,45 @@ app.get("/api/health", (req, res) => {
       res.sendFile(path.join(distPath, 'index.html'));
     });
 
-    // Start server with improved logging and port fallback
-    let port = 5000; // Primary port for Replit workflow
-    log(`Attempting to start server on port ${port}...`);
+    // Start server with improved logging and port selection
+    // Check for PORT environment variable first, fallback to standard ports
+    const preferredPorts = [
+      parseInt(process.env.PORT || "0", 10),
+      5000,  // Primary port mapped to 80 in .replit
+      3001,  // Backup port explicitly configured in .replit
+      3000   // Common development port
+    ].filter(p => p > 0);
+    
+    log(`Available ports to try: ${preferredPorts.join(', ')}`);
 
-    const startServer = (attemptPort: number) => {
+    const startServer = (portIndex = 0) => {
+      if (portIndex >= preferredPorts.length) {
+        log('Error: All ports are in use. Please free up a port before starting the server.');
+        process.exit(1);
+        return;
+      }
+      
+      const attemptPort = preferredPorts[portIndex];
+      log(`Attempting to start server on port ${attemptPort}...`);
+      
       const server_instance = server.listen({
         port: attemptPort,
-        host: "0.0.0.0",
+        host: "0.0.0.0", // Listen on all interfaces to be accessible externally
       }, () => {
         log(`Server successfully started and listening on port ${attemptPort}`);
-        log(`Visit your app at: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+        // Use REPL_SLUG environment variable to determine the URL
+        if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+          log(`Visit your app at: https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co`);
+        } else {
+          log(`Server running at http://0.0.0.0:${attemptPort}`);
+        }
       });
 
       server_instance.on('error', (error: any) => {
         if (error.code === 'EADDRINUSE') {
-          log(`Port ${attemptPort} is already in use. Attempting to use fallback port...`);
-          // Try another port
-          if (attemptPort === 5000) {
-            startServer(3001);
-          } else {
-            log(`Error: Alternative port is also in use. Please free the ports before starting the server.`);
-            process.exit(1);
-          }
+          log(`Port ${attemptPort} is already in use. Trying next port...`);
+          // Try the next port in the list
+          startServer(portIndex + 1);
         } else {
           console.error('Server error:', error);
           process.exit(1);
@@ -134,7 +150,7 @@ app.get("/api/health", (req, res) => {
       });
     };
 
-    startServer(port);
+    startServer();
 
   } catch (error) {
     console.error('Fatal error during server startup:', error);
