@@ -465,7 +465,7 @@ export function CalculatorForm() {
                       </div>
                     </div>
                     <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
-                    <div className="text-3xl text-center font-bold mb-1">
+                    <div className="text-3xl text-center font-bold mb-1 blur-sm group-hover:blur-none transition-all duration-300">
                       {calculateCO2Savings({
                         currentConsumption: form.getValues("currentConsumption"),
                         projectedConsumption: form.getValues("projectedConsumption")
@@ -483,7 +483,7 @@ export function CalculatorForm() {
                       </div>
                     </div>
                     <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
-                    <div className="text-3xl text-center font-bold mb-1">
+                    <div className="text-3xl text-center font-bold mb-1 blur-sm group-hover:blur-none transition-all duration-300">
                       {calculateCarbonCredits({
                         currentConsumption: form.getValues("currentConsumption"),
                         projectedConsumption: form.getValues("projectedConsumption")
@@ -501,7 +501,7 @@ export function CalculatorForm() {
                       </div>
                     </div>
                     <h3 className="text-center font-semibold mb-1">Financial Value</h3>
-                    <div className="text-3xl text-center font-bold mb-1">
+                    <div className="text-3xl text-center font-bold mb-1 blur-sm group-hover:blur-none transition-all duration-300">
                       €{calculateFinancialValue({
                         currentConsumption: form.getValues("currentConsumption"),
                         projectedConsumption: form.getValues("projectedConsumption")
@@ -522,7 +522,7 @@ export function CalculatorForm() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Building Size</p>
-                      <p className="font-medium">{form.getValues("buildingSize")} m²</p>
+                      <p className="font-medium blur-sm group-hover:blur-none transition-all duration-300">{form.getValues("buildingSize")} m²</p>
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Heating System</p>
@@ -530,7 +530,7 @@ export function CalculatorForm() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
-                      <p className="font-medium">
+                      <p className="font-medium blur-sm group-hover:blur-none transition-all duration-300">
                         {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
                       </p>
                     </div>
