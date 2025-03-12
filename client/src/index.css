@@ -66,6 +66,9 @@
     --input: 210 30% 15%;
     --ring: 210 40% 70%;
   }
+}
+
+@layer base {
   * {
     @apply border-border;
   }
@@ -124,11 +127,6 @@
   .bg-gradient {
     @apply bg-gradient-to-br from-calmBlue-50 via-white to-radicalBlue-50;
   }
-}
-
-/* Add the specific hero blue color */
-.bg-hero-blue {
-  background-color: #1E88E5;
 }
 
 @keyframes fade-in {

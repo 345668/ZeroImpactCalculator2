@@ -5,6 +5,20 @@ import { motion } from "framer-motion";
 export function HeroSection() {
   return (
     <div className="relative overflow-hidden">
+      <motion.div 
+        className="absolute inset-0 bg-gradient-to-br from-calmBlue-600 via-calmBlue-500 to-calmBlue-400"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1 }}
+      >
+        <motion.div 
+          className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.2 }}
+          transition={{ duration: 1, delay: 0.5 }}
+        />
+      </motion.div>
+
       <div className="container mx-auto px-4 py-24 relative">
         <div className="flex flex-col-reverse lg:flex-row items-center justify-between gap-12">
           <div className="flex-1 text-left">
@@ -42,7 +56,7 @@ export function HeroSection() {
               <Button
                 size="lg"
                 variant="secondary"
-                className="px-8 py-6 text-lg font-medium bg-white hover:bg-white/90 text-hero-blue transition-all duration-300 group"
+                className="px-8 py-6 text-lg font-medium bg-white hover:bg-white/90 text-calmBlue-600 transition-all duration-300 group"
                 onClick={() => {
                   document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' });
                 }}
@@ -52,6 +66,7 @@ export function HeroSection() {
               </Button>
             </motion.div>
           </div>
+
           <motion.div 
             className="flex-1 flex justify-center lg:justify-end"
             initial={{ opacity: 0, scale: 0.8 }}
@@ -64,6 +79,12 @@ export function HeroSection() {
               transition={{ duration: 0.3 }}
             >
               <div className="w-full h-full min-h-[300px] flex items-center justify-center relative group">
+                <motion.div 
+                  className="absolute inset-0 bg-gradient-to-br from-calmBlue-500/20 to-radicalBlue-500/20 rounded-2xl"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5 }}
+                />
                 <motion.svg 
                   className="w-40 h-40 text-white opacity-90"
                   viewBox="0 0 24 24" 
