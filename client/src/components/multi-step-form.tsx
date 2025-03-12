@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Step {
   title: string;
@@ -18,6 +19,13 @@ interface MultiStepFormProps {
   isSubmitting?: boolean;
 }
 
+const slideAnimation = {
+  initial: { opacity: 0, x: 10 },
+  animate: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -10 },
+  transition: { type: "spring", stiffness: 100, damping: 20 }
+};
+
 export function MultiStepForm({
   currentStep,
   steps,
@@ -31,85 +39,122 @@ export function MultiStepForm({
     <Card className="max-w-2xl mx-auto backdrop-blur-sm bg-white/95 dark:bg-gray-900/95 shadow-xl" id="calculator">
       <CardContent className="pt-6">
         {/* Step counter */}
-        <div className="text-sm text-muted-foreground mb-4">
+        <motion.div 
+          className="text-sm text-muted-foreground mb-4"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
           Step {currentStep} of {steps.length}
-        </div>
+        </motion.div>
 
         {/* Progress indicator */}
         <div className="mb-8">
           <div className="flex justify-between mb-2">
             {steps.map((step, index) => (
-              <div key={index} className="flex-1">
+              <motion.div 
+                key={index} 
+                className="flex-1"
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: index * 0.1 }}
+              >
                 <div
                   className={`h-2 rounded-full transition-all duration-500 ${
                     index < currentStep
-                      ? 'bg-green-500'
+                      ? 'bg-calmBlue-500'
                       : index === currentStep
-                      ? 'bg-green-500'
+                      ? 'bg-calmBlue-500'
                       : 'bg-gray-200'
                   } mx-0.5`}
                 />
-              </div>
+              </motion.div>
             ))}
           </div>
           <div className="flex justify-between px-2">
             {steps.map((step, index) => (
-              <div
+              <motion.div
                 key={index}
                 className={`flex items-center justify-center ${
-                  index < currentStep ? 'text-green-500' : 'text-gray-400'
+                  index < currentStep ? 'text-calmBlue-500' : 'text-gray-400'
                 }`}
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: index * 0.1 }}
               >
                 {index < currentStep ? (
-                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                  <div className="w-6 h-6 rounded-full bg-calmBlue-100 flex items-center justify-center">
                     <Check className="w-4 h-4" />
                   </div>
                 ) : (
                   <div className="w-6 h-6" />
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
 
         {/* Form content */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">{steps[currentStep - 1].title}</h2>
-          <p className="text-muted-foreground mb-6">{steps[currentStep - 1].description}</p>
-          {children}
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div 
+            key={currentStep}
+            {...slideAnimation}
+            className="mb-6"
+          >
+            <h2 className="text-xl font-semibold mb-2">{steps[currentStep - 1].title}</h2>
+            <p className="text-muted-foreground mb-6">{steps[currentStep - 1].description}</p>
+            {children}
+          </motion.div>
+        </AnimatePresence>
 
         {/* Navigation buttons */}
         <div className="flex justify-between mt-6 gap-4">
           {currentStep > 1 && (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onPrevious}
-              className="min-w-[100px]"
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
             >
-              Back
-            </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onPrevious}
+                className="min-w-[100px]"
+              >
+                Back
+              </Button>
+            </motion.div>
           )}
 
           {!isLastStep && (
-            <Button
-              type="button"
-              onClick={onNext}
-              className="min-w-[100px] ml-auto bg-green-600 hover:bg-green-700"
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="ml-auto"
             >
-              Continue
-            </Button>
+              <Button
+                type="button"
+                onClick={onNext}
+                className="min-w-[100px] bg-calmBlue-600 hover:bg-calmBlue-700"
+              >
+                Continue
+              </Button>
+            </motion.div>
           )}
 
           {isLastStep && (
-            <Button
-              type="submit"
-              className="min-w-[100px] ml-auto bg-green-600 hover:bg-green-700"
-              disabled={isSubmitting}
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="ml-auto"
             >
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </Button>
+              <Button
+                type="submit"
+                className="min-w-[100px] bg-calmBlue-600 hover:bg-calmBlue-700"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Submitting..." : "Submit"}
+              </Button>
+            </motion.div>
           )}
         </div>
       </CardContent>
