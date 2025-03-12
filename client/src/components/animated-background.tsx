@@ -7,7 +7,7 @@ export function AnimatedBackground() {
       <motion.div
         className="absolute inset-0 opacity-30"
         style={{
-          background: 'linear-gradient(45deg, #2196F3, #03A9F4)',
+          background: 'linear-gradient(45deg, #2196F3, #2196F3)',
         }}
         animate={{
           y: [0, -20, 0],
@@ -23,7 +23,7 @@ export function AnimatedBackground() {
       <motion.div
         className="absolute inset-0 opacity-20"
         style={{
-          background: 'linear-gradient(45deg, #03A9F4, #29B6F6)',
+          background: 'linear-gradient(45deg, #2196F3, #2196F3)',
         }}
         animate={{
           y: [-20, 0, -20],
@@ -39,7 +39,7 @@ export function AnimatedBackground() {
       <motion.div
         className="absolute inset-0 opacity-10"
         style={{
-          background: 'linear-gradient(45deg, #29B6F6, #4FC3F7)',
+          background: 'linear-gradient(45deg, #2196F3, #2196F3)',
         }}
         animate={{
           scale: [1, 1.1, 1],
