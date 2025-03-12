@@ -1,0 +1,109 @@
+Real Time Email Address Validation - API Reference
+
+
+API Overview
+
+
+Email Address Validation is available to Email API Pro and Premier level accounts only. An Email Validation API key is required. See the Email Address Validation overview page for more information.
+
+The Email Address Validation API provides detailed information about the validity of email addresses, which helps you create and maintain contact lists and reduce bounce rates.
+
+This API provides two options:
+
+Real Time Email Address Validation: real time, detailed information on the validity of a single email address.
+
+Use this option to prompt users that they've provided an invalid email, prevent invalid emails from entering your database.
+Bulk Email Address Validation: Asynchronous, bulk validation of up to one million email addresses.
+
+Use this option to help you remove invalid emails from your existing lists.
+Operation overview
+
+
+POST/v3/validations/email
+Base url: https://api.sendgrid.com (The Twilio SendGrid v3 API)
+This endpoint allows you to validate an email address.
+
+Operation details
+
+
+Authentication
+
+
+API Key
+Headers
+
+
+Property nameTypeRequiredDescription
+Authorization
+string
+required
+Default:
+Bearer <<YOUR_API_KEY_HERE>>
+Request body
+
+
+Encoding type:application/json
+Schema
+Example
+Property nameTypeRequiredDescriptionChild properties
+email
+string
+required
+The email address that you want to validate.
+
+source
+string
+Optional
+A one-word classifier for where this validation originated.
+
+Responses
+
+
+200
+Schema
+Example
+Property nameTypeRequiredDescriptionChild properties
+result
+object
+Show child propertiesfor result
+Validate an email
+
+Node.js
+
+Report code block
+
+Copy code block
+const client = require("@sendgrid/client");
+client.setApiKey(process.env.SENDGRID_API_KEY);
+
+const data = {
+  email: "example@example.com",
+  source: "Newsletter",
+};
+
+const request = {
+  url: `/v3/validations/email`,
+  method: "POST",
+  body: data,
+};
+
+client
+  .request(request)
+  .then(([response, body]) => {
+    console.log(response.statusCode);
+    console.log(response.body);
+  })
+  .catch((error) => {
+    console.error(error);
+  });
+The optional source parameter can be used identify the source of the email address. if you choose to integrate with multiple email address captures and want to be able to compare their results.
+
+The source must be a string, only using alphanumeric characters and spaces. For example:
+
+
+Copy code block
+{
+  "email": "email@example.com",
+  "source": "Newsletter Signup"
+}
+There is a limit of 50 sources. Sources are automatically deleted once the last validation to use that source falls off the 30 day window. You can continue to make validations without a source if you've hit the limit.

@@ -25,6 +25,32 @@ router.post("/send-report", async (req, res) => {
     const data = emailRequestSchema.parse(req.body);
     console.log('Validation passed, parsed data:', JSON.stringify(data, null, 2));
 
+    // Validate email address with SendGrid
+    try {
+      const validationResponse = await fetch('https://api.sendgrid.com/v3/validations/email', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email: data.email })
+      });
+
+      if (!validationResponse.ok) {
+        throw new Error('Email validation failed');
+      }
+
+      const validationResult = await validationResponse.json();
+      console.log('Email validation result:', validationResult);
+
+      if (!validationResult.result.verdict === 'Valid') {
+        throw new Error('Invalid email address');
+      }
+    } catch (validationError) {
+      console.error('Email validation error:', validationError);
+      // Continue even if validation fails, as it might be a temporary issue
+    }
+
     // Send email with results
     const result = await EmailService.sendCarbonReport({
       firstName: data.firstName,

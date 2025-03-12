@@ -32,22 +32,18 @@ export class EmailService {
 
       // Structure the message exactly as shown in SendGrid documentation
       const msg = {
-        personalizations: [
-          {
-            to: [{ email: data.email }],
-            subject: 'Your Carbon Savings Report from Radical Zero'
-          }
-        ],
+        personalizations: [{
+          to: [{ email: data.email }],
+          subject: 'Your Carbon Savings Report from Radical Zero'
+        }],
         from: {
           email: SENDER_EMAIL,
           name: 'Radical Zero Carbon Credits'
         },
-        content: [
-          {
-            type: "text/html",
-            value: emailContent
-          }
-        ],
+        content: [{
+          type: "text/html",
+          value: emailContent
+        }],
         tracking_settings: {
           click_tracking: { enable: true },
           open_tracking: { enable: true }
@@ -57,23 +53,11 @@ export class EmailService {
       console.log('Attempting to send email with message:', JSON.stringify(msg, null, 2));
 
       try {
-        const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.SENDGRID_API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(msg)
-        });
+        const [response] = await sgMail.send(msg);
+        console.log('SendGrid response:', response.statusCode);
 
-        if (!response.ok) {
-          const errorBody = await response.text();
-          console.error('SendGrid API error response:', {
-            status: response.status,
-            statusText: response.statusText,
-            body: errorBody
-          });
-          throw new Error(`SendGrid API error: ${response.status} ${response.statusText}`);
+        if (response.statusCode !== 202) {
+          throw new Error(`SendGrid API error: ${response.statusCode}`);
         }
 
         console.log('Email sent successfully to:', data.email);
