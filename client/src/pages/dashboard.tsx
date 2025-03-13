@@ -41,6 +41,15 @@ const safeDiv = (a: number, b: number, decimals = 2): number => {
   return Number(result.toFixed(decimals));
 };
 
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    value: number | string | undefined;
+    name?: string;
+    dataKey?: string;
+  }>;
+}
+
 // Chart configuration
 const chartConfig = {
   theme: {
@@ -393,32 +402,30 @@ export default function Dashboard() {
                       <XAxis dataKey="date" />
                       <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
                       <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="rounded-lg border bg-background p-2 shadow-sm">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Total CO₂
-                                  </span>
-                                  <span className="font-bold text-muted-foreground">
-                                    {safeNumber(payload[0].value).toFixed(2)} tons
-                                  </span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Average
-                                  </span>
-                                  <span className="font-bold text-muted-foreground">
-                                    {safeNumber(payload[1].value).toFixed(2)} tons
-                                  </span>
-                                </div>
+                      <Tooltip content={({ active, payload }: ChartTooltipProps) => {
+                        if (!active || !payload?.length) return null;
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Total CO₂
+                                </span>
+                                <span className="font-bold text-muted-foreground">
+                                  {safeNumber(payload[0]?.value).toFixed(2)} tons
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Average
+                                </span>
+                                <span className="font-bold text-muted-foreground">
+                                  {safeNumber(payload[1]?.value).toFixed(2)} tons
+                                </span>
                               </div>
                             </div>
-                          );
-                        }
-                        return null;
+                          </div>
+                        );
                       }} />
                       <Line
                         yAxisId="left"
@@ -454,32 +461,30 @@ export default function Dashboard() {
                       <XAxis dataKey="date" />
                       <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
                       <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="rounded-lg border bg-background p-2 shadow-sm">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Projects
-                                  </span>
-                                  <span className="font-bold text-muted-foreground">
-                                    {safeNumber(payload[0].value)}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col">
-                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                    Avg. Size
-                                  </span>
-                                  <span className="font-bold text-muted-foreground">
-                                    {safeNumber(payload[1].value).toFixed(0)} m²
-                                  </span>
-                                </div>
+                      <Tooltip content={({ active, payload }: ChartTooltipProps) => {
+                        if (!active || !payload?.length) return null;
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Projects
+                                </span>
+                                <span className="font-bold text-muted-foreground">
+                                  {safeNumber(payload[0]?.value)}
+                                </span>
+                              </div>
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Avg. Size
+                                </span>
+                                <span className="font-bold text-muted-foreground">
+                                  {safeNumber(payload[1]?.value).toFixed(0)} m²
+                                </span>
                               </div>
                             </div>
-                          );
-                        }
-                        return null;
+                          </div>
+                        );
                       }} />
                       <Bar
                         yAxisId="left"
@@ -512,22 +517,20 @@ export default function Dashboard() {
                     <LineChart data={chartData}>
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="rounded-lg border bg-background p-2 shadow-sm">
-                              <div className="flex flex-col">
-                                <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                  CO₂ Savings
-                                </span>
-                                <span className="font-bold text-muted-foreground">
-                                  {safeNumber(payload[0].value).toFixed(2)} tons
-                                </span>
-                              </div>
+                      <Tooltip content={({ active, payload }: ChartTooltipProps) => {
+                        if (!active || !payload?.length) return null;
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-sm">
+                            <div className="flex flex-col">
+                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                CO₂ Savings
+                              </span>
+                              <span className="font-bold text-muted-foreground">
+                                {safeNumber(payload[0]?.value).toFixed(2)} tons
+                              </span>
                             </div>
-                          );
-                        }
-                        return null;
+                          </div>
+                        );
                       }} />
                       <Line
                         type="monotone"
@@ -552,22 +555,20 @@ export default function Dashboard() {
                     <BarChart data={chartData}>
                       <XAxis dataKey="date" />
                       <YAxis />
-                      <Tooltip content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="rounded-lg border bg-background p-2 shadow-sm">
-                              <div className="flex flex-col">
-                                <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                  Energy Reduction
-                                </span>
-                                <span className="font-bold text-muted-foreground">
-                                  {safeNumber(payload[0].value).toFixed(2)} kWh
-                                </span>
-                              </div>
+                      <Tooltip content={({ active, payload }: ChartTooltipProps) => {
+                        if (!active || !payload?.length) return null;
+                        return (
+                          <div className="rounded-lg border bg-background p-2 shadow-sm">
+                            <div className="flex flex-col">
+                              <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                Energy Reduction
+                              </span>
+                              <span className="font-bold text-muted-foreground">
+                                {safeNumber(payload[0]?.value).toFixed(2)} kWh
+                              </span>
                             </div>
-                          );
-                        }
-                        return null;
+                          </div>
+                        );
                       }} />
                       <Bar
                         dataKey="energyReduction"
