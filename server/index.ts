@@ -45,20 +45,22 @@ app.get("/api/health", (req, res) => {
 
 (async () => {
   try {
-    log('Starting server initialization...');
+    console.log('=== Starting server initialization (Process ID:', process.pid, ') ===');
+    console.log('Environment:', app.get('env'));
+    console.log('Node Version:', process.version);
 
     // Test database connection first
-    log('Testing database connection...');
+    console.log('Testing database connection...');
     const dbConnected = await testDatabaseConnection();
     if (!dbConnected) {
       throw new Error('Failed to connect to database');
     }
-    log('Database connection successful');
+    console.log('✓ Database connection successful');
 
     // Register routes and get http server
-    log('Registering routes...');
+    console.log('Registering routes...');
     const server = await registerRoutes(app);
-    log('Routes registered successfully');
+    console.log('✓ Routes registered successfully');
 
     // Global error handler
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
@@ -70,26 +72,29 @@ app.get("/api/health", (req, res) => {
 
     // Setup environment-specific middleware
     const env = app.get("env");
-    log(`Setting up server for ${env} environment...`);
+    console.log(`Setting up server for ${env} environment...`);
 
     if (env === "development") {
-      log('Setting up Vite for development...');
+      console.log('Setting up Vite for development...');
       await setupVite(app, server);
-      log('Vite setup complete');
+      console.log('✓ Vite setup complete');
     }
 
     // Start server on port 5000
     const PORT = 5000;
-    log(`Starting server on port ${PORT}...`);
+    console.log(`Starting server on port ${PORT}...`);
 
     server.listen({
       port: PORT,
       host: "0.0.0.0",
     }, () => {
-      log(`Server started successfully on port ${PORT}`);
+      console.log(`=== Server started successfully ===`);
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`http://0.0.0.0:${PORT}`);
+      console.log('===============================');
     }).on('error', (error: any) => {
       if (error.code === 'EADDRINUSE') {
-        console.error(`Port ${PORT} is already in use. Please ensure no other application is using this port.`);
+        console.error(`Error: Port ${PORT} is already in use. Please ensure no other application is using this port.`);
         process.exit(1);
       } else {
         console.error('Fatal error during server startup:', error);
@@ -98,7 +103,8 @@ app.get("/api/health", (req, res) => {
     });
 
   } catch (error) {
-    console.error('Fatal error during server startup:', error);
+    console.error('=== Fatal error during server startup ===');
+    console.error(error);
     process.exit(1);
   }
 })();
