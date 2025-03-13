@@ -152,18 +152,6 @@ export function CalculatorForm() {
         title: "Success!",
         description: "Your calculation has been submitted. A detailed report will be sent to your email.",
       });
-
-      // Navigate to results page with submission data
-      const result = {
-        ...form.getValues(),
-        co2Savings: data.co2Savings,
-        carbonCredits: data.carbonCredits,
-        financialValue: data.financialValue,
-      };
-
-      // Use history.pushState to pass data
-      window.history.pushState({ result }, '', '/results');
-      setLocation('/results');
     },
     onError: (error: Error) => {
       console.error('Form submission error:', error);
@@ -191,6 +179,7 @@ export function CalculatorForm() {
     setStep(1);
     setIsSubmitSuccess(false);
   };
+
   const handleSendEmail = async () => {
     if (isEmailSent) return;
 
@@ -258,7 +247,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 5}
+          isLastStep={step === formSteps.length}
           isSubmitting={isPending}
           onStartNew={startNewCalculation}
           onSendEmail={handleSendEmail}
@@ -783,6 +772,16 @@ export function CalculatorForm() {
                           </motion.div>
                         )}
                       </AnimatePresence>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={startNewCalculation}
+                      className="px-6"
+                    >
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                      Start New Calculation
                     </Button>
                   </div>
                 </div>
