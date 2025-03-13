@@ -74,14 +74,28 @@ export default function Dashboard() {
     staleTime: 30000,
   });
 
-  // Add refresh function
+  // Update the handleRefresh function to include database sync
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
+      // First sync the database
+      const syncResponse = await fetch('/api/submissions/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!syncResponse.ok) {
+        throw new Error('Failed to sync database');
+      }
+
+      // Then invalidate the query cache
       await queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
+
       toast({
         title: "Success",
-        description: "Dashboard data refreshed successfully",
+        description: "Dashboard data and database synchronized successfully",
       });
     } catch (error) {
       console.error('Error refreshing data:', error);

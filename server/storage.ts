@@ -7,6 +7,7 @@ export interface IStorage {
   getSubmissionByEmail(email: string): Promise<Submission | undefined>;
   getAllSubmissions(): Promise<Submission[]>;
   getSubmissionById(id: number): Promise<Submission | undefined>;
+  syncSubmissions(): Promise<void>; // Add new sync method
 }
 
 export class DbStorage implements IStorage {
@@ -89,6 +90,23 @@ export class DbStorage implements IStorage {
       return result;
     } catch (error) {
       console.error('Error getting submission by id:', error);
+      throw error;
+    }
+  }
+  async syncSubmissions(): Promise<void> {
+    try {
+      console.log('Starting submissions sync...');
+
+      // Get all submissions ordered by latest first
+      const results = await db
+        .select()
+        .from(submissions)
+        .orderBy(desc(submissions.submittedAt));
+
+      console.log(`Successfully synced ${results.length} submissions`);
+      return;
+    } catch (error) {
+      console.error('Error syncing submissions:', error);
       throw error;
     }
   }

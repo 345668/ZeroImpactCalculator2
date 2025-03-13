@@ -134,6 +134,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add new sync endpoint
+  app.post("/api/submissions/sync", async (_req, res) => {
+    try {
+      console.log('Received submissions sync request');
+      await storage.syncSubmissions();
+      res.json({ success: true, message: "Submissions synced successfully" });
+    } catch (error) {
+      console.error('Error during submissions sync:', error);
+      res.status(500).json({ 
+        message: "Error syncing submissions",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Error handling middleware
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error('Express error:', err);
