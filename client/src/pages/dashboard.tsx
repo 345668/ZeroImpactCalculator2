@@ -18,6 +18,28 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 
+// Add type safety for metrics
+interface Metrics {
+  totalCO2Savings: number;
+  totalCarbonCredits: number;
+  totalFinancialValue: number;
+  totalBuildings: number;
+  averageReduction: number;
+  totalEnergyReduction: number;
+}
+
+// Add safety functions
+const safeNumber = (value: any): number => {
+  const num = Number(value);
+  return isNaN(num) ? 0 : num;
+};
+
+const safeDiv = (a: number, b: number, decimals = 2): number => {
+  if (b === 0) return 0;
+  const result = a / b;
+  return Number(result.toFixed(decimals));
+};
+
 // Chart configuration
 const chartConfig = {
   theme: {
@@ -42,9 +64,9 @@ export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [timeRange, setTimeRange] = useState("month"); // Default to month view
+  const [timeRange, setTimeRange] = useState("month");
 
-  // Enhanced query with error handling
+  // Enhanced query with error handling and type safety
   const { data: submissions = [], isLoading, error } = useQuery<Submission[]>({
     queryKey: ["/api/submissions"],
     retry: 3,
@@ -72,82 +94,41 @@ export default function Dashboard() {
     }
   };
 
-  // Filter submissions for last 30 days
+  // Filter submissions for last 30 days with safety
   const last30DaysSubmissions = submissions.filter(submission => {
-    const submissionDate = new Date(submission.submittedAt || "");
+    if (!submission.submittedAt) return false;
+    const submissionDate = new Date(submission.submittedAt);
+    if (isNaN(submissionDate.getTime())) return false;
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return submissionDate >= thirtyDaysAgo;
   });
 
-  // Calculate metrics for CO2 savings
+  // Calculate metrics with safety
   const co2Metrics = last30DaysSubmissions.reduce((acc, submission) => {
-    const co2Savings = Number(submission.co2Savings);
+    const co2Savings = safeNumber(submission.co2Savings);
     return {
       totalCO2: acc.totalCO2 + co2Savings,
       count: acc.count + 1
     };
   }, { totalCO2: 0, count: 0 });
 
-  // Calculate metrics for projects
+  // Calculate metrics for projects with safety
   const projectMetrics = last30DaysSubmissions.reduce((acc, submission) => {
-    const buildingSize = Number(submission.buildingSize);
+    const buildingSize = safeNumber(submission.buildingSize);
     return {
       totalSize: acc.totalSize + buildingSize,
       count: acc.count + 1
     };
   }, { totalSize: 0, count: 0 });
 
-  // Prepare data for CO2 savings graph (daily aggregation)
-  const co2GraphData = last30DaysSubmissions.reduce((acc: any[], submission) => {
-    const date = new Date(submission.submittedAt || "").toLocaleDateString();
-    const existingDay = acc.find(day => day.date === date);
-
-    if (existingDay) {
-      existingDay.totalCO2 += Number(submission.co2Savings);
-      existingDay.projectCount += 1;
-    } else {
-      acc.push({
-        date,
-        totalCO2: Number(submission.co2Savings),
-        projectCount: 1,
-        averageCO2: Number(submission.co2Savings)
-      });
-    }
-
-    return acc;
-  }, []).map(day => ({
-    ...day,
-    averageCO2: day.totalCO2 / day.projectCount
-  }));
-
-  // Prepare data for projects graph
-  const projectGraphData = last30DaysSubmissions.reduce((acc: any[], submission) => {
-    const date = new Date(submission.submittedAt || "").toLocaleDateString();
-    const existingDay = acc.find(day => day.date === date);
-
-    if (existingDay) {
-      existingDay.totalSize += Number(submission.buildingSize);
-      existingDay.projectCount += 1;
-    } else {
-      acc.push({
-        date,
-        totalSize: Number(submission.buildingSize),
-        projectCount: 1,
-        averageSize: Number(submission.buildingSize)
-      });
-    }
-
-    return acc;
-  }, []).map(day => ({
-    ...day,
-    averageSize: day.totalSize / day.projectCount
-  }));
-
-  // Filter submissions based on time range
+  // Filter submissions based on time range with safety
   const filteredSubmissions = submissions.filter(submission => {
+    if (!submission.submittedAt) return false;
+    const date = new Date(submission.submittedAt);
+    if (isNaN(date.getTime())) return false;
+
     if (timeRange === "all") return true;
-    const date = new Date(submission.submittedAt || "");
     const now = new Date();
     switch (timeRange) {
       case "week":
@@ -157,30 +138,24 @@ export default function Dashboard() {
       case "year":
         return date >= new Date(now.setFullYear(now.getFullYear() - 1));
       default:
-        return true;
+        return false;
     }
   });
 
-  // Calculate metrics
-  const metrics = filteredSubmissions.reduce((acc: {
-    totalCO2Savings: number;
-    totalCarbonCredits: number;
-    totalFinancialValue: number;
-    totalBuildings: number;
-    averageReduction: number;
-    totalEnergyReduction: number;
-  }, submission) => {
-    const currentConsumption = Number(submission.currentConsumption);
-    const projectedConsumption = Number(submission.projectedConsumption);
-    const reduction = ((currentConsumption - projectedConsumption) / currentConsumption) * 100;
+  // Calculate metrics with safety
+  const metrics: Metrics = filteredSubmissions.reduce((acc: Metrics, submission) => {
+    const currentConsumption = safeNumber(submission.currentConsumption);
+    const projectedConsumption = safeNumber(submission.projectedConsumption);
+    const energyReduction = currentConsumption - projectedConsumption;
+    const reductionPercentage = currentConsumption > 0 ? (energyReduction / currentConsumption) * 100 : 0;
 
     return {
-      totalCO2Savings: acc.totalCO2Savings + Number(submission.co2Savings),
-      totalCarbonCredits: acc.totalCarbonCredits + Number(submission.carbonCredits),
-      totalFinancialValue: acc.totalFinancialValue + Number(submission.financialValue),
+      totalCO2Savings: acc.totalCO2Savings + safeNumber(submission.co2Savings),
+      totalCarbonCredits: acc.totalCarbonCredits + safeNumber(submission.carbonCredits),
+      totalFinancialValue: acc.totalFinancialValue + safeNumber(submission.financialValue),
       totalBuildings: acc.totalBuildings + 1,
-      averageReduction: acc.averageReduction + reduction,
-      totalEnergyReduction: acc.totalEnergyReduction + (currentConsumption - projectedConsumption),
+      averageReduction: acc.averageReduction + reductionPercentage,
+      totalEnergyReduction: acc.totalEnergyReduction + energyReduction,
     };
   }, {
     totalCO2Savings: 0,
@@ -191,19 +166,71 @@ export default function Dashboard() {
     totalEnergyReduction: 0,
   });
 
-  // Adjust average reduction
-  metrics.averageReduction = metrics.averageReduction / (filteredSubmissions.length || 1);
+  // Adjust average reduction safely
+  metrics.averageReduction = safeDiv(metrics.averageReduction, filteredSubmissions.length);
 
-  // Chart data
+  // Prepare chart data with safety
   const chartData = filteredSubmissions
-    .sort((a, b) => (a.submittedAt || "").localeCompare(b.submittedAt || ""))
+    .filter(submission => submission.submittedAt)
+    .sort((a, b) => new Date(a.submittedAt || 0).getTime() - new Date(b.submittedAt || 0).getTime())
     .map(submission => ({
       date: submission.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : "",
-      co2Savings: Number(submission.co2Savings),
-      financialValue: Number(submission.financialValue),
-      carbonCredits: Number(submission.carbonCredits),
-      energyReduction: Number(submission.currentConsumption) - Number(submission.projectedConsumption),
+      co2Savings: safeNumber(submission.co2Savings),
+      financialValue: safeNumber(submission.financialValue),
+      carbonCredits: safeNumber(submission.carbonCredits),
+      energyReduction: safeNumber(submission.currentConsumption) - safeNumber(submission.projectedConsumption),
     }));
+
+  // Prepare data for CO2 savings graph (daily aggregation)
+  const co2GraphData = last30DaysSubmissions.reduce((acc: any[], submission) => {
+    const date = new Date(submission.submittedAt || "").toLocaleDateString();
+    const existingDay = acc.find(day => day.date === date);
+
+    const totalCO2 = safeNumber(submission.co2Savings);
+
+    if (existingDay) {
+      existingDay.totalCO2 += totalCO2;
+      existingDay.projectCount += 1;
+    } else {
+      acc.push({
+        date,
+        totalCO2: totalCO2,
+        projectCount: 1,
+        averageCO2: totalCO2
+      });
+    }
+
+    return acc;
+  }, []).map(day => ({
+    ...day,
+    averageCO2: safeDiv(day.totalCO2, day.projectCount)
+  }));
+
+  // Prepare data for projects graph
+  const projectGraphData = last30DaysSubmissions.reduce((acc: any[], submission) => {
+    const date = new Date(submission.submittedAt || "").toLocaleDateString();
+    const existingDay = acc.find(day => day.date === date);
+
+    const totalSize = safeNumber(submission.buildingSize);
+
+    if (existingDay) {
+      existingDay.totalSize += totalSize;
+      existingDay.projectCount += 1;
+    } else {
+      acc.push({
+        date,
+        totalSize: totalSize,
+        projectCount: 1,
+        averageSize: totalSize
+      });
+    }
+
+    return acc;
+  }, []).map(day => ({
+    ...day,
+    averageSize: safeDiv(day.totalSize, day.projectCount)
+  }));
+
 
   return (
     <div className="p-6 space-y-6">
@@ -283,7 +310,7 @@ export default function Dashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">{co2Metrics.totalCO2.toFixed(2)} tons</div>
                 <p className="text-xs text-muted-foreground">
-                  Average: {(co2Metrics.totalCO2 / (co2Metrics.count || 1)).toFixed(2)} tons per project
+                  Average: {safeDiv(co2Metrics.totalCO2, co2Metrics.count)} tons per project
                 </p>
               </CardContent>
             </Card>
@@ -295,7 +322,7 @@ export default function Dashboard() {
               <CardContent>
                 <div className="text-2xl font-bold">{projectMetrics.count}</div>
                 <p className="text-xs text-muted-foreground">
-                  Average Size: {(projectMetrics.totalSize / (projectMetrics.count || 1)).toFixed(0)} m²
+                  Average Size: {safeDiv(projectMetrics.totalSize, projectMetrics.count, 0)} m²
                 </p>
               </CardContent>
             </Card>
@@ -351,7 +378,7 @@ export default function Dashboard() {
                                     Total CO₂
                                   </span>
                                   <span className="font-bold text-muted-foreground">
-                                    {payload[0].value?.toFixed(2)} tons
+                                    {safeNumber(payload[0].value).toFixed(2)} tons
                                   </span>
                                 </div>
                                 <div className="flex flex-col">
@@ -359,7 +386,7 @@ export default function Dashboard() {
                                     Average
                                   </span>
                                   <span className="font-bold text-muted-foreground">
-                                    {payload[1].value?.toFixed(2)} tons
+                                    {safeNumber(payload[1].value).toFixed(2)} tons
                                   </span>
                                 </div>
                               </div>
@@ -412,7 +439,7 @@ export default function Dashboard() {
                                     Projects
                                   </span>
                                   <span className="font-bold text-muted-foreground">
-                                    {payload[0].value}
+                                    {safeNumber(payload[0].value)}
                                   </span>
                                 </div>
                                 <div className="flex flex-col">
@@ -420,7 +447,7 @@ export default function Dashboard() {
                                     Avg. Size
                                   </span>
                                   <span className="font-bold text-muted-foreground">
-                                    {payload[1].value?.toFixed(0)} m²
+                                    {safeNumber(payload[1].value).toFixed(0)} m²
                                   </span>
                                 </div>
                               </div>
@@ -519,13 +546,13 @@ export default function Dashboard() {
                               <span className="text-xs text-muted-foreground">No consultant info</span>
                             )}
                           </TableCell>
-                          <TableCell>{submission.buildingSize} m²</TableCell>
+                          <TableCell>{safeNumber(submission.buildingSize)} m²</TableCell>
                           <TableCell>
-                            {(((Number(submission.currentConsumption) - Number(submission.projectedConsumption)) / Number(submission.currentConsumption)) * 100).toFixed(1)}%
+                            {safeDiv(safeNumber(submission.currentConsumption) - safeNumber(submission.projectedConsumption), safeNumber(submission.currentConsumption), 1)}%
                           </TableCell>
-                          <TableCell>{Number(submission.co2Savings).toFixed(2)} tons</TableCell>
-                          <TableCell>{Number(submission.carbonCredits).toFixed(2)}</TableCell>
-                          <TableCell>€{Number(submission.financialValue).toFixed(2)}</TableCell>
+                          <TableCell>{safeNumber(submission.co2Savings).toFixed(2)} tons</TableCell>
+                          <TableCell>{safeNumber(submission.carbonCredits).toFixed(2)}</TableCell>
+                          <TableCell>€{safeNumber(submission.financialValue).toFixed(2)}</TableCell>
                           <TableCell>
                             <div className="space-y-2">
                               <Button
