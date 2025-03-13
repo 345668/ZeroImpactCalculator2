@@ -249,7 +249,6 @@ export function CalculatorForm() {
           onPrevious={previousStep}
           isLastStep={step === formSteps.length}
           isSubmitting={isPending}
-          onStartNew={startNewCalculation}
           onSendEmail={handleSendEmail}
         >
           {step === 1 && (
