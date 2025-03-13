@@ -772,16 +772,6 @@ export function CalculatorForm() {
                         )}
                       </AnimatePresence>
                     </Button>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={startNewCalculation}
-                      className="px-6"
-                    >
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Start New Calculation
-                    </Button>
                   </div>
                 </div>
               )}
