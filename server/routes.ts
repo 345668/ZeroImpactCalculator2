@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage.js";
-import { insertSubmissionSchema } from "@shared/schema.js";
+import { insertSubmissionSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor.js";
 import { EmailService } from "./services/email.js";
@@ -102,22 +102,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GET all submissions endpoint
-  app.get("/api/submissions", async (req, res) => {
-    try {
-      console.log('Fetching all submissions from database');
-      const submissions = await storage.getAllSubmissions();
-      console.log(`Found ${submissions.length} submissions`);
-      res.json(submissions);
-    } catch (error) {
-      console.error('Error fetching submissions:', error);
-      res.status(500).json({ 
-        message: "Error fetching submissions",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
   // Calculate endpoint
   app.post("/api/calculate", async (req, res) => {
     try {
@@ -170,39 +154,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error during submissions sync:', error);
       res.status(500).json({ 
         message: "Error syncing submissions",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // Update the send-report endpoint
-  app.post("/api/send-report", async (req, res) => {
-    try {
-      console.log('Received report email request:', req.body);
-
-      const { submissionId } = req.body;
-      if (!submissionId) {
-        return res.status(400).json({ error: "Submission ID is required" });
-      }
-
-      // Get the submission
-      const submission = await storage.getSubmissionById(submissionId);
-      if (!submission) {
-        return res.status(404).json({ error: "Submission not found" });
-      }
-
-      // Send the email
-      await EmailService.sendCarbonReport(submission);
-
-      // Update email status in database
-      await storage.updateEmailStatus(submissionId);
-
-      console.log('Report sent and status updated for submission:', submissionId);
-      res.json({ success: true, message: "Report sent successfully" });
-    } catch (error) {
-      console.error('Error sending report:', error);
-      res.status(500).json({ 
-        message: "Error sending report",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }

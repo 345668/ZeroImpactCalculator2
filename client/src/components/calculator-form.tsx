@@ -118,21 +118,12 @@ export function CalculatorForm() {
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: InsertSubmission) => {
       console.log('Submitting form data:', data);
-      const submissionData = {
-        ...data,
-        acceptedTerms: String(data.acceptedTerms),
-        gdprConsent: String(data.gdprConsent),
-        co2Savings: calculateCO2Savings(data),
-        carbonCredits: calculateCarbonCredits(data),
-        financialValue: calculateFinancialValue(data),
-      };
-
       const response = await fetch("/api/calculate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(submissionData),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -149,12 +140,24 @@ export function CalculatorForm() {
         title: "Success!",
         description: "Your calculation has been submitted. A detailed report will be sent to your email.",
       });
+
+      // Navigate to results page with submission data
+      const result = {
+        ...form.getValues(),
+        co2Savings: data.co2Savings,
+        carbonCredits: data.carbonCredits,
+        financialValue: data.financialValue,
+      };
+
+      // Use history.pushState to pass data
+      window.history.pushState({ result }, '', '/results');
+      setLocation('/results');
     },
     onError: (error: Error) => {
       console.error('Form submission error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to submit calculation",
         variant: "destructive",
       });
     },
