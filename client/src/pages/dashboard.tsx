@@ -4,7 +4,8 @@ import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Tooltip } from "recharts";
-import { BarChart2, Building2, Coins, Factory, FileDown, Calendar, RefreshCw, Loader2 } from "lucide-react";
+import { BarChart2, Building2, Coins, Factory, FileDown, Calendar, RefreshCw, Loader2, Home } from "lucide-react";
+import { Link } from "wouter";
 import type { Submission } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -244,6 +245,16 @@ export default function Dashboard() {
           Analytics Dashboard
         </motion.h1>
         <div className="flex gap-4">
+          <Link href="/">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex items-center gap-2 transition-all duration-200"
+            >
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+          </Link>
           <Button
             variant="outline"
             size="sm"
