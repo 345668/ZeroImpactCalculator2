@@ -6,9 +6,10 @@ import { insertSubmissionSchema } from "@shared/schema.js";
 import { fromZodError } from "zod-validation-error";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor.js";
 import { EmailService } from "./services/email.js";
+import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage.js";
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
-import authRouter from "./routes/auth.js"; // Add authentication routes
+import authRouter from "./routes/auth.js";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -24,8 +25,44 @@ const upload = multer({
   }
 });
 
+// Document processing function
+async function processDocument(file: Express.Multer.File) {
+  try {
+    console.log('Starting document processing...');
+
+    // First upload to Azure Blob Storage
+    console.log('Uploading to Azure Blob Storage...');
+    const fileUrl = await uploadFileToBlobStorage(file);
+    console.log('File uploaded successfully, URL:', fileUrl);
+
+    // Extract text from document
+    const extractedText = await extractTextFromDocument(file);
+    console.log('Text extracted successfully');
+
+    // Process with Mistral
+    const processedData = await processWithMistral(extractedText);
+    console.log('Mistral processing complete:', processedData);
+
+    return {
+      ...processedData,
+      fileUrl // Include the Azure Blob Storage URL
+    };
+  } catch (error) {
+    console.error('Document processing error:', error);
+    throw error;
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
+
+  // Ensure Azure container exists
+  try {
+    await ensureContainerExists();
+    console.log('Azure container setup complete');
+  } catch (error) {
+    console.error('Failed to setup Azure container:', error);
+  }
 
   // Add CORS headers middleware
   app.use((req, res, next) => {
@@ -36,23 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register API routes
   app.use('/api/ai', aiRouter);
   app.use('/api/email', emailRouter);
-  app.use('/api/auth', authRouter); // Add authentication routes
-
-  // GET all submissions endpoint
-  app.get("/api/submissions", async (req, res) => {
-    try {
-      console.log('Fetching all submissions from database');
-      const submissions = await storage.getAllSubmissions();
-      console.log(`Found ${submissions.length} submissions`);
-      res.json(submissions);
-    } catch (error) {
-      console.error('Error fetching submissions:', error);
-      res.status(500).json({ 
-        message: "Error fetching submissions",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
+  app.use('/api/auth', authRouter);
 
   // Document upload endpoint
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
@@ -76,6 +97,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Document processing error:', error);
       res.status(500).json({
         message: "Error processing document",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // GET all submissions endpoint
+  app.get("/api/submissions", async (req, res) => {
+    try {
+      console.log('Fetching all submissions from database');
+      const submissions = await storage.getAllSubmissions();
+      console.log(`Found ${submissions.length} submissions`);
+      res.json(submissions);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      res.status(500).json({ 
+        message: "Error fetching submissions",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
