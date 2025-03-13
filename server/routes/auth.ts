@@ -25,8 +25,11 @@ router.post("/signup", async (req, res) => {
       return res.status(400).json({ message: "Username already taken" });
     }
 
-    // Create new user
-    const user = await storage.createUser(validatedData);
+    // Create new user with admin role
+    const user = await storage.createUser({
+      ...validatedData,
+      role: "admin" // Force admin role for all users
+    });
 
     // Return success response without sensitive data
     res.status(201).json({
@@ -76,6 +79,9 @@ router.post("/login", async (req, res) => {
     if (!isValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
+
+    // Override user role to admin for all successful logins
+    user.role = "admin";
 
     // Return success response without sensitive data
     res.json({
