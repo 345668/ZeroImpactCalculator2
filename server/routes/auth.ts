@@ -1,7 +1,7 @@
 import express from "express";
 import { fromZodError } from "zod-validation-error";
-import { insertUserSchema } from "@shared/schema.js";
-import { storage } from "../storage.js";
+import { insertUserSchema } from "@shared/schema";
+import { storage } from "../storage";
 
 const router = express.Router();
 
@@ -9,10 +9,10 @@ const router = express.Router();
 router.post("/signup", async (req, res) => {
   try {
     console.log('Received signup request');
-    
+
     // Validate request body against schema
     const validatedData = insertUserSchema.parse(req.body);
-    
+
     // Check if email already exists
     const existingEmail = await storage.getUserByEmail(validatedData.email);
     if (existingEmail) {
@@ -27,7 +27,7 @@ router.post("/signup", async (req, res) => {
 
     // Create new user
     const user = await storage.createUser(validatedData);
-    
+
     // Return success response without sensitive data
     res.status(201).json({
       message: "User registered successfully",

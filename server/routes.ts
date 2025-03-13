@@ -8,7 +8,7 @@ import { extractTextFromDocument, processWithMistral } from "./utils/document-pr
 import { EmailService } from "./services/email.js";
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
-import authRouter from "./routes/auth.js";
+import authRouter from "./routes/auth.js"; // Add authentication routes
 
 // Configure multer for file uploads
 const upload = multer({
@@ -23,20 +23,6 @@ const upload = multer({
     }
   }
 });
-
-async function processDocument(file: Express.Multer.File) {
-  try {
-    console.log('Starting document processing...');
-    const extractedText = await extractTextFromDocument(file);
-    console.log('Text extracted successfully');
-    const processedData = await processWithMistral(extractedText);
-    console.log('Mistral processing complete:', processedData);
-    return processedData;
-  } catch (error) {
-    console.error('Document processing error:', error);
-    throw error;
-  }
-}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
