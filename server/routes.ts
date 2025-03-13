@@ -64,9 +64,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.error('Failed to setup Azure container:', error);
   }
 
-  // Add CORS headers middleware
+  // Add security headers middleware
   app.use((req, res, next) => {
-    res.header('Content-Type', 'application/json');
+    // Security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.replit.app https://api.openai.com;");
+
+    // Cache control for static assets
+    if (req.url.match(/\.(css|js|jpg|jpeg|png|gif|ico|svg)$/)) {
+      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
+    } else {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+
     next();
   });
 

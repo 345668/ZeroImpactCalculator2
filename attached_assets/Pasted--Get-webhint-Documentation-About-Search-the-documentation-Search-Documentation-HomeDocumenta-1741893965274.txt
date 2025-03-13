@@ -1,0 +1,87 @@
+
+Get webhint
+Documentation
+About
+Search the documentation
+Search Documentation
+
+HomeDocumentation  User guide Disallowed HTTP headers
+Disallowed HTTP headers
+Edit
+no-disallowed-headers warns against responding with certain HTTP headers.
+
+Why is this important?
+There are certain HTTP headers that should not be sent:
+
+Headers that are often set by servers, frameworks, and server-side languages (e.g.: ASP.NET, PHP), that by default have values that contain information about the technology that set them: its name, version number, etc.
+Sending these types of HTTP headers:
+
+does not provide any value to the user experience
+contributes to header bloat
+exposes information to potential attackers about the technology stack being used
+Uncommon or esoteric headers that have limited support, require a lot of knowledge to use correctly, and can create more problems than they solve.
+
+One example here is the Public-Key-Pins header. It has limited support and usage, it’s being deprecated (along with the related Public-Key-Pins-Report-Only header) and can easily create a lot of problems if not done correctly.
+
+What does the hint check?
+By default, the hint checks if responses include one of the following HTTP headers:
+
+Expires
+Host
+P3P
+Pragma
+Public-Key-Pins
+Public-Key-Pins-Report-Only
+X-AspNet-Version
+X-AspNetMvc-version
+X-Frame-Options
+X-Powered-By
+X-Runtime
+X-Version
+or the Server header with a value that provides a lot of information and is not limited to the server name.
+
+Examples that trigger the hint
+HTTP/... 200 OK
+
+...
+Server: Apache/2.2.27 (Unix) mod_ssl/2.2.27 OpenSSL/1.0.1e-fips mod_bwlimited/1.4
+X-Powered-By: PHP/5.3.28
+HTTP/... 200 OK
+
+...
+Public-Key-Pins-Report-Only:
+  pin-sha256="MoScTAZWKaASuYWhhneDttWpY3oBAkE3h2+soZS7sWs=";
+  pin-sha256="C5HTzCzM3elUxkcjR2S5P4hhyBNf6lHkmjAHKhpGPWE=";
+  includeSubDomains;
+  report-uri="https://www.example.com/hpkp-report"
+Examples that pass the hint
+HTTP/... 200 OK
+
+...
+Server: apache
+HTTP/... 200 OK
+
+...
+How to configure the server to pass this hint
+How to configure Apache
+How to configure IIS
+Can the hint be configured?
+Yes, you can use:
+
+include to specify additional HTTP headers that should be disallowed
+ignore to specify which of the disallowed HTTP headers should be ignored
+E.g. The following hint configuration used in the .hintrc file will make the hint allow responses to be served with the Server HTTP header, but not with Custom-Header.
+
+{
+    "connector": {...},
+    "formatters": [...],
+    "hints": {
+        "no-disallowed-headers": [ "warning", {
+            "ignore": ["Server"],
+            "include": ["Custom-Header"]
+        }],
+        ...
+    },
+    ...
+}
+How to use this hint?
