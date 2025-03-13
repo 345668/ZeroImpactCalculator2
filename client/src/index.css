@@ -78,6 +78,19 @@
     font-family: 'Inter', sans-serif;
   }
 
+  /* Add 3D transform utilities */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+
   .glass-card {
     @apply bg-white/80 backdrop-blur-md border border-calmBlue-100/20 shadow-lg;
   }

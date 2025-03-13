@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { Coin } from "@/components/ui/coin";
 
 export function HeroSection() {
   return (
@@ -85,18 +86,7 @@ export function HeroSection() {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
                 />
-                <motion.svg 
-                  className="w-40 h-40 text-white opacity-90"
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="1.5"
-                  initial={{ rotate: -180 }}
-                  animate={{ rotate: 0 }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                </motion.svg>
+                <Coin size={160} className="relative z-10" />
               </div>
             </motion.div>
           </motion.div>
