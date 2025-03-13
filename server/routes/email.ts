@@ -19,27 +19,30 @@ const emailRequestSchema = z.object({
 
 router.post("/test-email", async (req, res) => {
   try {
+    console.log('Received test email request:', req.body);
+
     const { email } = req.body;
     if (!email) {
       return res.status(400).json({ error: "Email is required" });
     }
 
     await EmailService.sendTestEmail(email);
+    console.log('Test email sent successfully to:', email);
     res.json({ success: true, message: "Test email sent successfully" });
   } catch (error) {
     console.error('Test email error:', error);
-    res.status(500).json({ error: "Failed to send test email" });
+    const errorMessage = error instanceof Error ? error.message : "Failed to send test email";
+    res.status(500).json({ error: errorMessage });
   }
 });
 
 router.post("/send-report", async (req, res) => {
   try {
-    console.log('Received email request body:', JSON.stringify(req.body, null, 2));
+    console.log('Received email report request:', JSON.stringify(req.body, null, 2));
 
     const data = emailRequestSchema.parse(req.body);
-    console.log('Validation passed, parsed data:', JSON.stringify(data, null, 2));
+    console.log('Validation passed, sending report email');
 
-    // Send email with results
     const result = await EmailService.sendCarbonReport(data);
 
     res.json({ 
