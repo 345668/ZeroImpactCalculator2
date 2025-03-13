@@ -5,9 +5,10 @@ import { storage } from "./storage.js";
 import { insertSubmissionSchema } from "@shared/schema.js";
 import { fromZodError } from "zod-validation-error";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor.js";
-import { EmailService } from "./services/email.js"; // Updated import
+import { EmailService } from "./services/email.js";
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
+import authRouter from "./routes/auth.js";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -46,9 +47,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Register API routes first
+  // Register API routes
   app.use('/api/ai', aiRouter);
   app.use('/api/email', emailRouter);
+  app.use('/api/auth', authRouter); // Add authentication routes
 
   // GET all submissions endpoint
   app.get("/api/submissions", async (req, res) => {

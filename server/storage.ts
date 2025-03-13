@@ -1,14 +1,22 @@
-import { submissions, type Submission, type InsertSubmission } from "@shared/schema";
+import { submissions, users, type Submission, type InsertSubmission, type User, type InsertUser } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
+  // Submission operations
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmissionByEmail(email: string): Promise<Submission | undefined>;
   getAllSubmissions(): Promise<Submission[]>;
   getSubmissionById(id: number): Promise<Submission | undefined>;
   syncSubmissions(): Promise<void>;
-  updateEmailStatus(id: number): Promise<void>; // Add new method
+  updateEmailStatus(id: number): Promise<void>;
+
+  // User operations
+  createUser(data: InsertUser & { password: string }): Promise<User>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
+  verifyPassword(email: string, password: string): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -16,15 +24,13 @@ export class DbStorage implements IStorage {
     console.log('Creating submission with data:', insertSubmission);
 
     try {
-      // Calculate CO2 savings based on consumption difference
       const currentConsumption = Number(insertSubmission.currentConsumption);
       const projectedConsumption = Number(insertSubmission.projectedConsumption);
       const consumptionDiff = currentConsumption - projectedConsumption;
-      const co2Savings = Number((consumptionDiff * 0.2).toFixed(2)); // Simplified CO2 calculation factor
-      const carbonCredits = co2Savings; // 1:1 ratio for this example
-      const financialValue = Number((carbonCredits * 50).toFixed(2)); // €50 per credit
+      const co2Savings = Number((consumptionDiff * 0.2).toFixed(2));
+      const carbonCredits = co2Savings;
+      const financialValue = Number((carbonCredits * 50).toFixed(2));
 
-      // Prepare submission data
       const submissionData = {
         ...insertSubmission,
         co2Savings: co2Savings.toString(),
@@ -36,7 +42,6 @@ export class DbStorage implements IStorage {
 
       console.log('Inserting submission data:', submissionData);
 
-      // Create new submission
       const [submission] = await db.insert(submissions)
         .values(submissionData)
         .returning();
@@ -97,8 +102,6 @@ export class DbStorage implements IStorage {
   async syncSubmissions(): Promise<void> {
     try {
       console.log('Starting submissions sync...');
-
-      // Get all submissions ordered by latest first
       const results = await db
         .select()
         .from(submissions)
@@ -126,6 +129,72 @@ export class DbStorage implements IStorage {
       console.log('Email status updated successfully');
     } catch (error) {
       console.error('Error updating email status:', error);
+      throw error;
+    }
+  }
+
+  async createUser(data: InsertUser & { password: string }): Promise<User> {
+    try {
+      console.log('Creating new user:', { email: data.email, username: data.username });
+
+      // Hash the password
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(data.password, salt);
+
+      // Insert new user
+      const [user] = await db.insert(users)
+        .values({
+          email: data.email,
+          username: data.username,
+          passwordHash,
+          role: data.role || 'user'
+        })
+        .returning();
+
+      console.log('User created successfully');
+      return user;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email));
+
+      return user;
+    } catch (error) {
+      console.error('Error getting user by email:', error);
+      throw error;
+    }
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username));
+
+      return user;
+    } catch (error) {
+      console.error('Error getting user by username:', error);
+      throw error;
+    }
+  }
+
+  async verifyPassword(email: string, password: string): Promise<boolean> {
+    try {
+      const user = await this.getUserByEmail(email);
+      if (!user) return false;
+
+      return bcrypt.compare(password, user.passwordHash);
+    } catch (error) {
+      console.error('Error verifying password:', error);
       throw error;
     }
   }
