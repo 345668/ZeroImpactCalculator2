@@ -8,6 +8,8 @@ import { Check, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { TermsAndConditions } from "./legal/terms";
+import { GDPRConsent } from "./legal/gdpr";
 
 // Import necessary UI components
 import {
@@ -24,6 +26,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MultiStepForm } from "./multi-step-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export const formSteps = [
   {
@@ -642,7 +649,21 @@ export function CalculatorForm() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I accept the terms and conditions and agree that Radical Zero can contact me via email
+                            I accept the{" "}
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="link" 
+                                  className="h-auto p-0 text-primary underline"
+                                >
+                                  terms and conditions
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl">
+                                <TermsAndConditions />
+                              </DialogContent>
+                            </Dialog>
+                            {" "}and agree that Radical Zero can contact me via email
                           </FormLabel>
                           <FormMessage />
                         </div>
@@ -663,7 +684,20 @@ export function CalculatorForm() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I consent to the processing of my personal data in accordance with GDPR regulations
+                            I consent to the processing of my personal data in accordance with the{" "}
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button 
+                                  variant="link" 
+                                  className="h-auto p-0 text-primary underline"
+                                >
+                                  GDPR regulations
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl">
+                                <GDPRConsent />
+                              </DialogContent>
+                            </Dialog>
                           </FormLabel>
                           <FormMessage />
                         </div>
