@@ -7,7 +7,8 @@ export interface IStorage {
   getSubmissionByEmail(email: string): Promise<Submission | undefined>;
   getAllSubmissions(): Promise<Submission[]>;
   getSubmissionById(id: number): Promise<Submission | undefined>;
-  syncSubmissions(): Promise<void>; // Add new sync method
+  syncSubmissions(): Promise<void>;
+  updateEmailStatus(id: number): Promise<void>; // Add new method
 }
 
 export class DbStorage implements IStorage {
@@ -107,6 +108,24 @@ export class DbStorage implements IStorage {
       return;
     } catch (error) {
       console.error('Error syncing submissions:', error);
+      throw error;
+    }
+  }
+  async updateEmailStatus(id: number): Promise<void> {
+    try {
+      console.log('Updating email status for submission:', id);
+
+      await db
+        .update(submissions)
+        .set({
+          emailSent: "yes",
+          emailSentAt: new Date()
+        })
+        .where(eq(submissions.id, id));
+
+      console.log('Email status updated successfully');
+    } catch (error) {
+      console.error('Error updating email status:', error);
       throw error;
     }
   }

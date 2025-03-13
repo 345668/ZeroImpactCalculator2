@@ -675,6 +675,9 @@ export default function Dashboard() {
                                       throw new Error('Failed to send report');
                                     }
 
+                                    // Invalidate the query to refresh the data
+                                    await queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
+
                                     toast({
                                       title: "Success",
                                       description: "Report has been sent to your email",
@@ -689,9 +692,10 @@ export default function Dashboard() {
                                   }
                                 }}
                                 className="w-full justify-center"
+                                disabled={submission.emailSent === "yes"}
                               >
                                 <FileDown className="h-4 w-4 mr-1" />
-                                Send Report
+                                {submission.emailSent === "yes" ? "Report Sent" : "Send Report"}
                               </Button>
                               {submission.fileUrl && (
                                 <Button
