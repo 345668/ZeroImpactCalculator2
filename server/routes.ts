@@ -142,6 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         financialValue
       };
 
+      console.log('Creating submission with data:', submissionData);
       const result = await storage.createSubmission(submissionData);
       console.log('Submission created:', result);
       res.json(result);

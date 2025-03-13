@@ -117,6 +117,7 @@ export function CalculatorForm() {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: InsertSubmission) => {
+      console.log('Submitting form data:', data);
       const submissionData = {
         ...data,
         acceptedTerms: String(data.acceptedTerms),
@@ -142,13 +143,15 @@ export function CalculatorForm() {
       return response.json();
     },
     onSuccess: (data) => {
+      console.log('Form submission successful:', data);
       setIsSubmitSuccess(true);
       toast({
         title: "Success!",
-        description: "Your calculation has been submitted. A detailed report has been sent to your email.",
+        description: "Your calculation has been submitted. A detailed report will be sent to your email.",
       });
     },
     onError: (error: Error) => {
+      console.error('Form submission error:', error);
       toast({
         title: "Error",
         description: error.message,
@@ -157,8 +160,13 @@ export function CalculatorForm() {
     },
   });
 
-  const onSubmit = (data: InsertSubmission) => {
-    mutate(data);
+  const onSubmit = async (data: InsertSubmission) => {
+    console.log('Form submit triggered with data:', data);
+    try {
+      await mutate(data);
+    } catch (error) {
+      console.error('Form submission error:', error);
+    }
   };
 
   const nextStep = () => setStep(step + 1);
