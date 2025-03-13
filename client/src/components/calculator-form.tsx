@@ -8,8 +8,6 @@ import { Check, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { TermsAndConditions } from "./legal/terms";
-import { GDPRConsent } from "./legal/gdpr";
 
 // Import necessary UI components
 import {
@@ -26,11 +24,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { MultiStepForm } from "./multi-step-form";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 export const formSteps = [
   {
@@ -130,12 +123,7 @@ export function CalculatorForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...data,
-          buildingSize: Number(data.buildingSize),
-          currentConsumption: Number(data.currentConsumption),
-          projectedConsumption: Number(data.projectedConsumption)
-        }),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -152,6 +140,18 @@ export function CalculatorForm() {
         title: "Success!",
         description: "Your calculation has been submitted. A detailed report will be sent to your email.",
       });
+
+      // Navigate to results page with submission data
+      const result = {
+        ...form.getValues(),
+        co2Savings: data.co2Savings,
+        carbonCredits: data.carbonCredits,
+        financialValue: data.financialValue,
+      };
+
+      // Use history.pushState to pass data
+      window.history.pushState({ result }, '', '/results');
+      setLocation('/results');
     },
     onError: (error: Error) => {
       console.error('Form submission error:', error);
@@ -179,7 +179,6 @@ export function CalculatorForm() {
     setStep(1);
     setIsSubmitSuccess(false);
   };
-
   const handleSendEmail = async () => {
     if (isEmailSent) return;
 
@@ -247,8 +246,9 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === formSteps.length}
+          isLastStep={step === 5}
           isSubmitting={isPending}
+          onStartNew={startNewCalculation}
           onSendEmail={handleSendEmail}
         >
           {step === 1 && (
@@ -642,21 +642,7 @@ export function CalculatorForm() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I accept the{" "}
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  variant="link" 
-                                  className="h-auto p-0 text-primary underline"
-                                >
-                                  terms and conditions
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl">
-                                <TermsAndConditions />
-                              </DialogContent>
-                            </Dialog>
-                            {" "}and agree that Radical Zero can contact me via email
+                            I accept the terms and conditions and agree that Radical Zero can contact me via email
                           </FormLabel>
                           <FormMessage />
                         </div>
@@ -677,40 +663,14 @@ export function CalculatorForm() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I consent to the processing of my personal data in accordance with the{" "}
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button 
-                                  variant="link" 
-                                  className="h-auto p-0 text-primary underline"
-                                >
-                                  GDPR regulations
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="max-w-4xl">
-                                <GDPRConsent />
-                              </DialogContent>
-                            </Dialog>
+                            I consent to the processing of my personal data in accordance with GDPR regulations
                           </FormLabel>
                           <FormMessage />
                         </div>
                       </FormItem>
                     )}
                   />
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={isPending}
-                  >
-                    {isPending ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Submitting...
-                      </>
-                    ) : (
-                      'Submit'
-                    )}
-                  </Button>
+                  <Button type="submit" className="w-full">Submit</Button>
                 </>
               ) : (
                 <div className="text-center space-y-6">
@@ -771,16 +731,6 @@ export function CalculatorForm() {
                           </motion.div>
                         )}
                       </AnimatePresence>
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={startNewCalculation}
-                      className="px-6"
-                    >
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Start New Calculation
                     </Button>
                   </div>
                 </div>
