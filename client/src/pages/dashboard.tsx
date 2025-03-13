@@ -488,6 +488,84 @@ export default function Dashboard() {
                 </ChartContainer>
               </CardContent>
             </Card>
+            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+              <CardHeader>
+                <CardTitle>CO₂ Savings Trend (All Time)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer className="h-[300px]" config={chartConfig}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  CO₂ Savings
+                                </span>
+                                <span className="font-bold text-muted-foreground">
+                                  {safeNumber(payload[0].value).toFixed(2)} tons
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }} />
+                      <Line
+                        type="monotone"
+                        dataKey="co2Savings"
+                        name="CO₂ Savings (tons)"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+              <CardHeader>
+                <CardTitle>Energy Reduction Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer className="h-[300px]" config={chartConfig}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
+                      <XAxis dataKey="date" />
+                      <YAxis />
+                      <Tooltip content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-2 shadow-sm">
+                              <div className="flex flex-col">
+                                <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                  Energy Reduction
+                                </span>
+                                <span className="font-bold text-muted-foreground">
+                                  {safeNumber(payload[0].value).toFixed(2)} kWh
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }} />
+                      <Bar
+                        dataKey="energyReduction"
+                        name="Energy Reduction (kWh)"
+                        fill="hsl(var(--primary))"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
           </motion.div>
 
           <motion.div
