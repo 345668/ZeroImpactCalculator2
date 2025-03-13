@@ -130,7 +130,12 @@ export function CalculatorForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          buildingSize: Number(data.buildingSize),
+          currentConsumption: Number(data.currentConsumption),
+          projectedConsumption: Number(data.projectedConsumption)
+        }),
       });
 
       if (!response.ok) {
@@ -704,7 +709,20 @@ export function CalculatorForm() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full">Submit</Button>
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isPending}
+                  >
+                    {isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Submit'
+                    )}
+                  </Button>
                 </>
               ) : (
                 <div className="text-center space-y-6">
