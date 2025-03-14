@@ -9,6 +9,8 @@ import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { SuccessModal } from "./success-modal";
+import { TermsModal } from "./terms-modal";
+import { GDPRModal } from "./gdpr-modal";
 
 // Import necessary UI components
 import {
@@ -59,6 +61,8 @@ export function CalculatorForm() {
   const [isEmailSending, setIsEmailSending] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showGDPRModal, setShowGDPRModal] = useState(false);
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -640,7 +644,15 @@ export function CalculatorForm() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I accept the terms and conditions and agree that Radical Zero can contact me via email
+                            I accept the{" "}
+                            <button
+                              type="button"
+                              onClick={() => setShowTermsModal(true)}
+                              className="text-calmBlue-600 hover:text-calmBlue-700 underline"
+                            >
+                              terms and conditions
+                            </button>{" "}
+                            and agree that Radical Zero can contact me via email
                           </FormLabel>
                           <FormMessage />
                         </div>
@@ -661,7 +673,14 @@ export function CalculatorForm() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I consent to the processing of my personal data in accordance with GDPR regulations
+                            I consent to the processing of my personal data in accordance with the{" "}
+                            <button
+                              type="button"
+                              onClick={() => setShowGDPRModal(true)}
+                              className="text-calmBlue-600 hover:text-calmBlue-700 underline"
+                            >
+                              GDPR regulations
+                            </button>
                           </FormLabel>
                           <FormMessage />
                         </div>
@@ -744,6 +763,14 @@ export function CalculatorForm() {
           setShowSuccessModal(false);
           setLocation('/results');
         }} 
+      />
+      <TermsModal 
+        open={showTermsModal} 
+        onOpenChange={setShowTermsModal} 
+      />
+      <GDPRModal 
+        open={showGDPRModal} 
+        onOpenChange={setShowGDPRModal} 
       />
     </Form>
   );
