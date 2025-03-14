@@ -13,8 +13,9 @@ export function ResultsPage() {
   const [emailSent, setEmailSent] = useState(false);
   const [isEmailSending, setIsEmailSending] = useState(false);
 
-  // Get results from location state
-  const result = history.state?.result;
+  // Get results from window history state
+  const state = window.history.state;
+  const result = state?.result;
 
   if (!result) {
     setLocation("/");
@@ -56,7 +57,7 @@ export function ResultsPage() {
       setEmailSent(true);
       toast({
         title: "Success!",
-        description: "Report has been sent to your email.",
+        description: "The detailed report has been sent to your email.",
       });
     } catch (error) {
       console.error('Error sending email:', error);
