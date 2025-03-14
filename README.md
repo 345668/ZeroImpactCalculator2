@@ -29,14 +29,32 @@ A cutting-edge web application that helps building owners and tenants calculate 
 - SendGrid API Key
 - Mistral AI API Key
 
-## Environment Variables 🔐
+# Dependency Management
+
+Our project uses a modern JavaScript/TypeScript stack with dependencies managed through npm. For detailed information about project dependencies and their purposes, please refer to [DEPENDENCIES.md](DEPENDENCIES.md).
+
+## Adding New Dependencies
+
+To add new dependencies to the project:
+
+1. Never modify package.json directly
+2. Use Replit's package management system
+3. Document new dependencies in DEPENDENCIES.md
+4. Update security policies as needed
+5. Test the application after adding dependencies
+
+## Environment Setup
+
+The following environment variables are required:
 
 ```env
 DATABASE_URL=postgresql://user:password@host:port/dbname
 AZURE_STORAGE_CONNECTION_STRING=your_azure_connection_string
 SENDGRID_API_KEY=your_sendgrid_api_key
-MISTRAL_API_KEY=your_mistral_api_key
+OPENAI_API_KEY=your_openai_api_key
 ```
+
+For local development, create a `.env` file with these variables. In production, use Replit's Secrets system.
 
 ## Installation 🚀
 
