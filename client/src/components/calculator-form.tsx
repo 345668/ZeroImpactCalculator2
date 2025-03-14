@@ -8,6 +8,7 @@ import { Check, Mail, RefreshCw, Loader2 } from "lucide-react";
 import { DocumentUpload } from "./document-upload";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
+import { SuccessModal } from "./success-modal";
 
 // Import necessary UI components
 import {
@@ -57,6 +58,7 @@ export function CalculatorForm() {
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const [isEmailSending, setIsEmailSending] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const form = useForm<InsertSubmission>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -136,12 +138,9 @@ export function CalculatorForm() {
     onSuccess: (data) => {
       console.log('Form submission successful:', data);
       setIsSubmitSuccess(true);
-      toast({
-        title: "Success!",
-        description: "Your calculation has been submitted. A detailed report will be sent to your email.",
-      });
+      setShowSuccessModal(true); // Show success modal
 
-      // Navigate to results page with submission data
+      // Store result data for the results page
       const result = {
         ...form.getValues(),
         co2Savings: data.co2Savings,
@@ -151,7 +150,6 @@ export function CalculatorForm() {
 
       // Use history.pushState to pass data
       window.history.pushState({ result }, '', '/results');
-      setLocation('/results');
     },
     onError: (error: Error) => {
       console.error('Form submission error:', error);
@@ -739,6 +737,14 @@ export function CalculatorForm() {
           )}
         </MultiStepForm>
       </form>
+
+      <SuccessModal 
+        open={showSuccessModal} 
+        onClose={() => {
+          setShowSuccessModal(false);
+          setLocation('/results');
+        }} 
+      />
     </Form>
   );
 }
