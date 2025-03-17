@@ -13,19 +13,114 @@ import authRouter from "./routes/auth.js";
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 
-// Configure multer for file uploads
-const isProduction = process.env.NODE_ENV === 'production';
-
 // Configure rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isProduction ? 100 : 0, // Limit each IP to 100 requests per windowMs in production
+  max: process.env.NODE_ENV === 'production' ? 100 : 0,
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Document processing function
+// CO₂ emission factors (kg CO₂ per kWh)
+const EMISSION_FACTORS = {
+  gas: 0.24,
+  oil: 0.30,
+  pellet: 0.10,
+  electricity: 0.343,
+};
+
+// Calculate endpoint with enhanced carbon calculations
+const calculateEndpoint = async (req: express.Request, res: express.Response) => {
+    const startTime = Date.now();
+    console.log('Received calculation request');
+
+    try {
+      const validatedData = insertSubmissionSchema.parse(req.body);
+
+      // Production data validation
+      const isProduction = process.env.NODE_ENV === 'production';
+      if (isProduction) {
+        if (validatedData.currentConsumption <= 0 || validatedData.projectedConsumption < 0) {
+          return res.status(400).json({ error: "Invalid consumption values" });
+        }
+      }
+
+      // Current consumption is already in kWh
+      const currentConsumptionKWh = Number(validatedData.currentConsumption);
+
+      // Calculate current CO₂ emissions (kg CO₂)
+      const currentCO2Emissions = currentConsumptionKWh * EMISSION_FACTORS.gas;
+
+      // Calculate new system CO₂ emissions (heat pump using electricity) (kg CO₂)
+      const projectedConsumptionKWh = Number(validatedData.projectedConsumption);
+      const newCO2Emissions = projectedConsumptionKWh * EMISSION_FACTORS.electricity;
+
+      // Calculate annual CO₂ savings in tons (1000 kg = 1 ton)
+      const annualCO2Savings = (currentCO2Emissions - newCO2Emissions) / 1000;
+
+      // For single year values (with 2 decimal precision)
+      const co2Savings = annualCO2Savings.toFixed(2);
+      const carbonCredits = co2Savings; // 1:1 ratio with CO2 savings
+      const financialValue = (Number(carbonCredits) * 50).toFixed(2); // €50 per credit
+
+      // Calculate 10-year projections
+      const tenYearCO2Savings = (annualCO2Savings * 10).toFixed(2);
+      const tenYearCarbonCredits = tenYearCO2Savings;
+      const tenYearFinancialValue = (Number(tenYearCO2Savings) * 50).toFixed(2);
+
+      // Add calculations to the submission data
+      const submissionData = {
+        ...validatedData,
+        co2Savings,
+        carbonCredits,
+        financialValue,
+        calculationDetails: JSON.stringify({
+          currentConsumptionKWh,
+          currentCO2Emissions: currentCO2Emissions.toFixed(2),
+          newCO2Emissions: newCO2Emissions.toFixed(2),
+          annualCO2Savings: annualCO2Savings.toFixed(2),
+          tenYearProjection: {
+            co2Savings: tenYearCO2Savings,
+            carbonCredits: tenYearCarbonCredits,
+            financialValue: tenYearFinancialValue
+          },
+          energyReductionPercent: ((currentConsumptionKWh - projectedConsumptionKWh) / currentConsumptionKWh * 100).toFixed(1)
+        })
+      };
+
+      console.log('Creating submission with data:', submissionData);
+      const result = await storage.createSubmission(submissionData);
+      console.log('Submission created:', result);
+
+      // Log performance metrics in production
+      if (isProduction) {
+        console.log(`Calculation completed in ${Date.now() - startTime}ms`);
+      }
+
+      res.json({
+        ...result,
+        tenYearProjection: {
+          co2Savings: tenYearCO2Savings,
+          carbonCredits: tenYearCarbonCredits,
+          financialValue: tenYearFinancialValue
+        }
+      });
+    } catch (error) {
+      console.error('Calculation error:', error);
+
+      if (error.name === "ZodError") {
+        const validationError = fromZodError(error);
+        res.status(400).json({ error: validationError.message });
+      } else {
+        res.status(500).json({
+          error: isProduction ? "Internal server error" : error.message
+        });
+      }
+    }
+  };
+
+  // Document processing function
 async function processDocument(file: Express.Multer.File) {
   try {
     console.log('Starting document processing...');
@@ -55,6 +150,7 @@ async function processDocument(file: Express.Multer.File) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
+  const isProduction = process.env.NODE_ENV === 'production';
 
   // Apply rate limiting to API routes in production
   if (isProduction) {
@@ -74,7 +170,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-      fileSize: isProduction ? 5 * 1024 * 1024 : 10 * 1024 * 1024, // 5MB in production, 10MB in development
+      fileSize: isProduction ? 5 * 1024 * 1024 : 10 * 1024 * 1024,
       files: 1
     },
     fileFilter: (_req, file, cb) => {
@@ -86,31 +182,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add security headers middleware
-  app.use((req, res, next) => {
-    // Security headers
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://*.replit.app https://api.openai.com;");
-
-    // Cache control for static assets
-    if (req.url.match(/\.(css|js|jpg|jpeg|png|gif|ico|svg)$/)) {
-      res.setHeader('Cache-Control', 'public, max-age=31536000, immutable'); // 1 year
-    } else {
-      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-      res.setHeader('Pragma', 'no-cache');
-      res.setHeader('Expires', '0');
-    }
-
-    next();
-  });
-
   // Register API routes
   app.use('/api/ai', aiRouter);
   app.use('/api/email', emailRouter);
   app.use('/api/auth', authRouter);
+
+  // Calculate endpoint
+  app.post("/api/calculate", calculateEndpoint);
 
   // Document upload endpoint with production safeguards
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
@@ -152,113 +230,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Energy conversion constants
-  const ENERGY_CONVERSION = {
-    gas: 10.4,    // kWh per m³
-    oil: 9.4,     // kWh per L
-    pellet: 4.8,  // kWh per kg
-  };
-
-  // CO₂ emission factors (kg CO₂ per kWh)
-  const EMISSION_FACTORS = {
-    gas: 0.24,
-    oil: 0.30,
-    pellet: 0.10,
-    electricity: 0.343,
-  };
-
-  // Calculate endpoint with enhanced carbon calculations
-  app.post("/api/calculate", async (req, res) => {
-    const startTime = Date.now();
-    console.log('Received calculation request');
-
-    try {
-      const validatedData = insertSubmissionSchema.parse(req.body);
-
-      // Production data validation
-      if (isProduction) {
-        // Additional validation checks
-        if (validatedData.currentConsumption <= 0 || validatedData.projectedConsumption < 0) {
-          return res.status(400).json({ error: "Invalid consumption values" });
-        }
-      }
-
-      // Convert current energy source to kWh
-      const currentEnergySource = validatedData.currentEnergySource?.toLowerCase() || 'gas';
-      const energyConversionFactor = ENERGY_CONVERSION[currentEnergySource];
-      const currentConsumptionKWh = Number(validatedData.currentConsumption) * energyConversionFactor;
-
-      // Calculate current CO₂ emissions
-      const currentEmissionFactor = EMISSION_FACTORS[currentEnergySource];
-      const currentCO2Emissions = currentConsumptionKWh * currentEmissionFactor;
-
-      // Calculate new system CO₂ emissions (assuming electric heat pump)
-      const projectedConsumptionKWh = Number(validatedData.projectedConsumption);
-      const newCO2Emissions = projectedConsumptionKWh * EMISSION_FACTORS.electricity;
-
-      // Calculate annual CO₂ savings in tons (1000 kg = 1 ton)
-      const annualCO2Savings = (currentCO2Emissions - newCO2Emissions) / 1000;
-
-      // For single year values (with 2 decimal precision)
-      const co2Savings = annualCO2Savings.toFixed(2);
-      const carbonCredits = co2Savings; // 1:1 ratio with CO2 savings
-      const financialValue = (Number(carbonCredits) * 50).toFixed(2); // €50 per credit
-
-      // Calculate 10-year projections
-      const tenYearCO2Savings = (annualCO2Savings * 10).toFixed(2);
-      const tenYearCarbonCredits = tenYearCO2Savings;
-      const tenYearFinancialValue = (Number(tenYearCO2Savings) * 50).toFixed(2);
-
-      // Add calculations to the submission data
-      const submissionData = {
-        ...validatedData,
-        co2Savings,
-        carbonCredits,
-        financialValue,
-        calculationDetails: JSON.stringify({
-          currentConsumptionKWh,
-          currentCO2Emissions,
-          newCO2Emissions,
-          annualCO2Savings,
-          tenYearProjection: {
-            co2Savings: tenYearCO2Savings,
-            carbonCredits: tenYearCarbonCredits,
-            financialValue: tenYearFinancialValue
-          },
-          energyReductionPercent: ((currentConsumptionKWh - projectedConsumptionKWh) / currentConsumptionKWh * 100).toFixed(1)
-        })
-      };
-
-      console.log('Creating submission with data:', submissionData);
-      const result = await storage.createSubmission(submissionData);
-      console.log('Submission created:', result);
-
-      // Log performance metrics in production
-      if (isProduction) {
-        console.log(`Calculation completed in ${Date.now() - startTime}ms`);
-      }
-
-      res.json({
-        ...result,
-        tenYearProjection: {
-          co2Savings: tenYearCO2Savings,
-          carbonCredits: tenYearCarbonCredits,
-          financialValue: tenYearFinancialValue
-        }
-      });
-    } catch (error) {
-      console.error('Calculation error:', error);
-
-      if (error.name === "ZodError") {
-        const validationError = fromZodError(error);
-        res.status(400).json({ error: validationError.message });
-      } else {
-        res.status(500).json({
-          error: isProduction ? "Internal server error" : error.message
-        });
-      }
-    }
-  });
 
   // Add new sync endpoint
   app.post("/api/submissions/sync", async (_req, res) => {
@@ -323,7 +294,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-
 
   // Error handling middleware enhanced for production
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

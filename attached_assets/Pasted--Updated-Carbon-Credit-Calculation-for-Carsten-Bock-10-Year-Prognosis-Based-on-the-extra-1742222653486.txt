@@ -1,0 +1,65 @@
+### **Updated Carbon Credit Calculation for Carsten Bock (10-Year Prognosis)**  
+
+Based on the extracted data from **Sanierungsfahrplan_Bock.pdf**, we will calculate the carbon credits over a **10-year period** using the structured methodology.
+
+---
+
+### **Extracted Data from the Document:**  
+- **Building Size:** **142 m²**  
+- **Current Energy Consumption:** **33,700 kWh/year**  
+- **Projected Energy Consumption (after renovation):** **5,050 kWh/year**  
+- **Current Heating System:** **Gas (Baujahr 1997 – Gas-NT)**  
+- **New Heating System:** **Assumed to be a heat pump (as post-renovation energy source is electricity)**  
+- **Time Period:** **10 years**  
+
+---
+
+### **Updated Carbon Credit Calculation (10-Year Projection)**  
+
+#### **Step 1: Calculate CO₂ Emissions Before Renovation (Gas Heating System)**
+- **Gas emission factor:** **0.24 kg CO₂/kWh**  
+\[
+33,700 \times 0.24 = 8,088.00 \text{ kg CO₂ per year} = 8.09 \text{ tons CO₂ per year}
+\]
+- Over **10 years**:
+\[
+8.09 \times 10 = 80.88 \text{ tons CO₂ over 10 years}
+\]
+
+#### **Step 2: Calculate CO₂ Emissions After Renovation (Electric Heat Pump)**
+- **Electricity emission factor (Germany's grid mix):** **0.343 kg CO₂/kWh**  
+\[
+5,050 \times 0.343 = 1,732.15 \text{ kg CO₂ per year} = 1.73 \text{ tons CO₂ per year}
+\]
+- Over **10 years**:
+\[
+1.73 \times 10 = 17.32 \text{ tons CO₂ over 10 years}
+\]
+
+#### **Step 3: Calculate CO₂ Savings (Carbon Credits Earned)**
+\[
+80.88 - 17.32 = 63.56 \text{ tons CO₂ saved over 10 years}
+\]
+
+#### **Step 4: Financial Value of Carbon Credits (10-Year Total)**
+- **Carbon credit price:** **50 EUR per ton**  
+\[
+63.56 \times 50 = 3,178.00 \text{ EUR over 10 years}
+\]
+
+---
+
+### **Final Output (10-Year Prognosis, Matching Image Format)**  
+
+| **Date**      | **Customer**     | **Energy Consultant**    | **Building Size** | **Energy Reduction** | **CO₂ Savings (10 years)**  | **Carbon Credits (10 years)** | **Financial Value (10 years)** | **Actions**      |
+|--------------|----------------|------------------------|------------------|------------------|---------------------|-----------------------|----------------------|----------------|
+| 3/17/2025   | Carsten Bock   | ResiKon GmbH          | 142 m²           | **85%**          | **63.56 tons**     | **63.56**            | **€3,178.00**       | Report Sent    |
+
+---
+
+### **Summary (10-Year Carbon Credit Calculation)**
+- **Total CO₂ saved over 10 years:** **63.56 tons CO₂**  
+- **Carbon credits earned:** **63.56 credits** (1 credit = 1 ton CO₂)  
+- **Total financial value:** **€3,178.00**  
+
+This updated calculation ensures compliance with industry **best practices** for long-term carbon credit assessments. 🚀 Let me know if you need further refinements!
