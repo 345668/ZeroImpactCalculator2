@@ -423,7 +423,7 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          {form.getValues("co2Savings")} tons
+                          {form.watch("co2Savings")} tons
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Per year</p>
                       </div>
@@ -458,7 +458,7 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          {form.getValues("carbonCredits")}
+                          {form.watch("carbonCredits")}
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
                       </div>
@@ -493,7 +493,7 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">Financial Value</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          €{form.getValues("financialValue")}
+                          €{form.watch("financialValue")}
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Potential market value</p>
                       </div>
@@ -514,15 +514,15 @@ export function CalculatorForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Ownership Type</p>
-                        <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
+                        <p className="font-medium capitalize">{form.watch("buildingOwnership")}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Building Size</p>
-                        <p className="font-medium">{form.getValues("buildingSize")} m²</p>
+                        <p className="font-medium">{form.watch("buildingSize")} m²</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Heating System</p>
-                        <p className="font-medium capitalize">{form.getValues("heatingSystem")}</p>
+                        <p className="font-medium capitalize">{form.watch("heatingSystem")}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
@@ -536,13 +536,13 @@ export function CalculatorForm() {
                             className="h-full bg-calmBlue-500"
                             initial={{ width: "0%" }}
                             animate={{ 
-                              width: `${(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%` 
+                              width: `${(((form.watch("currentConsumption") - form.watch("projectedConsumption")) / form.watch("currentConsumption")) * 100).toFixed(1)}%` 
                             }}
                             transition={{ duration: 1.5, delay: 1.2 }}
                           />
                         </motion.div>
                         <p className="font-medium mt-2">
-                          {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
+                          {(((form.watch("currentConsumption") - form.watch("projectedConsumption")) / form.watch("currentConsumption")) * 100).toFixed(1)}%
                         </p>
                       </div>
                     </div>
@@ -583,7 +583,6 @@ export function CalculatorForm() {
                   The detailed results will be sent to your email after completing the form.
                 </p>
               </motion.div>
-
             </div>
           )}
 
