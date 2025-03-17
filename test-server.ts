@@ -3,13 +3,21 @@ import { storage } from "./server/storage.js";
 import { performBackup } from "./server/utils/backup.js";
 import { testDatabaseConnection } from "./server/database.js";
 import { EmailService } from "./server/services/email.js";
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 const app = express();
-const TEST_PORT = 5001;
+const PORT = process.env.PORT || 5001;
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Basic security and parsing middleware
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+
+// Production security
+if (isProduction) {
+  app.use(helmet());
+}
 
 // Force JSON content type for all routes in test server
 app.use((req, res, next) => {
@@ -22,8 +30,23 @@ app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('X-XSS-Protection', '1; mode=block');
+  if (isProduction) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
   next();
 });
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isProduction ? 100 : 1000, // limit each IP
+  message: { error: 'Too many requests, please try again later.' }
+});
+
+// Apply rate limiting to all routes in production
+if (isProduction) {
+  app.use(apiLimiter);
+}
 
 // Test backup endpoint
 app.post("/test-backup", async (_req, res) => {
@@ -91,15 +114,16 @@ app.get("/health", async (_req, res) => {
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Test server error:', err);
   res.status(500).json({
-    error: err.message,
+    error: isProduction ? "Internal server error" : err.message,
     timestamp: new Date().toISOString()
   });
 });
 
 // Start the test server
-app.listen(TEST_PORT, '0.0.0.0', () => {
-  console.log(`=== API Test Server started ===`);
-  console.log(`Listening on http://0.0.0.0:${TEST_PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`=== API Server started ===`);
+  console.log(`Environment: ${process.env.NODE_ENV}`);
+  console.log(`Listening on http://0.0.0.0:${PORT}`);
   console.log('Available endpoints:');
   console.log('- POST /test-backup');
   console.log('- GET /health');
