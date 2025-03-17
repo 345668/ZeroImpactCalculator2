@@ -186,7 +186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Convert current energy source to kWh
       const currentEnergySource = validatedData.currentEnergySource?.toLowerCase() || 'gas';
       const energyConversionFactor = ENERGY_CONVERSION[currentEnergySource];
-      const currentConsumptionKWh = Number(validatedData.currentConsumption) * (energyConversionFactor || 1);
+      const currentConsumptionKWh = Number(validatedData.currentConsumption) * energyConversionFactor;
 
       // Calculate current CO₂ emissions
       const currentEmissionFactor = EMISSION_FACTORS[currentEnergySource];
@@ -199,7 +199,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate annual CO₂ savings in tons (1000 kg = 1 ton)
       const annualCO2Savings = (currentCO2Emissions - newCO2Emissions) / 1000;
 
-      // For single year values
+      // For single year values (with 2 decimal precision)
       const co2Savings = annualCO2Savings.toFixed(2);
       const carbonCredits = co2Savings; // 1:1 ratio with CO2 savings
       const financialValue = (Number(carbonCredits) * 50).toFixed(2); // €50 per credit
