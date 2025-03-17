@@ -12,14 +12,28 @@ import emailRouter from "./routes/email.js";
 import authRouter from "./routes/auth.js";
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import {testDatabaseConnection} from "./database.js"; //Import for health check
 
-// Configure rate limiting
+// Enhance rate limiting configuration
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 0,
+  max: process.env.NODE_ENV === 'production' ? 100 : 0, // Limit each IP to 100 requests per windowMs in production
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders: false,
+});
+
+// Create specific limiters for different endpoints
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // Limit auth attempts
+  message: { error: 'Too many authentication attempts, please try again later.' }
+});
+
+const calculationLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // Limit calculations per minute
+  message: { error: 'Too many calculation requests, please try again later.' }
 });
 
 // Energy conversion constants (2024)
@@ -150,7 +164,7 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
     }
 };
 
-  // Document processing function
+// Document processing function
 async function processDocument(file: Express.Multer.File) {
   try {
     console.log('Starting document processing...');
@@ -182,10 +196,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const isProduction = process.env.NODE_ENV === 'production';
 
-  // Apply rate limiting to API routes in production
+  // Apply rate limiting to specific routes
   if (isProduction) {
-    app.use('/api/', apiLimiter);
+    app.use('/api/auth', authLimiter);
+    app.use('/api/calculate', calculationLimiter);
+    app.use('/api/', apiLimiter); // General API rate limiting
   }
+
+  // Enhanced health check endpoint
+  app.get("/api/health", async (req, res) => {
+    try {
+      // Check database connection
+      const dbStatus = await testDatabaseConnection();
+
+      // Check email service
+      let emailStatus = "unknown";
+      try {
+        await EmailService.sendTestEmail(process.env.ADMIN_EMAIL || "test@example.com");
+        emailStatus = "healthy";
+      } catch (error) {
+        emailStatus = "unhealthy";
+        console.error('Email service health check failed:', error);
+      }
+
+      const health = {
+        status: dbStatus && emailStatus === "healthy" ? "healthy" : "unhealthy",
+        timestamp: new Date().toISOString(),
+        version: process.env.npm_package_version || "1.0.0",
+        services: {
+          database: dbStatus ? "healthy" : "unhealthy",
+          email: emailStatus,
+        },
+        environment: process.env.NODE_ENV,
+        uptime: process.uptime(),
+        memory: process.memoryUsage()
+      };
+
+      const status = health.status === "healthy" ? 200 : 503;
+      res.status(status).json(health);
+    } catch (error) {
+      console.error('Health check error:', error);
+      res.status(503).json({
+        status: "unhealthy",
+        timestamp: new Date().toISOString(),
+        error: isProduction ? "Service unavailable" : error.message
+      });
+    }
+  });
 
   // Ensure Azure container exists
   try {
@@ -325,16 +382,56 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Error handling middleware enhanced for production
-  app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-    console.error('Express error:', err);
+  // Enhanced error handling middleware
+  app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    const errorId = Math.random().toString(36).substring(7);
 
-    // Production-safe error response
-    res.status(500).json({
-      error: isProduction ? "Internal server error" : err.message,
+    // Log error with context
+    console.error('Express error:', {
+      errorId,
+      error: err.message,
+      stack: isProduction ? undefined : err.stack,
+      path: req.path,
+      method: req.method,
+      body: isProduction ? undefined : req.body,
+      timestamp: new Date().toISOString(),
+      headers: isProduction ? undefined : req.headers
+    });
+
+    // Determine status code based on error type
+    let statusCode = 500;
+    if (err.name === "ValidationError") statusCode = 400;
+    if (err.name === "UnauthorizedError") statusCode = 401;
+    if (err.name === "NotFoundError") statusCode = 404;
+
+    // Send safe error response
+    res.status(statusCode).json({
+      error: isProduction ? "An error occurred" : err.message,
+      errorId,
       ...(isProduction ? {} : { stack: err.stack })
     });
   });
+
+  // Production-only middleware
+  if (isProduction) {
+    // Add security headers
+    app.use(helmet());
+
+    // Log all requests in production
+    app.use((req, res, next) => {
+      const start = Date.now();
+      res.on('finish', () => {
+        console.log({
+          method: req.method,
+          path: req.path,
+          status: res.statusCode,
+          duration: Date.now() - start,
+          timestamp: new Date().toISOString()
+        });
+      });
+      next();
+    });
+  }
 
   console.log('Route registration completed successfully');
   const httpServer = createServer(app);
