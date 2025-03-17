@@ -189,7 +189,14 @@ export function CalculatorForm() {
     }
   };
 
-  const nextStep = () => setStep(step + 1);
+  // When moving to step 4, trigger the calculation
+  const nextStep = () => {
+    if (step === 3) {
+      // Trigger calculation before showing results
+      form.handleSubmit(onSubmit)();
+    }
+    setStep(step + 1);
+  };
   const previousStep = () => setStep(step - 1);
   const startNewCalculation = () => {
     form.reset();
@@ -416,13 +423,6 @@ export function CalculatorForm() {
                 >
                   <Card className="p-6 bg-primary/5 relative overflow-hidden">
                     <div className="transition-all duration-300">
-                      <motion.div 
-                        className="absolute inset-0 bg-calmBlue-50"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ duration: 1, delay: 0.5 }}
-                        style={{ transformOrigin: 'left' }}
-                      />
                       <div className="relative z-10">
                         <div className="flex items-center justify-center mb-4">
                           <motion.div 
@@ -436,7 +436,11 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          {Number(form.getValues("co2Savings")).toFixed(2)} tons
+                          {isPending ? (
+                            <span className="animate-pulse">Calculating...</span>
+                          ) : (
+                            `${Number(form.getValues("co2Savings") || 0).toFixed(2)} tons`
+                          )}
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Per year</p>
                       </div>
@@ -451,13 +455,6 @@ export function CalculatorForm() {
                 >
                   <Card className="p-6 bg-primary/5 relative overflow-hidden">
                     <div className="transition-all duration-300">
-                      <motion.div 
-                        className="absolute inset-0 bg-calmBlue-50"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ duration: 1, delay: 0.7 }}
-                        style={{ transformOrigin: 'left' }}
-                      />
                       <div className="relative z-10">
                         <div className="flex items-center justify-center mb-4">
                           <motion.div 
@@ -471,7 +468,11 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          {Number(form.getValues("carbonCredits")).toFixed(2)}
+                          {isPending ? (
+                            <span className="animate-pulse">Calculating...</span>
+                          ) : (
+                            Number(form.getValues("carbonCredits") || 0).toFixed(2)
+                          )}
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
                       </div>
@@ -486,13 +487,6 @@ export function CalculatorForm() {
                 >
                   <Card className="p-6 bg-primary/5 relative overflow-hidden">
                     <div className="transition-all duration-300">
-                      <motion.div 
-                        className="absolute inset-0 bg-calmBlue-50"
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: 1 }}
-                        transition={{ duration: 1, delay: 0.9 }}
-                        style={{ transformOrigin: 'left' }}
-                      />
                       <div className="relative z-10">
                         <div className="flex items-center justify-center mb-4">
                           <motion.div 
@@ -506,7 +500,11 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">Financial Value</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          €{Number(form.getValues("financialValue")).toFixed(2)}
+                          {isPending ? (
+                            <span className="animate-pulse">Calculating...</span>
+                          ) : (
+                            `€${Number(form.getValues("financialValue") || 0).toFixed(2)}`
+                          )}
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Potential market value</p>
                       </div>
@@ -527,36 +525,19 @@ export function CalculatorForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">Ownership Type</p>
-                        <p className="font-medium capitalize">{form.watch("buildingOwnership")}</p>
+                        <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Building Size</p>
-                        <p className="font-medium">{form.watch("buildingSize")} m²</p>
+                        <p className="font-medium">{form.getValues("buildingSize")} m²</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Heating System</p>
-                        <p className="font-medium capitalize">{form.watch("heatingSystem")}</p>
+                        <p className="text-sm text-muted-foreground">Current Consumption</p>
+                        <p className="font-medium">{form.getValues("currentConsumption")} kWh/year</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
-                        <motion.div
-                          className="h-2 bg-calmBlue-100 rounded-full mt-2 overflow-hidden"
-                          initial={{ width: "0%" }}
-                          animate={{ width: "100%" }}
-                          transition={{ duration: 1, delay: 1 }}
-                        >
-                          <motion.div
-                            className="h-full bg-calmBlue-500"
-                            initial={{ width: "0%" }}
-                            animate={{ 
-                              width: `${(((form.watch("currentConsumption") - form.watch("projectedConsumption")) / form.watch("currentConsumption")) * 100).toFixed(1)}%` 
-                            }}
-                            transition={{ duration: 1.5, delay: 1.2 }}
-                          />
-                        </motion.div>
-                        <p className="font-medium mt-2">
-                          {(((form.watch("currentConsumption") - form.watch("projectedConsumption")) / form.watch("currentConsumption")) * 100).toFixed(1)}%
-                        </p>
+                        <p className="text-sm text-muted-foreground">Projected Consumption</p>
+                        <p className="font-medium">{form.getValues("projectedConsumption")} kWh/year</p>
                       </div>
                     </div>
                   </div>
@@ -573,15 +554,33 @@ export function CalculatorForm() {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Total CO₂ Savings</p>
-                    <p className="text-2xl font-bold">{form.watch("tenYearProjection.co2Savings")} tons</p>
+                    <p className="text-2xl font-bold">
+                      {isPending ? (
+                        <span className="animate-pulse">Calculating...</span>
+                      ) : (
+                        `${Number(form.getValues("tenYearProjection.co2Savings") || 0).toFixed(2)} tons`
+                      )}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total Carbon Credits</p>
-                    <p className="text-2xl font-bold">{form.watch("tenYearProjection.carbonCredits")}</p>
+                    <p className="text-2xl font-bold">
+                      {isPending ? (
+                        <span className="animate-pulse">Calculating...</span>
+                      ) : (
+                        Number(form.getValues("tenYearProjection.carbonCredits") || 0).toFixed(2)
+                      )}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total Financial Value</p>
-                    <p className="text-2xl font-bold">€{form.watch("tenYearProjection.financialValue")}</p>
+                    <p className="text-2xl font-bold">
+                      {isPending ? (
+                        <span className="animate-pulse">Calculating...</span>
+                      ) : (
+                        `€${Number(form.getValues("tenYearProjection.financialValue") || 0).toFixed(2)}`
+                      )}
+                    </p>
                   </div>
                 </div>
               </motion.div>
