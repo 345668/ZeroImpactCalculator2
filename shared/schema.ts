@@ -15,11 +15,13 @@ export const submissions = pgTable("submissions", {
   buildingOwnership: text("building_ownership").notNull(),
   buildingSize: numeric("building_size").notNull(),
   heatingSystem: text("heating_system").notNull(),
+  currentEnergySource: text("current_energy_source").notNull(),
   currentConsumption: numeric("current_consumption").notNull(),
   projectedConsumption: numeric("projected_consumption").notNull(),
   co2Savings: numeric("co2_savings"),
   carbonCredits: numeric("carbon_credits"),
   financialValue: numeric("financial_value"),
+  calculationDetails: text("calculation_details"), // Stored as JSON string
   acceptedTerms: text("accepted_terms").notNull(),
   gdprConsent: text("gdpr_consent").notNull(),
   fileUrl: text("file_url"),
@@ -42,6 +44,7 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
   currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
   projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
+  currentEnergySource: z.enum(["gas", "oil", "pellet"]).default("gas"),
   email: z.string().email("Please enter a valid email address"),
   acceptedTerms: z.union([z.boolean(), z.string()]).transform(val =>
     typeof val === 'boolean' ? String(val) : val
@@ -56,7 +59,8 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   emailSentAt: true,
   co2Savings: true,
   carbonCredits: true,
-  financialValue: true
+  financialValue: true,
+  calculationDetails: true
 });
 
 export const insertUserSchema = createInsertSchema(users)

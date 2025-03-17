@@ -1,0 +1,61 @@
+I will generate a refined prompt for another LLM focusing purely on carbon credit calculations, ensuring it integrates the latest energy source conversion, emission factor calculations, and language formatting. Additionally, I will compile a bibliography in APA 7 format, including only sources related to emission factors and energy calculations, without broader literature on carbon credits and trading mechanisms. I will let you know once the refined prompt and bibliography are ready.
+
+# Carbon Credit Calculation Prompt
+
+### Required Calculation Steps:
+
+1. **Convert Energy Source to kWh:**  
+   - **Gas (m³)** → 1 m³ ≈ 10.4 kWh ([Einheiten-Umrechner für verschiedene Heizenergie mit CO2‑Berechnung – Energie-Umwelt.ch](https://www.energie-umwelt.ch/tools/835-einheiten-umrechner-fuer-verschiedene-heizenergie#:~:text=Zur%20Erinnerung%20der%20Gr%C3%B6ssenordnungen%20hier,oder%C2%A036%C2%A0Megajoules))  
+   - **Oil (L)** → 1 L ≈ 9.4 kWh ([Heizwert von Pellets – Vergleich zu Öl & Gas](https://www.effizienzhaus-online.de/heizwert-von-pellets/#:~:text=Angegeben%20wird%20die%20zum%20Heizen,einem%20Kubikmeter%20Erdgas%20zu%20kommen))  
+   - **Pellet (kg)** → 1 kg ≈ 4.8 kWh ([Heizwert von Pellets – Vergleich zu Öl & Gas](https://www.effizienzhaus-online.de/heizwert-von-pellets/#:~:text=Angegeben%20wird%20die%20zum%20Heizen,einem%20Kubikmeter%20Erdgas%20zu%20kommen))
+
+2. **Calculate CO₂ Emissions for the Current Heating System:**  
+   - **Gas:** 0.24 kg CO₂ per kWh ([Daten für die Berechnung im CO2-Rechner | Naturefund](https://www.naturefund.de/wissen/co2_rechner/daten#:~:text=,2%7D%2FkWh))  
+   - **Oil:** 0.30 kg CO₂ per kWh ([Daten für die Berechnung im CO2-Rechner | Naturefund](https://www.naturefund.de/wissen/co2_rechner/daten#:~:text=,2%7D%2FkWh))  
+   - **Pellet:** 0.10 kg CO₂ per kWh ([Daten für die Berechnung im CO2-Rechner | Naturefund](https://www.naturefund.de/wissen/co2_rechner/daten#:~:text=,2%7D%2FkWh))  
+   - **Electricity Mix:** 0.343 kg CO₂ per kWh (typical grid mix) ([](https://www.bdew.de/media/documents/Energiemarkt_Deutschland_2020_englisch.pdf#:~:text=CO2%20emissions%20continue%20to%20fall,from%20hard%20coal%20and%20lignite))  
+   
+   **Formula:**  
+   \[ \text{Current CO₂ Emissions (kg)} = \text{Energy Consumption (kWh)} \times \text{Emission Factor (kg CO₂/kWh)} \]
+
+3. **Calculate CO₂ Emissions for the New System:**  
+   - If using a heat pump (electric heating), use the electricity consumption in kWh and the electricity emission factor (0.343 kg CO₂/kWh).  
+   
+   **Formula:**  
+   \[ \text{New CO₂ Emissions (kg)} = \text{Electricity Consumption (kWh)} \times 0.343 \]
+
+4. **Compute CO₂ Savings and Carbon Credits:**  
+   - Calculate the difference between current and new (projected) annual CO₂ emissions.  
+   - Convert the CO₂ savings from kilograms to metric **tons** (1,000 kg = 1 t).  
+   
+   **Formula:**  
+   \[ \text{Carbon Credits (t CO₂/year)} = \frac{\text{Current CO₂ Emissions} - \text{New CO₂ Emissions}}{1000} \]
+
+5. **Calculate Monetary Value of Carbon Credits:**  
+   - Assume a default carbon credit price of **50 EUR per ton** of CO₂ saved.  
+   
+   **Formula:**  
+   \[ \text{Value of Carbon Credits (€/year)} = \text{Carbon Credits (t CO₂/year)} \times 50 \]
+
+### Additional Requirements:
+
+- **Language & Formatting:** The output should use the correct numeric format for the selected language. For **German (`de`)** output, use a comma **`,`** as the decimal separator and a period **`.`** as the thousands separator (e.g. **„13,13 t CO₂“** for thirteen point one-three tons). For **English (`en`)** output, use a period **`.`** as the decimal separator and a comma **`,`** for thousands (e.g. **“13.13 t CO₂”**). Ensure units like **t CO₂** (tons of CO₂) are clearly indicated.
+
+- **Input Parameters:** The prompt should expect the following inputs from the user or calling program:  
+  - **Language** – a code or flag indicating output language (`de` or `en`).  
+  - **Current Energy Source & Consumption** – the type of fuel currently used for heating (e.g. gas, oil, or pellets) and its annual consumption (e.g. cubic meters of gas per year, liters of oil per year, or kg of pellets per year).  
+  - **New System Type & Electricity Consumption** – the type of new heating system (if it’s a heat pump or electric system, etc.) and the expected annual electricity consumption in kWh for heating.
+
+- **Output Content:** The LLM’s output should clearly present:  
+  - **Current CO₂ Emissions:** The annual CO₂ output of the current heating system (in kg or tons, as appropriate).  
+  - **Projected CO₂ Emissions:** The expected annual CO₂ output after switching to the new system.  
+  - **Carbon Credits (CO₂ Savings):** The reduction in CO₂ emissions per year, expressed in metric tons of CO₂ saved. This represents the carbon credits earned per year.  
+  - **Monetary Value:** The annual monetary value of the carbon credits, in euros (EUR/year), based on the assumed price per ton of CO₂.  
+
+Each of these results should be formatted according to the chosen language’s numerical format rules. The answer should be thorough and labeled (for example: “Current CO₂ Emissions: …”, “Projected CO₂ Emissions: …”, etc.), making it easy for readers to identify each component of the calculation. Calculations should be shown or explained step by step, and the final values should be clearly highlighted (e.g., **bold** or otherwise emphasized), including units.
+
+### Bibliography:
+
+- **Bundesverband der Energie- und Wasserwirtschaft (BDEW).** (2020). *Energy Market Germany 2020* (Data on electricity carbon intensity) ([](https://www.bdew.de/media/documents/Energiemarkt_Deutschland_2020_englisch.pdf#:~:text=CO2%20emissions%20continue%20to%20fall,from%20hard%20coal%20and%20lignite)). BDEW. *(Specific CO₂ emissions from Germany’s electricity mix ~0.35 kg/kWh in 2019)*.  
+- **Effizienzhaus-Online.** (n.d.). *Heizwert von Pellets – Vergleich zu Öl & Gas* ([Heizwert von Pellets – Vergleich zu Öl & Gas](https://www.effizienzhaus-online.de/heizwert-von-pellets/#:~:text=Angegeben%20wird%20die%20zum%20Heizen,einem%20Kubikmeter%20Erdgas%20zu%20kommen)). Retrieved from Effizienzhaus-online.de. *(Energy content: 1 kg pellets ≈ 4.8 kWh; 1 L heating oil ≈ 9.8 kWh; 1 m³ natural gas ≈ 10.1 kWh)*.  
+- **Naturefund.** (n.d.). *Grundlage der CO₂-Berechnung* ([Daten für die Berechnung im CO2-Rechner | Naturefund](https://www.naturefund.de/wissen/co2_rechner/daten#:~:text=,2%7D%2FkWh)). Retrieved from Naturefund.de. *(Emission factors from German Environment Ministry: gas = 0.24 kg CO₂/kWh, oil = 0.30 kg CO₂/kWh, wood = 0.10 kg CO₂/kWh)*.

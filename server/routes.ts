@@ -152,7 +152,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Calculate endpoint with enhanced validation
+  // Energy conversion constants
+  const ENERGY_CONVERSION = {
+    gas: 10.4,    // kWh per m³
+    oil: 9.4,     // kWh per L
+    pellet: 4.8,  // kWh per kg
+  };
+
+  // CO₂ emission factors (kg CO₂ per kWh)
+  const EMISSION_FACTORS = {
+    gas: 0.24,
+    oil: 0.30,
+    pellet: 0.10,
+    electricity: 0.343,
+  };
+
+  // Calculate endpoint with enhanced carbon calculations
   app.post("/api/calculate", async (req, res) => {
     const startTime = Date.now();
 
@@ -168,21 +183,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Calculate annual savings with safety checks
-      const consumptionDiff = Math.max(0, Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption));
-      const annualCO2Savings = Number((consumptionDiff * 0.2).toFixed(2));
+      // Convert current energy consumption to kWh
+      const currentEnergySource = validatedData.currentEnergySource?.toLowerCase() || 'gas';
+      const energyConversionFactor = ENERGY_CONVERSION[currentEnergySource] || 1;
+      const currentConsumptionKWh = Number(validatedData.currentConsumption) * energyConversionFactor;
 
-      // Project over 10 years
-      const co2Savings = (annualCO2Savings * 10).toString(); // 10 year projection
-      const carbonCredits = co2Savings; // 1:1 ratio with CO2 savings
-      const financialValue = (Number(carbonCredits) * 50).toString(); // €50 per credit
+      // Calculate current CO₂ emissions
+      const currentEmissionFactor = EMISSION_FACTORS[currentEnergySource] || EMISSION_FACTORS.gas;
+      const currentCO2Emissions = currentConsumptionKWh * currentEmissionFactor;
+
+      // Calculate new system CO₂ emissions (assuming electric heat pump)
+      const projectedConsumptionKWh = Number(validatedData.projectedConsumption);
+      const newCO2Emissions = projectedConsumptionKWh * EMISSION_FACTORS.electricity;
+
+      // Calculate annual CO₂ savings in tons (1000 kg = 1 ton)
+      const annualCO2Savings = (currentCO2Emissions - newCO2Emissions) / 1000;
+
+      // Project over 10 years with 2 decimal precision
+      const co2Savings = (annualCO2Savings * 10).toFixed(2);
+
+      // 1:1 ratio with CO2 savings for carbon credits
+      const carbonCredits = co2Savings;
+
+      // €50 per credit
+      const financialValue = (Number(carbonCredits) * 50).toFixed(2);
 
       // Add calculations to the submission data
       const submissionData = {
         ...validatedData,
         co2Savings,
         carbonCredits,
-        financialValue
+        financialValue,
+        // Add detailed calculation data
+        calculationDetails: {
+          currentConsumptionKWh,
+          currentCO2Emissions,
+          newCO2Emissions,
+          annualCO2Savings,
+        }
       };
 
       console.log('Creating submission with data:', submissionData);

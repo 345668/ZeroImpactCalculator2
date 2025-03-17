@@ -20,7 +20,7 @@ export async function generatePDFReport(submission: Submission): Promise<Buffer>
       doc.fontSize(25)
          .font('Helvetica-Bold')
          .text('Carbon Credits Analysis Report', { align: 'center' });
-      
+
       doc.moveDown();
       doc.fontSize(12)
          .font('Helvetica')
@@ -31,25 +31,41 @@ export async function generatePDFReport(submission: Submission): Promise<Buffer>
       doc.fontSize(16)
          .font('Helvetica-Bold')
          .text('Building Information');
-      
+
       doc.fontSize(12)
          .font('Helvetica')
          .text(`Building Size: ${submission.buildingSize} m²`)
-         .text(`Current Energy Consumption: ${submission.currentConsumption} kWh/year`)
-         .text(`Projected Energy Consumption: ${submission.projectedConsumption} kWh/year`);
+         .text(`Current Energy Source: ${submission.currentEnergySource}`)
+         .text(`Current Energy Consumption: ${submission.currentConsumption} ${submission.currentEnergySource === 'gas' ? 'm³' : submission.currentEnergySource === 'oil' ? 'L' : 'kg'}/year`)
+         .text(`Projected Electricity Consumption: ${submission.projectedConsumption} kWh/year`);
 
-      // Savings Analysis
+      // Detailed Calculations
       doc.moveDown(2);
       doc.fontSize(16)
          .font('Helvetica-Bold')
-         .text('Carbon Savings Analysis');
+         .text('Detailed Energy Analysis');
 
-      const consumptionReduction = Number(submission.currentConsumption) - Number(submission.projectedConsumption);
-      const reductionPercentage = (consumptionReduction / Number(submission.currentConsumption)) * 100;
+      const calculationDetails = typeof submission.calculationDetails === 'string' 
+        ? JSON.parse(submission.calculationDetails)
+        : submission.calculationDetails;
+
+      if (calculationDetails) {
+        doc.fontSize(12)
+           .font('Helvetica')
+           .text(`Current Energy in kWh: ${calculationDetails.currentConsumptionKWh.toFixed(2)} kWh/year`)
+           .text(`Current CO₂ Emissions: ${calculationDetails.currentCO2Emissions.toFixed(2)} kg CO₂/year`)
+           .text(`New System CO₂ Emissions: ${calculationDetails.newCO2Emissions.toFixed(2)} kg CO₂/year`)
+           .text(`Annual CO₂ Savings: ${calculationDetails.annualCO2Savings.toFixed(2)} tons CO₂/year`);
+      }
+
+      // Carbon Credit Analysis
+      doc.moveDown(2);
+      doc.fontSize(16)
+         .font('Helvetica-Bold')
+         .text('Carbon Credits Analysis');
 
       doc.fontSize(12)
          .font('Helvetica')
-         .text(`Energy Reduction: ${consumptionReduction.toFixed(2)} kWh/year (${reductionPercentage.toFixed(1)}%)`)
          .text(`CO₂ Savings: ${submission.co2Savings} tons/year`)
          .text(`Carbon Credits Generated: ${submission.carbonCredits}`)
          .text(`Financial Value: €${submission.financialValue}`);
