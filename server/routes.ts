@@ -33,6 +33,8 @@ const CONVERSION_FACTORS = {
 const EMISSION_FACTORS = {
   "heating oil": 0.266,
   "natural gas": 0.202,
+  "liquefied petroleum gas": 0.234,
+  "district heating": 0.195,
   "electricity mix": 0.343,
   "heat pump (electricity mix)": 0.086  // COP 4.0
 };

@@ -24,18 +24,12 @@ export class DbStorage implements IStorage {
     console.log('Creating submission with data:', insertSubmission);
 
     try {
-      const currentConsumption = Number(insertSubmission.currentConsumption);
-      const projectedConsumption = Number(insertSubmission.projectedConsumption);
-      const consumptionDiff = currentConsumption - projectedConsumption;
-      const co2Savings = Number((consumptionDiff * 0.2).toFixed(2));
-      const carbonCredits = co2Savings;
-      const financialValue = Number((carbonCredits * 50).toFixed(2));
-
+      // No additional calculations here - use the values directly
       const submissionData = {
         ...insertSubmission,
-        co2Savings: co2Savings.toString(),
-        carbonCredits: carbonCredits.toString(),
-        financialValue: financialValue.toString(),
+        co2Savings: insertSubmission.co2Savings,
+        carbonCredits: insertSubmission.carbonCredits,
+        financialValue: insertSubmission.financialValue,
         acceptedTerms: String(insertSubmission.acceptedTerms),
         submittedAt: new Date()
       };
