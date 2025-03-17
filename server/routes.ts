@@ -196,12 +196,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
   const isProduction = process.env.NODE_ENV === 'production';
 
+  // Add API route middleware
+  app.use('/api', (req, res, next) => {
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        res.setHeader('Content-Type', 'application/json');
+    }
+    next();
+  });
+
   // Apply rate limiting to specific routes
   if (isProduction) {
     app.use('/api/auth', authLimiter);
     app.use('/api/calculate', calculationLimiter);
     app.use('/api/', apiLimiter); // General API rate limiting
   }
+
+  // Register all API routes first
+  app.use('/api/ai', aiRouter);
+  app.use('/api/email', emailRouter);
+  app.use('/api/auth', authRouter);
+  app.post("/api/calculate", calculateEndpoint);
+  app.post("/api/submissions/sync", async (_req, res) => {
+    try {
+      console.log('Received submissions sync request');
+      await storage.syncSubmissions();
+      res.json({ success: true, message: "Submissions synced successfully" });
+    } catch (error) {
+      console.error('Error during submissions sync:', error);
+      res.status(500).json({
+        message: "Error syncing submissions",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+    app.get("/api/submissions", async (req, res) => {
+    try {
+      console.log('Fetching all submissions from database');
+      const submissions = await storage.getAllSubmissions();
+      console.log(`Found ${submissions.length} submissions`);
+      res.json(submissions);
+    } catch (error) {
+      console.error('Error fetching submissions:', error);
+      res.status(500).json({
+        message: "Error fetching submissions",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  app.post("/api/send-report", async (req, res) => {
+    try {
+      console.log('Received report email request:', req.body);
+
+      const { submissionId } = req.body;
+      if (!submissionId) {
+        return res.status(400).json({ error: "Submission ID is required" });
+      }
+
+      // Get the submission
+      const submission = await storage.getSubmissionById(submissionId);
+      if (!submission) {
+        return res.status(404).json({ error: "Submission not found" });
+      }
+
+      // Send the email
+      await EmailService.sendCarbonReport(submission);
+
+      // Update email status in database
+      await storage.updateEmailStatus(submissionId);
+
+      console.log('Report sent and status updated for submission:', submissionId);
+      res.json({ success: true, message: "Report sent successfully" });
+    } catch (error) {
+      console.error('Error sending report:', error);
+      res.status(500).json({
+        message: "Error sending report",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  // Development-only backup test endpoint
+  if (process.env.NODE_ENV !== 'production') {
+    app.post("/api/test-backup", async (_req, res) => {
+      try {
+        console.log('Manual backup test initiated');
+        await performBackup();
+        res.json({ 
+          success: true, 
+          message: "Backup completed successfully",
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Manual backup test failed:', error);
+        res.status(500).json({
+          success: false,
+          message: "Backup failed",
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+  }
+
+  // Document upload endpoint with production safeguards
+  app.post("/api/upload-document", upload.single('document'), async (req, res) => {
+    const startTime = Date.now();
+    console.log('Upload request received:', req.file ? 'File present' : 'No file');
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Production file validation
+      if (isProduction) {
+        // Additional security checks for production
+        if (req.file.size === 0) {
+          return res.status(400).json({ error: "Empty file detected" });
+        }
+      }
+
+      console.log('Processing file:', req.file.originalname);
+      const processedData = await processDocument(req.file);
+
+      // Log processing time in production
+      if (isProduction) {
+        console.log(`Document processing completed in ${Date.now() - startTime}ms`);
+      }
+
+      res.json({
+        message: "Document processed successfully",
+        extractedData: processedData
+      });
+    } catch (error) {
+      console.error('Document processing error:', error);
+
+      // Production-safe error response
+      res.status(500).json({
+        error: isProduction ? "Error processing document" : error.message
+      });
+    }
+  });
 
   // Enhanced health check endpoint
   app.get("/api/health", async (req, res) => {
@@ -272,118 +406,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Register API routes
-  app.use('/api/ai', aiRouter);
-  app.use('/api/email', emailRouter);
-  app.use('/api/auth', authRouter);
-
-  // Calculate endpoint
-  app.post("/api/calculate", calculateEndpoint);
-
-  // Document upload endpoint with production safeguards
-  app.post("/api/upload-document", upload.single('document'), async (req, res) => {
-    const startTime = Date.now();
-    console.log('Upload request received:', req.file ? 'File present' : 'No file');
-
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
-
-      // Production file validation
-      if (isProduction) {
-        // Additional security checks for production
-        if (req.file.size === 0) {
-          return res.status(400).json({ error: "Empty file detected" });
-        }
-      }
-
-      console.log('Processing file:', req.file.originalname);
-      const processedData = await processDocument(req.file);
-
-      // Log processing time in production
-      if (isProduction) {
-        console.log(`Document processing completed in ${Date.now() - startTime}ms`);
-      }
-
-      res.json({
-        message: "Document processed successfully",
-        extractedData: processedData
-      });
-    } catch (error) {
-      console.error('Document processing error:', error);
-
-      // Production-safe error response
-      res.status(500).json({
-        error: isProduction ? "Error processing document" : error.message
-      });
-    }
-  });
-
-
-  // Add new sync endpoint
-  app.post("/api/submissions/sync", async (_req, res) => {
-    try {
-      console.log('Received submissions sync request');
-      await storage.syncSubmissions();
-      res.json({ success: true, message: "Submissions synced successfully" });
-    } catch (error) {
-      console.error('Error during submissions sync:', error);
-      res.status(500).json({
-        message: "Error syncing submissions",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // Add GET all submissions endpoint
-  app.get("/api/submissions", async (req, res) => {
-    try {
-      console.log('Fetching all submissions from database');
-      const submissions = await storage.getAllSubmissions();
-      console.log(`Found ${submissions.length} submissions`);
-      res.json(submissions);
-    } catch (error) {
-      console.error('Error fetching submissions:', error);
-      res.status(500).json({
-        message: "Error fetching submissions",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
-
-  // Update the send-report endpoint
-  app.post("/api/send-report", async (req, res) => {
-    try {
-      console.log('Received report email request:', req.body);
-
-      const { submissionId } = req.body;
-      if (!submissionId) {
-        return res.status(400).json({ error: "Submission ID is required" });
-      }
-
-      // Get the submission
-      const submission = await storage.getSubmissionById(submissionId);
-      if (!submission) {
-        return res.status(404).json({ error: "Submission not found" });
-      }
-
-      // Send the email
-      await EmailService.sendCarbonReport(submission);
-
-      // Update email status in database
-      await storage.updateEmailStatus(submissionId);
-
-      console.log('Report sent and status updated for submission:', submissionId);
-      res.json({ success: true, message: "Report sent successfully" });
-    } catch (error) {
-      console.error('Error sending report:', error);
-      res.status(500).json({
-        message: "Error sending report",
-        error: error instanceof Error ? error.message : "Unknown error"
-      });
-    }
-  });
 
   // Enhanced error handling middleware
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
