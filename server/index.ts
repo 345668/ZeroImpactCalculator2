@@ -10,6 +10,17 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Disable x-powered-by header
 app.disable('x-powered-by');
 
+// Parse JSON and URL-encoded bodies with size limits
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+
+// API route handling middleware - must come before any static/frontend middleware
+app.use('/api', (req, res, next) => {
+  // Force JSON content type for all API routes
+  res.setHeader('Content-Type', 'application/json');
+  next();
+});
+
 // Enhanced security headers
 app.use((req, res, next) => {
   // Basic security headers
@@ -37,16 +48,6 @@ app.use((req, res, next) => {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
 
-  next();
-});
-
-// Parse JSON and URL-encoded bodies with size limits
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: false, limit: '1mb' }));
-
-// Add API route middleware
-app.use('/api', (req, res, next) => {
-  res.setHeader('Content-Type', 'application/json');
   next();
 });
 
@@ -115,34 +116,15 @@ app.use((req, res, next) => {
       }
     }
 
-    // Register routes and get http server
+    // Register routes first (API endpoints)
     console.log('Registering routes...');
     const server = await registerRoutes(app);
     console.log('✓ Routes registered successfully');
 
-    // Production-grade error handler
-    app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
-      // Log error details
-      console.error('Server error:', {
-        requestId: (req as any).requestId,
-        error: isProduction ? err.message : err.stack,
-        path: req.path,
-        method: req.method,
-        timestamp: new Date().toISOString()
-      });
-
-      // Send safe error response
-      res.status(err.status || 500).json({
-        error: isProduction ? 'Internal Server Error' : err.message,
-        requestId: (req as any).requestId,
-        ...(isProduction ? {} : { stack: err.stack })
-      });
-    });
-
-    // Setup environment-specific middleware
+    // Setup environment-specific middleware last
     if (!isProduction) {
       console.log('Setting up Vite for development...');
-      await setupVite(app, server);
+      await setupVite(app);
       console.log('✓ Vite setup complete');
     }
 
