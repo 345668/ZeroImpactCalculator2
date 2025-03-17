@@ -384,6 +384,7 @@ export function CalculatorForm() {
 
           {step === 4 && (
             <div className="space-y-6">
+              {/* Results section with restored styling */}
               <motion.div 
                 className="text-center"
                 initial={{ opacity: 0, y: 20 }}
@@ -402,6 +403,13 @@ export function CalculatorForm() {
                 >
                   <Card className="p-6 bg-primary/5 relative overflow-hidden">
                     <div className="transition-all duration-300">
+                      <motion.div 
+                        className="absolute inset-0 bg-calmBlue-50"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                        style={{ transformOrigin: 'left' }}
+                      />
                       <div className="relative z-10">
                         <div className="flex items-center justify-center mb-4">
                           <motion.div 
@@ -430,6 +438,13 @@ export function CalculatorForm() {
                 >
                   <Card className="p-6 bg-primary/5 relative overflow-hidden">
                     <div className="transition-all duration-300">
+                      <motion.div 
+                        className="absolute inset-0 bg-calmBlue-50"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 1, delay: 0.7 }}
+                        style={{ transformOrigin: 'left' }}
+                      />
                       <div className="relative z-10">
                         <div className="flex items-center justify-center mb-4">
                           <motion.div 
@@ -458,6 +473,13 @@ export function CalculatorForm() {
                 >
                   <Card className="p-6 bg-primary/5 relative overflow-hidden">
                     <div className="transition-all duration-300">
+                      <motion.div 
+                        className="absolute inset-0 bg-calmBlue-50"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 1, delay: 0.9 }}
+                        style={{ transformOrigin: 'left' }}
+                      />
                       <div className="relative z-10">
                         <div className="flex items-center justify-center mb-4">
                           <motion.div 
@@ -480,12 +502,59 @@ export function CalculatorForm() {
                 </motion.div>
               </div>
 
-              {/* 10-year projection section */}
+              <motion.div 
+                className="mt-8"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.8 }}
+              >
+                <div className="p-6 bg-gray-50 rounded-lg transition-all duration-300">
+                  <div className="transition-all duration-300">
+                    <h3 className="text-lg font-semibold mb-4">Building Information</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-muted-foreground">Ownership Type</p>
+                        <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Building Size</p>
+                        <p className="font-medium">{form.getValues("buildingSize")} m²</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Heating System</p>
+                        <p className="font-medium capitalize">{form.getValues("heatingSystem")}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
+                        <motion.div
+                          className="h-2 bg-calmBlue-100 rounded-full mt-2 overflow-hidden"
+                          initial={{ width: "0%" }}
+                          animate={{ width: "100%" }}
+                          transition={{ duration: 1, delay: 1 }}
+                        >
+                          <motion.div
+                            className="h-full bg-calmBlue-500"
+                            initial={{ width: "0%" }}
+                            animate={{ 
+                              width: `${(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%` 
+                            }}
+                            transition={{ duration: 1.5, delay: 1.2 }}
+                          />
+                        </motion.div>
+                        <p className="font-medium mt-2">
+                          {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
               <motion.div 
                 className="mt-8 p-6 bg-primary/5 rounded-lg"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.8 }}
+                transition={{ duration: 0.5, delay: 1 }}
               >
                 <h3 className="text-xl font-semibold mb-4">10-Year Projection</h3>
                 <div className="grid grid-cols-3 gap-4">
@@ -503,6 +572,18 @@ export function CalculatorForm() {
                   </div>
                 </div>
               </motion.div>
+
+              <motion.div 
+                className="text-center mt-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 1.4 }}
+              >
+                <p className="text-sm text-muted-foreground mb-4">
+                  The detailed results will be sent to your email after completing the form.
+                </p>
+              </motion.div>
+
             </div>
           )}
 
