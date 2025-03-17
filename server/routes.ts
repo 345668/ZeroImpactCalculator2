@@ -37,6 +37,7 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
 
     try {
       const validatedData = insertSubmissionSchema.parse(req.body);
+      console.log('Validated input data:', validatedData);
 
       // Production data validation
       const isProduction = process.env.NODE_ENV === 'production';
@@ -48,16 +49,20 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
 
       // Current consumption is already in kWh
       const currentConsumptionKWh = Number(validatedData.currentConsumption);
+      console.log('Current consumption (kWh):', currentConsumptionKWh);
 
       // Calculate current CO₂ emissions (kg CO₂)
-      const currentCO2Emissions = currentConsumptionKWh * EMISSION_FACTORS.gas;
+      const currentCO2Emissions = currentConsumptionKWh * EMISSION_FACTORS.gas; // 0.24 kg CO₂/kWh
+      console.log('Current CO₂ emissions (kg):', currentCO2Emissions);
 
       // Calculate new system CO₂ emissions (heat pump using electricity) (kg CO₂)
       const projectedConsumptionKWh = Number(validatedData.projectedConsumption);
-      const newCO2Emissions = projectedConsumptionKWh * EMISSION_FACTORS.electricity;
+      const newCO2Emissions = projectedConsumptionKWh * EMISSION_FACTORS.electricity; // 0.343 kg CO₂/kWh
+      console.log('New CO₂ emissions (kg):', newCO2Emissions);
 
       // Calculate annual CO₂ savings in tons (1000 kg = 1 ton)
       const annualCO2Savings = (currentCO2Emissions - newCO2Emissions) / 1000;
+      console.log('Annual CO₂ savings (tons):', annualCO2Savings);
 
       // For single year values (with 2 decimal precision)
       const co2Savings = annualCO2Savings.toFixed(2);
@@ -68,6 +73,19 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
       const tenYearCO2Savings = (annualCO2Savings * 10).toFixed(2);
       const tenYearCarbonCredits = tenYearCO2Savings;
       const tenYearFinancialValue = (Number(tenYearCO2Savings) * 50).toFixed(2);
+
+      console.log('Calculation results:', {
+        annualValues: {
+          co2Savings,
+          carbonCredits,
+          financialValue
+        },
+        tenYearProjection: {
+          co2Savings: tenYearCO2Savings,
+          carbonCredits: tenYearCarbonCredits,
+          financialValue: tenYearFinancialValue
+        }
+      });
 
       // Add calculations to the submission data
       const submissionData = {
@@ -118,7 +136,7 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
         });
       }
     }
-  };
+};
 
   // Document processing function
 async function processDocument(file: Express.Multer.File) {
