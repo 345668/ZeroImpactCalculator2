@@ -10,19 +10,19 @@ import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-st
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
 import authRouter from "./routes/auth.js";
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 
 // Configure multer for file uploads
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-  fileFilter: (_req, file, cb) => {
-    // Accept only PDFs and images
-    if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only PDF and image files are allowed'));
-    }
-  }
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Configure rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: isProduction ? 100 : 0, // Limit each IP to 100 requests per windowMs in production
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
 // Document processing function
@@ -56,13 +56,35 @@ async function processDocument(file: Express.Multer.File) {
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
 
+  // Apply rate limiting to API routes in production
+  if (isProduction) {
+    app.use('/api/', apiLimiter);
+  }
+
   // Ensure Azure container exists
   try {
     await ensureContainerExists();
     console.log('Azure container setup complete');
   } catch (error) {
     console.error('Failed to setup Azure container:', error);
+    throw error; // In production, we want to fail fast if critical services are unavailable
   }
+
+  // Configure multer with stricter limits for production
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: isProduction ? 5 * 1024 * 1024 : 10 * 1024 * 1024, // 5MB in production, 10MB in development
+      files: 1
+    },
+    fileFilter: (_req, file, cb) => {
+      if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only PDF and image files are allowed'));
+      }
+    }
+  });
 
   // Add security headers middleware
   app.use((req, res, next) => {
@@ -90,19 +112,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/email', emailRouter);
   app.use('/api/auth', authRouter);
 
-  // Document upload endpoint
+  // Document upload endpoint with production safeguards
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
+    const startTime = Date.now();
     console.log('Upload request received:', req.file ? 'File present' : 'No file');
 
     try {
       if (!req.file) {
-        console.error('No file in request');
-        return res.status(400).json({ message: "No file uploaded" });
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Production file validation
+      if (isProduction) {
+        // Additional security checks for production
+        if (req.file.size === 0) {
+          return res.status(400).json({ error: "Empty file detected" });
+        }
       }
 
       console.log('Processing file:', req.file.originalname);
       const processedData = await processDocument(req.file);
-      console.log('File processed successfully');
+
+      // Log processing time in production
+      if (isProduction) {
+        console.log(`Document processing completed in ${Date.now() - startTime}ms`);
+      }
 
       res.json({
         message: "Document processed successfully",
@@ -110,23 +144,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Document processing error:', error);
+
+      // Production-safe error response
       res.status(500).json({
-        message: "Error processing document",
-        error: error instanceof Error ? error.message : "Unknown error"
+        error: isProduction ? "Error processing document" : error.message
       });
     }
   });
 
-  // Calculate endpoint
+  // Calculate endpoint with enhanced validation
   app.post("/api/calculate", async (req, res) => {
-    try {
-      console.log('Received calculation request:', req.body);
-      const validatedData = insertSubmissionSchema.parse(req.body);
-      console.log('Validation successful:', validatedData);
+    const startTime = Date.now();
 
-      // Calculate annual savings
-      const consumptionDiff = Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption);
-      const annualCO2Savings = Number((consumptionDiff * 0.2).toFixed(2)); // tons of CO2 per year
+    try {
+      console.log('Received calculation request');
+      const validatedData = insertSubmissionSchema.parse(req.body);
+
+      // Production data validation
+      if (isProduction) {
+        // Additional validation checks
+        if (validatedData.currentConsumption <= 0 || validatedData.projectedConsumption < 0) {
+          return res.status(400).json({ error: "Invalid consumption values" });
+        }
+      }
+
+      // Calculate annual savings with safety checks
+      const consumptionDiff = Math.max(0, Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption));
+      const annualCO2Savings = Number((consumptionDiff * 0.2).toFixed(2));
 
       // Project over 10 years
       const co2Savings = (annualCO2Savings * 10).toString(); // 10 year projection
@@ -144,16 +188,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('Creating submission with data:', submissionData);
       const result = await storage.createSubmission(submissionData);
       console.log('Submission created:', result);
+
+      // Log performance metrics in production
+      if (isProduction) {
+        console.log(`Calculation completed in ${Date.now() - startTime}ms`);
+      }
+
       res.json(result);
     } catch (error) {
       console.error('Calculation error:', error);
-      if (error instanceof Error && error.name === "ZodError") {
+
+      if (error.name === "ZodError") {
         const validationError = fromZodError(error);
-        res.status(400).json({ message: validationError.message });
+        res.status(400).json({ error: validationError.message });
       } else {
-        res.status(500).json({ 
-          message: "Internal server error",
-          error: error instanceof Error ? error.message : "Unknown error"
+        res.status(500).json({
+          error: isProduction ? "Internal server error" : error.message
         });
       }
     }
@@ -167,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: "Submissions synced successfully" });
     } catch (error) {
       console.error('Error during submissions sync:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error syncing submissions",
         error: error instanceof Error ? error.message : "Unknown error"
       });
@@ -183,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(submissions);
     } catch (error) {
       console.error('Error fetching submissions:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error fetching submissions",
         error: error instanceof Error ? error.message : "Unknown error"
       });
@@ -216,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ success: true, message: "Report sent successfully" });
     } catch (error) {
       console.error('Error sending report:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: "Error sending report",
         error: error instanceof Error ? error.message : "Unknown error"
       });
@@ -224,12 +274,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // Error handling middleware
+  // Error handling middleware enhanced for production
   app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
     console.error('Express error:', err);
+
+    // Production-safe error response
     res.status(500).json({
-      message: "Internal server error",
-      error: err instanceof Error ? err.message : "Unknown error"
+      error: isProduction ? "Internal server error" : err.message,
+      ...(isProduction ? {} : { stack: err.stack })
     });
   });
 
