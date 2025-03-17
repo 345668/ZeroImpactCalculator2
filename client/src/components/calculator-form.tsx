@@ -143,6 +143,19 @@ export function CalculatorForm() {
     },
     onSuccess: (data) => {
       console.log('Form submission successful:', data);
+
+      // Set the calculation results in the form
+      form.setValue("co2Savings", data.co2Savings);
+      form.setValue("carbonCredits", data.carbonCredits);
+      form.setValue("financialValue", data.financialValue);
+
+      // Set the 10-year projection data
+      form.setValue("tenYearProjection", {
+        co2Savings: data.tenYearProjection.co2Savings,
+        carbonCredits: data.tenYearProjection.carbonCredits,
+        financialValue: data.tenYearProjection.financialValue
+      });
+
       setIsSubmitSuccess(true);
 
       // Store result data for the results page
@@ -423,7 +436,7 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          {form.watch("co2Savings")} tons
+                          {Number(form.getValues("co2Savings")).toFixed(2)} tons
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Per year</p>
                       </div>
@@ -458,7 +471,7 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          {form.watch("carbonCredits")}
+                          {Number(form.getValues("carbonCredits")).toFixed(2)}
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
                       </div>
@@ -493,7 +506,7 @@ export function CalculatorForm() {
                         </div>
                         <h3 className="text-center font-semibold mb-1">Financial Value</h3>
                         <div className="text-3xl text-center font-bold mb-1">
-                          €{form.watch("financialValue")}
+                          €{Number(form.getValues("financialValue")).toFixed(2)}
                         </div>
                         <p className="text-sm text-center text-muted-foreground">Potential market value</p>
                       </div>
