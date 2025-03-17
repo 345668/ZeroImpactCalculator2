@@ -55,7 +55,7 @@ app.use((req, res, next) => {
   const requestId = Math.random().toString(36).substring(7);
 
   // Attach request ID for tracking
-  req.requestId = requestId;
+  (req as any).requestId = requestId;
 
   res.on("finish", () => {
     const duration = Date.now() - start;
@@ -81,58 +81,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint with enhanced checks
-app.get("/api/health", async (req, res) => {
-  try {
-    // Check database connection
-    const dbStatus = await testDatabaseConnection();
-
-    const health = {
-      status: dbStatus ? "ok" : "error",
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV,
-      uptime: process.uptime(),
-      memoryUsage: process.memoryUsage(),
-      dbConnection: dbStatus ? "healthy" : "unhealthy"
-    };
-
-    const status = dbStatus ? 200 : 503;
-    res.status(status).json(health);
-  } catch (error) {
-    res.status(503).json({
-      status: "error",
-      timestamp: new Date().toISOString(),
-      error: isProduction ? "Service unavailable" : error.message
-    });
-  }
-});
-
-// Add health check endpoint
-app.get("/api/health", async (req, res) => {
-  try {
-    // Check database connection
-    const dbStatus = await testDatabaseConnection();
-
-    const health = {
-      status: dbStatus ? "ok" : "error",
-      timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV,
-      uptime: process.uptime(),
-      memoryUsage: process.memoryUsage(),
-      dbConnection: dbStatus ? "healthy" : "unhealthy"
-    };
-
-    const status = dbStatus ? 200 : 503;
-    res.status(status).json(health);
-  } catch (error) {
-    res.status(503).json({
-      status: "error",
-      timestamp: new Date().toISOString(),
-      error: isProduction ? "Service unavailable" : error.message
-    });
-  }
-});
-
 (async () => {
   try {
     console.log(`=== Starting server initialization (Process ID: ${process.pid}) ===`);
@@ -156,7 +104,7 @@ app.get("/api/health", async (req, res) => {
     app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
       // Log error details
       console.error('Server error:', {
-        requestId: req.requestId,
+        requestId: (req as any).requestId,
         error: isProduction ? err.message : err.stack,
         path: req.path,
         method: req.method,
@@ -166,7 +114,7 @@ app.get("/api/health", async (req, res) => {
       // Send safe error response
       res.status(err.status || 500).json({
         error: isProduction ? 'Internal Server Error' : err.message,
-        requestId: req.requestId,
+        requestId: (req as any).requestId,
         ...(isProduction ? {} : { stack: err.stack })
       });
     });

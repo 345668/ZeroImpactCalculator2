@@ -220,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const health = {
-        status: dbStatus && emailStatus === "healthy" ? "healthy" : "unhealthy",
+        status: dbStatus && emailStatus === "healthy" ? "healthy" : "degraded",
         timestamp: new Date().toISOString(),
         version: process.env.npm_package_version || "1.0.0",
         services: {
@@ -232,14 +232,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memory: process.memoryUsage()
       };
 
-      const status = health.status === "healthy" ? 200 : 503;
-      res.status(status).json(health);
+      // Set appropriate status code based on service health
+      const statusCode = health.status === "healthy" ? 200 : 
+                        health.status === "degraded" ? 503 : 500;
+
+      res.status(statusCode).json(health);
     } catch (error) {
       console.error('Health check error:', error);
       res.status(503).json({
         status: "unhealthy",
         timestamp: new Date().toISOString(),
-        error: isProduction ? "Service unavailable" : error.message
+        error: process.env.NODE_ENV === 'production' ? "Service unavailable" : error.message
       });
     }
   });
