@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button.tsx";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
-import { Coin } from "@/components/ui/coin";
+import { Coin } from "@/components/ui/coin.tsx";
 
 export function HeroSection() {
   return (

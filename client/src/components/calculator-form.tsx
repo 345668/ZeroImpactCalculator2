@@ -5,12 +5,12 @@ import { useMutation } from "@tanstack/react-query";
 import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Check, Mail, RefreshCw, Loader2 } from "lucide-react";
-import { DocumentUpload } from "./document-upload";
+import { DocumentUpload } from "./document-upload.tsx";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
-import { SuccessModal } from "./success-modal";
-import { TermsModal } from "./terms-modal";
-import { GDPRModal } from "./gdpr-modal";
+import { SuccessModal } from "./success-modal.tsx";
+import { TermsModal } from "./terms-modal.tsx";
+import { GDPRModal } from "./gdpr-modal.tsx";
 
 // Import necessary UI components
 import {
@@ -20,13 +20,27 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Checkbox } from "@/components/ui/checkbox";
-import { MultiStepForm } from "./multi-step-form";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+} from "@/components/ui/form.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { MultiStepForm } from "./multi-step-form.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Card } from "@/components/ui/card.tsx";
+
+// Type for extracted data
+interface ExtractedData {
+  language?: string;
+  buildingSize?: number;
+  currentConsumption?: number;
+  projectedConsumption?: number;
+  heatingSystem?: string;
+  energyConsultantName?: string;
+  energyConsultantCompany?: string;
+  energyConsultantId?: string;
+  energyConsultantBafaNumber?: string;
+  fileUrl?: string;
+}
 
 export const formSteps = [
   {
@@ -822,17 +836,4 @@ export function CalculatorForm() {
       />
     </Form>
   );
-}
-
-interface ExtractedData {
-  buildingSize?: number;
-  currentConsumption?: number;
-  projectedConsumption?: number;
-  language?: string;
-  heatingSystem?: string;
-  energyConsultantName?: string;
-  energyConsultantCompany?: string;
-  energyConsultantId?: string;
-  energyConsultantBafaNumber?: string;
-  fileUrl?: string;
 }

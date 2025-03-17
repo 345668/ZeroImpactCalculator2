@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button.tsx";
+import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Check, Mail, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
