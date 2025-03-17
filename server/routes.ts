@@ -34,7 +34,7 @@ const EMISSION_FACTORS = {
   "heating oil": 0.266,
   "natural gas": 0.202,
   "electricity mix": 0.343,
-  "heat pump": 0.086,  // COP 4.0
+  "heat pump (electricity mix)": 0.086  // COP 4.0
 };
 
 const CARBON_PRICE_PER_TON = 50;  // EUR per ton
@@ -57,19 +57,17 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
         }
       }
 
-      // Convert current consumption to kWh if needed
-      const currentEnergySource = validatedData.currentEnergySource?.toLowerCase() || 'natural gas';
+      // Current consumption is in kWh/year
       const currentConsumptionKWh = Number(validatedData.currentConsumption);
       console.log('Current consumption (kWh):', currentConsumptionKWh);
 
-      // Calculate current CO₂ emissions (kg CO₂)
-      const currentEmissionFactor = EMISSION_FACTORS[currentEnergySource] || EMISSION_FACTORS["natural gas"];
-      const currentCO2Emissions = currentConsumptionKWh * currentEmissionFactor;
+      // Calculate current CO₂ emissions using natural gas factor (kg CO₂)
+      const currentCO2Emissions = currentConsumptionKWh * EMISSION_FACTORS["natural gas"];
       console.log('Current CO₂ emissions (kg):', currentCO2Emissions);
 
-      // Calculate new system CO₂ emissions (heat pump)
+      // Calculate new system CO₂ emissions using electricity mix factor (kg CO₂)
       const projectedConsumptionKWh = Number(validatedData.projectedConsumption);
-      const newCO2Emissions = projectedConsumptionKWh * EMISSION_FACTORS["heat pump"]; // Using heat pump efficiency
+      const newCO2Emissions = projectedConsumptionKWh * EMISSION_FACTORS["electricity mix"];
       console.log('New CO₂ emissions (kg):', newCO2Emissions);
 
       // Calculate annual CO₂ savings in tons (1000 kg = 1 ton)
