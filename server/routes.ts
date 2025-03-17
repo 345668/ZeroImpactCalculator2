@@ -170,9 +170,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Calculate endpoint with enhanced carbon calculations
   app.post("/api/calculate", async (req, res) => {
     const startTime = Date.now();
+    console.log('Received calculation request');
 
     try {
-      console.log('Received calculation request');
       const validatedData = insertSubmissionSchema.parse(req.body);
 
       // Production data validation

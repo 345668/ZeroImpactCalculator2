@@ -1,0 +1,125 @@
+### **Updated Carbon Credit Calculation Prompt (Including 10-Year Prognosis)**  
+
+#### **Title:** Carbon Credit Calculation with 10-Year Prognosis  
+
+#### **Prompt:**  
+Develop a structured **carbon credit calculation model** based on energy efficiency improvements over a **10-year period**. The user provides **pre-renovation and post-renovation energy data**, and the system calculates **CO₂ savings, carbon credits, and financial value**.  
+
+---
+
+### **Required Calculation Steps:**
+
+#### **1. Convert Energy Source to kWh**
+Each heating source has a specific energy content per unit. Convert the given **fuel consumption** to kWh:  
+
+| **Energy Source** | **Unit** | **Conversion to kWh** |
+|------------------|--------|--------------------|
+| **Gas**         | m³     | **1 m³ = 10.4 kWh** |
+| **Oil**         | Liter  | **1 L = 9.4 kWh**  |
+| **Pellet**      | kg     | **1 kg = 4.8 kWh** |
+
+\[
+\text{Energy (kWh)} = \text{Energy Amount} \times \text{Conversion Factor}
+\]
+
+---
+
+#### **2. Calculate CO₂ Emissions for the Current Heating System**
+After conversion to kWh, use the **correct emission factor** for the energy source:
+
+| **Energy Source** | **Emission Factor** (kg CO₂/kWh) |
+|------------------|--------------------------|
+| **Gas**         | 0.24                      |
+| **Oil**         | 0.30                      |
+| **Pellet**      | 0.10                      |
+| **Electricity Mix** | 0.343                  |
+
+\[
+\text{Current CO₂ Emissions (kg)} = \text{Energy (kWh)} \times \text{Emission Factor}
+\]
+
+Multiply by **10 years** to compute the total CO₂ emissions **over a decade**:
+
+\[
+\text{Current CO₂ Emissions (kg, 10 years)} = \text{Current CO₂ Emissions (kg)} \times 10
+\]
+
+---
+
+#### **3. Calculate CO₂ Emissions for the New Heating System**
+- If switching to a **heat pump**, assume the system consumes electricity.  
+- Convert **post-renovation energy consumption** (in kWh) using the **electricity mix emission factor (0.343 kg CO₂/kWh)**.
+
+\[
+\text{Projected CO₂ Emissions (kg)} = \text{Electricity Consumption (kWh)} \times 0.343
+\]
+
+Multiply by **10 years** to compute the emissions for the full prognosis:
+
+\[
+\text{Projected CO₂ Emissions (kg, 10 years)} = \text{Projected CO₂ Emissions (kg)} \times 10
+\]
+
+---
+
+#### **4. Compute Carbon Credits (CO₂ Savings)**
+Calculate the CO₂ saved by subtracting projected emissions from current emissions:
+
+\[
+\text{Carbon Credits (t CO₂, 10 years)} = \frac{\text{Current CO₂ Emissions (kg, 10 years)} - \text{Projected CO₂ Emissions (kg, 10 years)}}{1000}
+\]
+
+---
+
+#### **5. Calculate the Financial Value of Carbon Credits**
+Carbon credits are **valued at €50 per ton of CO₂**:
+
+\[
+\text{Value of Carbon Credits (€)} = \text{Carbon Credits (t CO₂, 10 years)} \times 50
+\]
+
+---
+
+### **Additional Requirements:**
+- **Numerical Formatting:** The calculation should be formatted according to the selected **language (`de` or `en`)**:
+  - **German (`de`)**: `,` as decimal separator, `.` for thousands (`63,56 t CO₂`).
+  - **English (`en`)**: `.` as decimal separator, `,` for thousands (`63.56 t CO₂`).
+
+- **Input Parameters:**
+  - **Language Selection** (`de` or `en`).
+  - **Current Heating System & Fuel Type** (Gas, Oil, Pellet).
+  - **Annual Energy Consumption (before renovation)**.
+  - **Projected Energy Consumption (after renovation)**.
+  - **New Heating System Type** (e.g., Heat Pump, Gas Condensing Boiler, etc.).
+  - **Carbon Credit Price per Ton (default: €50 per ton, but adjustable).**
+
+- **Output Data (10-Year Prognosis):**
+  - **Current CO₂ Emissions (kg & tons, 10 years).**
+  - **Projected CO₂ Emissions (kg & tons, 10 years).**
+  - **Total Carbon Credits (tons CO₂ saved, 10 years).**
+  - **Total Financial Value (€).**
+  - **Formatted Output Consistent with the Selected Language.**
+
+---
+
+### **Example Input & Output**
+#### **Example Input:**
+- **Current heating system:** Gas (Baujahr 1997 – Gas-NT)
+- **Energy before renovation:** 33,700 kWh/year
+- **Energy after renovation:** 5,050 kWh/year (heat pump)
+- **Language:** `en`
+- **Carbon credit price:** 50 EUR per ton
+
+#### **Example Output:**
+| **Date**      | **Customer**     | **Energy Consultant**    | **Building Size** | **Energy Reduction** | **CO₂ Savings (10 years)**  | **Carbon Credits (10 years)** | **Financial Value (10 years)** | **Actions**      |
+|--------------|----------------|------------------------|------------------|------------------|---------------------|-----------------------|----------------------|----------------|
+| 3/17/2025   | Carsten Bock   | ResiKon GmbH          | 142 m²           | **85%**          | **63.56 tons**     | **63.56**            | **€3,178.00**       | Report Sent    |
+
+---
+
+### **Final Notes**
+- This **refined prompt** integrates **energy conversion**, **correct emission factors**, and a **10-year forecast**.  
+- **Language-specific formatting** ensures clear output for both **German and English users**.  
+- **Financial valuation** aligns with industry standards for carbon credit calculations.
+
+This prompt is now **fully structured** for an LLM to **accurately compute carbon credits and financial projections over a 10-year period**. 🚀 Let me know if any further refinements are needed!
