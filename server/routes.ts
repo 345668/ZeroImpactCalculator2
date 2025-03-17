@@ -183,7 +183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      // Convert current energy consumption to kWh
+      // Convert current energy source to kWh
       const currentEnergySource = validatedData.currentEnergySource?.toLowerCase() || 'gas';
       const energyConversionFactor = ENERGY_CONVERSION[currentEnergySource];
       const currentConsumptionKWh = Number(validatedData.currentConsumption) * (energyConversionFactor || 1);
