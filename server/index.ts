@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
 import { setupVite, log } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
+import { performBackup } from "./utils/backup.js";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -21,7 +22,7 @@ app.use((req, res, next) => {
   // Production-specific headers
   if (isProduction) {
     // Strict CSP for production
-    res.setHeader('Content-Security-Policy', 
+    res.setHeader('Content-Security-Policy',
       "default-src 'self'; " +
       "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
       "style-src 'self' 'unsafe-inline'; " +
@@ -94,6 +95,25 @@ app.use((req, res, next) => {
       throw new Error('Failed to connect to database');
     }
     console.log('✓ Database connection successful');
+
+    // Initial backup on startup
+    if (process.env.NODE_ENV === 'production') {
+      try {
+        await performBackup();
+        console.log('✓ Initial backup completed');
+
+        // Schedule daily backups at 2 AM
+        setInterval(async () => {
+          const now = new Date();
+          if (now.getHours() === 2 && now.getMinutes() === 0) {
+            console.log('Starting scheduled backup...');
+            await performBackup();
+          }
+        }, 60000); // Check every minute
+      } catch (error) {
+        console.error('Backup system initialization failed:', error);
+      }
+    }
 
     // Register routes and get http server
     console.log('Registering routes...');

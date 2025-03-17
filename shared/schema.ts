@@ -1,4 +1,4 @@
-import { pgTable, text, serial, numeric, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, numeric, timestamp, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -28,7 +28,18 @@ export const submissions = pgTable("submissions", {
   emailSent: text("email_sent").notNull().default("no"),
   emailSentAt: timestamp("email_sent_at"),
   submittedAt: timestamp("submitted_at").defaultNow(),
-});
+}, (table) => ({
+  // Add indexes for frequently queried fields
+  emailIdx: index("email_idx").on(table.email),
+  submittedAtIdx: index("submitted_at_idx").on(table.submittedAt),
+  // Composite index for consultant lookup
+  consultantIdx: index("consultant_idx").on(
+    table.energyConsultantId,
+    table.energyConsultantBafaNumber
+  ),
+  // Index for status tracking
+  emailSentIdx: index("email_sent_idx").on(table.emailSent)
+}));
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
