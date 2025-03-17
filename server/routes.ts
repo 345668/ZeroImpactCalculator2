@@ -185,11 +185,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Convert current energy consumption to kWh
       const currentEnergySource = validatedData.currentEnergySource?.toLowerCase() || 'gas';
-      const energyConversionFactor = ENERGY_CONVERSION[currentEnergySource] || 1;
-      const currentConsumptionKWh = Number(validatedData.currentConsumption) * energyConversionFactor;
+      const energyConversionFactor = ENERGY_CONVERSION[currentEnergySource];
+      const currentConsumptionKWh = Number(validatedData.currentConsumption) * (energyConversionFactor || 1);
 
       // Calculate current CO₂ emissions
-      const currentEmissionFactor = EMISSION_FACTORS[currentEnergySource] || EMISSION_FACTORS.gas;
+      const currentEmissionFactor = EMISSION_FACTORS[currentEnergySource];
       const currentCO2Emissions = currentConsumptionKWh * currentEmissionFactor;
 
       // Calculate new system CO₂ emissions (assuming electric heat pump)
@@ -199,14 +199,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Calculate annual CO₂ savings in tons (1000 kg = 1 ton)
       const annualCO2Savings = (currentCO2Emissions - newCO2Emissions) / 1000;
 
-      // Project over 10 years with 2 decimal precision
-      const co2Savings = (annualCO2Savings * 10).toFixed(2);
+      // For single year values
+      const co2Savings = annualCO2Savings.toFixed(2);
+      const carbonCredits = co2Savings; // 1:1 ratio with CO2 savings
+      const financialValue = (Number(carbonCredits) * 50).toFixed(2); // €50 per credit
 
-      // 1:1 ratio with CO2 savings for carbon credits
-      const carbonCredits = co2Savings;
-
-      // €50 per credit
-      const financialValue = (Number(carbonCredits) * 50).toFixed(2);
+      // Calculate 10-year projections
+      const tenYearCO2Savings = (annualCO2Savings * 10).toFixed(2);
+      const tenYearCarbonCredits = tenYearCO2Savings;
+      const tenYearFinancialValue = (Number(tenYearCO2Savings) * 50).toFixed(2);
 
       // Add calculations to the submission data
       const submissionData = {
@@ -214,13 +215,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         co2Savings,
         carbonCredits,
         financialValue,
-        // Add detailed calculation data
-        calculationDetails: {
+        calculationDetails: JSON.stringify({
           currentConsumptionKWh,
           currentCO2Emissions,
           newCO2Emissions,
           annualCO2Savings,
-        }
+          tenYearProjection: {
+            co2Savings: tenYearCO2Savings,
+            carbonCredits: tenYearCarbonCredits,
+            financialValue: tenYearFinancialValue
+          },
+          energyReductionPercent: ((currentConsumptionKWh - projectedConsumptionKWh) / currentConsumptionKWh * 100).toFixed(1)
+        })
       };
 
       console.log('Creating submission with data:', submissionData);
@@ -232,7 +238,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`Calculation completed in ${Date.now() - startTime}ms`);
       }
 
-      res.json(result);
+      res.json({
+        ...result,
+        tenYearProjection: {
+          co2Savings: tenYearCO2Savings,
+          carbonCredits: tenYearCarbonCredits,
+          financialValue: tenYearFinancialValue
+        }
+      });
     } catch (error) {
       console.error('Calculation error:', error);
 

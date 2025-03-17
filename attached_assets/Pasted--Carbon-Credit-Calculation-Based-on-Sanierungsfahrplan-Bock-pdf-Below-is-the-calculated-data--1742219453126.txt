@@ -1,0 +1,56 @@
+### **Carbon Credit Calculation Based on Sanierungsfahrplan_Bock.pdf**
+Below is the calculated data for **Carsten Bock's** property based on the extracted information from the provided **Sanierungsfahrplan** document.
+
+---
+
+### **Extracted Data from the Document:**
+- **Building Size:** **142 m²**  
+- **Current Energy Consumption:** **33,700 kWh/year**  
+- **Projected Energy Consumption (after renovation):** **5,050 kWh/year**  
+- **Current Heating System:** **Gas (Baujahr 1997 – Gas-NT)**  
+- **New Heating System:** **Assumed to be a heat pump (as the post-renovation energy source is electricity)**  
+
+---
+
+### **Carbon Credit Calculation**
+Using the updated logic for gas and electricity conversion:
+
+1. **Current CO₂ Emissions:**
+   - Gas emission factor: **0.24 kg CO₂/kWh**  
+   \[
+   33,700 \times 0.24 = 8,088.00 \text{ kg CO₂} = 8.09 \text{ tons CO₂}
+   \]
+
+2. **Projected CO₂ Emissions (Heat Pump on Electricity Mix):**
+   - Electricity emission factor (Germany's grid mix): **0.343 kg CO₂/kWh**  
+   \[
+   5,050 \times 0.343 = 1,732.15 \text{ kg CO₂} = 1.73 \text{ tons CO₂}
+   \]
+
+3. **CO₂ Savings (Carbon Credits Earned):**
+   \[
+   8.09 - 1.73 = 6.36 \text{ tons CO₂ saved per year}
+   \]
+
+4. **Financial Value of Carbon Credits:**
+   - Carbon credit price: **50 EUR per ton**  
+   \[
+   6.36 \times 50 = 318.00 \text{ EUR per year}
+   \]
+
+---
+
+### **Final Output (Matching Image Format)**
+
+| **Date**      | **Customer**     | **Energy Consultant**    | **Building Size** | **Energy Reduction** | **CO₂ Savings**  | **Carbon Credits** | **Financial Value** | **Actions**      |
+|--------------|----------------|------------------------|------------------|------------------|-----------------|----------------|------------------|----------------|
+| 3/17/2025   | Carsten Bock   | ResiKon GmbH          | 142 m²           | **85%**          | **6.36 tons**   | **6.36**       | **€318.00**      | Report Sent    |
+
+---
+
+### **Summary**
+- Carsten Bock's **energy reduction is 85%**, from **33,700 kWh/year** to **5,050 kWh/year**.
+- **6.36 tons CO₂** saved annually, leading to **6.36 carbon credits**.
+- **Financial value:** **€318.00/year** based on 50 EUR per ton.
+
+This calculation is **consistent with the logic applied in the image** and uses **English numerical formatting** as requested. 🚀 Let me know if you need any modifications!

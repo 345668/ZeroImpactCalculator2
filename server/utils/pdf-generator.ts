@@ -66,9 +66,9 @@ export async function generatePDFReport(submission: Submission): Promise<Buffer>
 
       doc.fontSize(12)
          .font('Helvetica')
-         .text(`CO₂ Savings: ${submission.co2Savings} tons/year`)
-         .text(`Carbon Credits Generated: ${submission.carbonCredits}`)
-         .text(`Financial Value: €${submission.financialValue}`);
+         .text(`Annual CO₂ Savings: ${submission.co2Savings} tons CO₂/year`)
+         .text(`Annual Carbon Credits: ${submission.carbonCredits}`)
+         .text(`Annual Financial Value: €${submission.financialValue}`);
 
       // 10-Year Projection
       doc.moveDown(2);
@@ -76,11 +76,28 @@ export async function generatePDFReport(submission: Submission): Promise<Buffer>
          .font('Helvetica-Bold')
          .text('10-Year Projection');
 
-      doc.fontSize(12)
-         .font('Helvetica')
-         .text(`Total CO₂ Savings: ${(Number(submission.co2Savings) * 10).toFixed(2)} tons`)
-         .text(`Total Carbon Credits: ${(Number(submission.carbonCredits) * 10).toFixed(2)}`)
-         .text(`Total Financial Value: €${(Number(submission.financialValue) * 10).toFixed(2)}`);
+      if (calculationDetails?.tenYearProjection) {
+        const { tenYearProjection } = calculationDetails;
+        doc.fontSize(12)
+           .font('Helvetica')
+           .text(`Total CO₂ Savings: ${tenYearProjection.co2Savings} tons`)
+           .text(`Total Carbon Credits: ${tenYearProjection.carbonCredits}`)
+           .text(`Total Financial Value: €${tenYearProjection.financialValue}`);
+      }
+
+      // Energy Reduction Analysis
+      if (calculationDetails?.energyReductionPercent) {
+        doc.moveDown(2);
+        doc.fontSize(16)
+           .font('Helvetica-Bold')
+           .text('Energy Reduction Analysis');
+
+        doc.fontSize(12)
+           .font('Helvetica')
+           .text(`Energy Reduction: ${calculationDetails.energyReductionPercent}%`)
+           .text(`Current Energy Consumption: ${calculationDetails.currentConsumptionKWh.toFixed(2)} kWh/year`)
+           .text(`Projected Energy Consumption: ${submission.projectedConsumption} kWh/year`);
+      }
 
       // Recommendations
       doc.moveDown(2);
