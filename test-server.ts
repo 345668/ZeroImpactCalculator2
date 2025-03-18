@@ -5,7 +5,7 @@ import { testDatabaseConnection } from "./server/database.js";
 import { EmailService } from "./server/services/email.js";
 
 const app = express();
-const TEST_PORT = 5001;
+const TEST_PORT = process.env.TEST_SERVER_PORT || 5001;
 
 // Basic security and parsing middleware
 app.use(express.json({ limit: '1mb' }));
@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 // Test backup endpoint
 app.post("/test-backup", async (_req, res) => {
   try {
-    console.log('Manual backup test initiated');
+    console.log('=== Manual backup test initiated ===');
     await performBackup();
     res.json({ 
       success: true, 
@@ -96,12 +96,29 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-// Start the test server
-app.listen(TEST_PORT, '0.0.0.0', () => {
+// Start server with automatic shutdown after tests complete
+const server = app.listen(Number(TEST_PORT), '0.0.0.0', () => {
   console.log(`=== API Test Server started ===`);
   console.log(`Listening on http://0.0.0.0:${TEST_PORT}`);
   console.log('Available endpoints:');
   console.log('- POST /test-backup');
   console.log('- GET /health');
   console.log('==============================');
+});
+
+// Auto-shutdown after 2 minutes (increased from 30 seconds to ensure backup completion)
+setTimeout(() => {
+  console.log('Auto-shutdown triggered after timeout');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+}, 120000);
+
+process.on('SIGTERM', () => {
+  console.log('SIGTERM signal received. Shutting down gracefully...');
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
