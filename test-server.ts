@@ -35,12 +35,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Force JSON content type for all routes
-app.use((req, res, next) => {
-  res.setHeader('Content-Type', 'application/json');
-  next();
-});
-
 // Basic security headers
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -161,7 +155,7 @@ app.get('/', (_req, res) => {
 
 // Start the server
 try {
-  const server = app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(5001, '0.0.0.0', () => {
     console.log(`\n=== Production API Server started ===`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Internal port: ${PORT}`);
