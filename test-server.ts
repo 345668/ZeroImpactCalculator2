@@ -128,17 +128,12 @@ apiRouter.get("/health", async (_req, res) => {
   }
 });
 
-// Mount API router
-app.use('/api', apiRouter);
-
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Test server error:', err);
-  res.status(500).json({
-    error: isProduction ? "Internal server error" : err.message,
-    timestamp: new Date().toISOString()
-  });
-});
+// Mount API router with explicit content type
+app.use('/api', (req, res, next) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Access-Control-Allow-Origin', '*'); // Add CORS header
+  next();
+}, apiRouter);
 
 // Root endpoint
 app.get('/', (_req, res) => {
@@ -155,7 +150,7 @@ app.get('/', (_req, res) => {
 
 // Start the server
 try {
-  const server = app.listen(5001, '0.0.0.0', () => {
+  const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n=== Production API Server started ===`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Internal port: ${PORT}`);
