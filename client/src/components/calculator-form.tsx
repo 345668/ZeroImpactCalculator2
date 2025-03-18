@@ -449,7 +449,7 @@ export function CalculatorForm() {
                           </motion.div>
                         </div>
                         <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
-                        <div className="text-3xl text-center font-bold mb-1 blur-md hover:blur-none transition-all duration-300">
+                        <div className="text-3xl text-center font-bold mb-1 blur-md">
                           {isPending ? (
                             <span className="animate-pulse">Calculating...</span>
                           ) : (
@@ -481,7 +481,7 @@ export function CalculatorForm() {
                           </motion.div>
                         </div>
                         <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
-                        <div className="text-3xl text-center font-bold mb-1 blur-md hover:blur-none transition-all duration-300">
+                        <div className="text-3xl text-center font-bold mb-1 blur-md">
                           {isPending ? (
                             <span className="animate-pulse">Calculating...</span>
                           ) : (
@@ -513,7 +513,7 @@ export function CalculatorForm() {
                           </motion.div>
                         </div>
                         <h3 className="text-center font-semibold mb-1">Financial Value</h3>
-                        <div className="text-3xl text-center font-bold mb-1 blur-md hover:blur-none transition-all duration-300">
+                        <div className="text-3xl text-center font-bold mb-1 blur-md">
                           {isPending ? (
                             <span className="animate-pulse">Calculating...</span>
                           ) : (
@@ -543,15 +543,15 @@ export function CalculatorForm() {
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Building Size</p>
-                        <p className="font-medium blur-md hover:blur-none transition-all duration-300">{form.getValues("buildingSize")} m²</p>
+                        <p className="font-medium blur-md">{form.getValues("buildingSize")} m²</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Current Consumption</p>
-                        <p className="font-medium blur-md hover:blur-none transition-all duration-300">{form.getValues("currentConsumption")} kWh/year</p>
+                        <p className="font-medium blur-md">{form.getValues("currentConsumption")} kWh/year</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Projected Consumption</p>
-                        <p className="font-medium blur-md hover:blur-none transition-all duration-300">{form.getValues("projectedConsumption")} kWh/year</p>
+                        <p className="font-medium blur-md">{form.getValues("projectedConsumption")} kWh/year</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
@@ -564,13 +564,13 @@ export function CalculatorForm() {
                           <motion.div
                             className="h-full bg-calmBlue-500"
                             initial={{ width: "0%" }}
-                            animate={{ 
-                              width: `${(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%` 
+                            animate={{
+                              width: `${(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%`
                             }}
                             transition={{ duration: 1.5, delay: 1.2 }}
                           />
                         </motion.div>
-                        <p className="font-medium mt-2 blur-md hover:blur-none transition-all duration-300">
+                        <p className="font-medium mt-2 blur-md">
                           {(((form.getValues("currentConsumption") - form.getValues("projectedConsumption")) / form.getValues("currentConsumption")) * 100).toFixed(1)}%
                         </p>
                       </div>
@@ -589,7 +589,7 @@ export function CalculatorForm() {
                 <div className="grid grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Total CO₂ Savings</p>
-                    <p className="text-2xl font-bold blur-md hover:blur-none transition-all duration-300">
+                    <p className="text-2xl font-bold blur-md">
                       {isPending ? (
                         <span className="animate-pulse">Calculating...</span>
                       ) : (
@@ -599,7 +599,7 @@ export function CalculatorForm() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total Carbon Credits</p>
-                    <p className="text-2xl font-bold blur-md hover:blur-none transition-all duration-300">
+                    <p className="text-2xl font-bold blur-md">
                       {isPending ? (
                         <span className="animate-pulse">Calculating...</span>
                       ) : (
@@ -609,7 +609,7 @@ export function CalculatorForm() {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total Financial Value</p>
-                    <p className="text-2xl font-bold blur-md hover:blur-none transition-all duration-300">
+                    <p className="text-2xl font-bold blur-md">
                       {isPending ? (
                         <span className="animate-pulse">Calculating...</span>
                       ) : (
