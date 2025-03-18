@@ -162,7 +162,7 @@ app.get('/', (_req, res) => {
 // Start the server
 try {
   const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n=== API Server started successfully ===`);
+    console.log(`\n=== Production API Server started ===`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Internal port: ${PORT}`);
     console.log(`External port: ${PORT === 5001 ? 3001 : PORT}`);
