@@ -181,6 +181,15 @@ try {
       console.log('HTTP server closed');
     });
   });
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    server.close(() => {
+      console.log('Server closed due to uncaught exception');
+      process.exit(1);
+    });
+  });
 } catch (error) {
   console.error('Failed to start server:', error);
   process.exit(1);
