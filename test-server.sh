@@ -46,3 +46,10 @@ curl -I \
      -H "Accept: application/json" \
      -H "Content-Type: application/json" \
      http://localhost:5001/api/health
+
+echo "\n6. Testing Compression..."
+curl -i \
+     -H "Accept: application/json" \
+     -H "Content-Type: application/json" \
+     -H "Accept-Encoding: gzip" \
+     http://localhost:5001/api/health
