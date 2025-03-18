@@ -46,18 +46,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Rate limiting
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: isProduction ? 100 : 1000, // limit each IP
-  message: { error: 'Too many requests, please try again later.' }
-});
-
-// Apply rate limiting to all routes in production
-if (isProduction) {
-  app.use(apiLimiter);
-}
-
 // API Routes
 const apiRouter = express.Router();
 
@@ -150,7 +138,7 @@ app.get('/', (_req, res) => {
 
 // Start the server
 try {
-  const server = app.listen(PORT, '0.0.0.0', () => {
+  const server = app.listen(5001, '0.0.0.0', () => {
     console.log(`\n=== Production API Server started ===`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Internal port: ${PORT}`);
