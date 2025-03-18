@@ -8,13 +8,13 @@ import rateLimit from 'express-rate-limit';
 
 const app = express();
 const PORT = 5001; // Force port 5001
+const MAX_RETRIES = 5;
+const RETRY_DELAY = 2000; // 2 seconds
 const isProduction = process.env.NODE_ENV === 'production';
 
-console.log('=== Test Server Configuration ===');
-console.log('PORT:', PORT);
-console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('Process PID:', process.pid);
-console.log('========================');
+console.log(`=== Starting server initialization (Process ID: ${process.pid}) ===`);
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Node Version:', process.version);
 
 // Basic security and parsing middleware
 app.use(express.json({ limit: '1mb' }));
@@ -34,20 +34,12 @@ if (isProduction) {
         objectSrc: ["'none'"],
         upgradeInsecureRequests: []
       }
-    },
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-      preload: true
     }
   }));
 
-  // Rate limiting
   const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
-    standardHeaders: true,
-    legacyHeaders: false,
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: { error: 'Too many requests, please try again later.' }
   });
 
@@ -72,13 +64,11 @@ apiRouter.post("/backup", async (_req, res) => {
   console.log('[Backup] Starting backup process...');
   try {
     await performBackup();
-    const response = { 
+    res.json({ 
       success: true, 
       message: "Backup completed successfully",
       timestamp: new Date().toISOString()
-    };
-    console.log('[Backup] Success:', response);
-    res.json(response);
+    });
   } catch (error) {
     console.error('[Backup] Failed:', error);
     res.status(500).json({
@@ -156,46 +146,62 @@ app.get('/', (_req, res) => {
   });
 });
 
-// Start the server with enhanced error handling
-try {
-  const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`\n=== Test API Server started ===`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`Internal port: ${PORT}`);
-    console.log(`External port: 3001`);
-    console.log(`Server URL: http://0.0.0.0:${PORT}`);
-    console.log('\nAvailable endpoints:');
-    console.log('- GET /');
-    console.log('- GET /api/health');
-    console.log('- POST /api/backup');
-    console.log('==============================\n');
-  }).on('error', (error: any) => {
-    if (error.code === 'EADDRINUSE') {
-      console.error(`Error: Port ${PORT} is already in use`);
-      process.exit(1);
-    } else {
-      console.error('Fatal error during server startup:', error);
-      process.exit(1);
+(async () => {
+  let retryCount = 0;
+
+  while (retryCount < MAX_RETRIES) {
+    try {
+      console.log(`Starting server attempt ${retryCount + 1}/${MAX_RETRIES}...`);
+
+      const server = app.listen(PORT, '0.0.0.0', () => {
+        console.log(`\n=== Test API Server started successfully ===`);
+        console.log(`Environment: ${process.env.NODE_ENV}`);
+        console.log(`Internal port: ${PORT}`);
+        console.log(`External port: 3001`);
+        console.log(`Server URL: http://0.0.0.0:${PORT}`);
+        console.log(`Process ID: ${process.pid}`);
+        console.log('\nAvailable endpoints:');
+        console.log('- GET /');
+        console.log('- GET /api/health');
+        console.log('- POST /api/backup');
+        console.log('==============================\n');
+      });
+
+      // Graceful shutdown
+      process.on('SIGTERM', () => {
+        console.log('SIGTERM signal received: closing HTTP server');
+        server.close(() => {
+          console.log('HTTP server closed');
+          process.exit(0);
+        });
+      });
+
+      // Handle uncaught exceptions
+      process.on('uncaughtException', (error) => {
+        console.error('Uncaught Exception:', error);
+        server.close(() => {
+          console.log('Server closed due to uncaught exception');
+          process.exit(1);
+        });
+      });
+      break; // Server started successfully
+    } catch (error) {
+      if (error.code === 'EADDRINUSE') {
+        console.log(`Port ${PORT} is busy, retrying in ${RETRY_DELAY/1000} seconds... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+        retryCount++;
+      } else {
+        console.error('Fatal error during server startup:', error);
+        process.exit(1);
+      }
     }
-  });
+  }
 
-  // Graceful shutdown
-  process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
-    server.close(() => {
-      console.log('HTTP server closed');
-    });
-  });
-
-  // Handle uncaught exceptions
-  process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
-    server.close(() => {
-      console.log('Server closed due to uncaught exception');
-      process.exit(1);
-    });
-  });
-} catch (error) {
-  console.error('Failed to start server:', error);
+  if (retryCount >= MAX_RETRIES) {
+    console.error(`Failed to start server after ${MAX_RETRIES} retries`);
+    process.exit(1);
+  }
+})().catch((error) => {
+  console.error('Unhandled error during startup:', error);
   process.exit(1);
-}
+});
