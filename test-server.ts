@@ -19,7 +19,7 @@ if (isProduction) {
   app.use(helmet());
 }
 
-// Force JSON content type for all routes in test server
+// Force JSON content type for all routes
 app.use((req, res, next) => {
   res.setHeader('Content-Type', 'application/json');
   next();
@@ -48,8 +48,11 @@ if (isProduction) {
   app.use(apiLimiter);
 }
 
+// API Routes
+const apiRouter = express.Router();
+
 // Test backup endpoint
-app.post("/test-backup", async (_req, res) => {
+apiRouter.post("/backup", async (_req, res) => {
   try {
     console.log('Manual backup test initiated');
     await performBackup();
@@ -70,7 +73,7 @@ app.post("/test-backup", async (_req, res) => {
 });
 
 // Health check endpoint
-app.get("/health", async (_req, res) => {
+apiRouter.get("/health", async (_req, res) => {
   try {
     // Check database connection
     const dbStatus = await testDatabaseConnection();
@@ -110,6 +113,9 @@ app.get("/health", async (_req, res) => {
   }
 });
 
+// Mount API router
+app.use('/api', apiRouter);
+
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Test server error:', err);
@@ -119,13 +125,39 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   });
 });
 
-// Start the test server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`=== API Server started ===`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
-  console.log(`Listening on http://0.0.0.0:${PORT}`);
-  console.log('Available endpoints:');
-  console.log('- POST /test-backup');
-  console.log('- GET /health');
-  console.log('==============================');
+// Root endpoint
+app.get('/', (_req, res) => {
+  res.json({
+    message: "Carbon Credit Calculator API Server",
+    version: process.env.npm_package_version || "1.0.0",
+    environment: process.env.NODE_ENV,
+    endpoints: [
+      "/api/health",
+      "/api/backup"
+    ]
+  });
 });
+
+// Start the server
+try {
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`=== API Server started ===`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Listening on http://0.0.0.0:${PORT}`);
+    console.log('Available endpoints:');
+    console.log('- POST /api/backup');
+    console.log('- GET /api/health');
+    console.log('==============================');
+  });
+
+  // Handle graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+      console.log('HTTP server closed');
+    });
+  });
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
