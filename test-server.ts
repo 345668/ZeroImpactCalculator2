@@ -3,14 +3,13 @@ import { storage } from "./server/storage.js";
 import { performBackup } from "./server/utils/backup.js";
 import { testDatabaseConnection } from "./server/database.js";
 import { EmailService } from "./server/services/email.js";
-import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 
 const app = express();
-const PORT = process.env.PORT || 5001;
+const PORT = 5001; // Force port 5001
 const isProduction = process.env.NODE_ENV === 'production';
 
-console.log('=== Server Configuration ===');
+console.log('=== Test Server Configuration ===');
 console.log('PORT:', PORT);
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('Process PID:', process.pid);
@@ -126,7 +125,7 @@ app.use('/api', (req, res, next) => {
 // Root endpoint
 app.get('/', (_req, res) => {
   res.json({
-    message: "Carbon Credit Calculator API Server",
+    message: "Carbon Credit Calculator Test API Server",
     version: process.env.npm_package_version || "1.0.0",
     environment: process.env.NODE_ENV,
     endpoints: [
@@ -138,17 +137,25 @@ app.get('/', (_req, res) => {
 
 // Start the server
 try {
-  const server = app.listen(5001, '0.0.0.0', () => {
-    console.log(`\n=== Production API Server started ===`);
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n=== Test API Server started ===`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Internal port: ${PORT}`);
-    console.log(`External port: ${PORT === 5001 ? 3001 : PORT}`);
+    console.log(`External port: 3001`);
     console.log(`Server URL: http://0.0.0.0:${PORT}`);
     console.log('\nAvailable endpoints:');
     console.log('- GET /');
     console.log('- GET /api/health');
     console.log('- POST /api/backup');
     console.log('==============================\n');
+  }).on('error', (error: any) => {
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Error: Port ${PORT} is already in use`);
+      process.exit(1);
+    } else {
+      console.error('Fatal error during server startup:', error);
+      process.exit(1);
+    }
   });
 
   // Handle graceful shutdown
