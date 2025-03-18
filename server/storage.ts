@@ -2,6 +2,7 @@ import { submissions, users, type Submission, type InsertSubmission, type User, 
 import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
 import bcrypt from "bcryptjs";
+import { spawn } from "child_process";
 
 export interface IStorage {
   // Submission operations
@@ -11,6 +12,7 @@ export interface IStorage {
   getSubmissionById(id: number): Promise<Submission | undefined>;
   syncSubmissions(): Promise<void>;
   updateEmailStatus(id: number): Promise<void>;
+  backup(): Promise<string>;
 
   // User operations
   createUser(data: InsertUser & { password: string }): Promise<User>;
@@ -191,6 +193,32 @@ export class DbStorage implements IStorage {
       console.error('Error verifying password:', error);
       throw error;
     }
+  }
+
+  async backup(): Promise<string> {
+    return new Promise((resolve, reject) => {
+      let output = '';
+
+      const pgDump = spawn('pg_dump', [
+        process.env.DATABASE_URL || '',
+        '-F', 'p' // Plain text format
+      ]);
+
+      pgDump.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      pgDump.stderr.on('data', (data) => {
+        console.error('pg_dump stderr:', data.toString());
+      });
+
+      pgDump.on('close', (code) => {
+        if (code === 0) resolve(output);
+        else reject(new Error(`pg_dump failed with code ${code}`));
+      });
+
+      pgDump.on('error', reject);
+    });
   }
 }
 
