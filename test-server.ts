@@ -10,6 +10,12 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 const isProduction = process.env.NODE_ENV === 'production';
 
+console.log('=== Server Configuration ===');
+console.log('PORT:', PORT);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('Process PID:', process.pid);
+console.log('========================');
+
 // Basic security and parsing middleware
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
@@ -18,6 +24,16 @@ app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 if (isProduction) {
   app.use(helmet());
 }
+
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  const start = Date.now();
+  res.on('finish', () => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.path} completed in ${Date.now() - start}ms with status ${res.statusCode}`);
+  });
+  next();
+});
 
 // Force JSON content type for all routes
 app.use((req, res, next) => {
@@ -53,16 +69,19 @@ const apiRouter = express.Router();
 
 // Test backup endpoint
 apiRouter.post("/backup", async (_req, res) => {
+  console.log('[Backup] Starting backup process...');
   try {
     console.log('Manual backup test initiated');
     await performBackup();
-    res.json({ 
+    const response = { 
       success: true, 
       message: "Backup completed successfully",
       timestamp: new Date().toISOString()
-    });
+    };
+    console.log('[Backup] Success:', response);
+    res.json(response);
   } catch (error) {
-    console.error('Manual backup test failed:', error);
+    console.error('[Backup] Failed:', error);
     res.status(500).json({
       success: false,
       message: "Backup failed",
@@ -74,6 +93,7 @@ apiRouter.post("/backup", async (_req, res) => {
 
 // Health check endpoint
 apiRouter.get("/health", async (_req, res) => {
+  console.log('[Health] Starting health check...');
   try {
     // Check database connection
     const dbStatus = await testDatabaseConnection();
@@ -85,7 +105,7 @@ apiRouter.get("/health", async (_req, res) => {
       emailStatus = "healthy";
     } catch (error) {
       emailStatus = "unhealthy";
-      console.error('Email service health check failed:', error);
+      console.error('[Health] Email service check failed:', error);
     }
 
     const health = {
@@ -102,9 +122,10 @@ apiRouter.get("/health", async (_req, res) => {
     };
 
     const statusCode = health.status === "healthy" ? 200 : 503;
+    console.log('[Health] Check completed:', health);
     res.status(statusCode).json(health);
   } catch (error) {
-    console.error('Health check error:', error);
+    console.error('[Health] Check failed:', error);
     res.status(503).json({
       status: "unhealthy",
       timestamp: new Date().toISOString(),
@@ -141,13 +162,16 @@ app.get('/', (_req, res) => {
 // Start the server
 try {
   const server = app.listen(PORT, '0.0.0.0', () => {
-    console.log(`=== API Server started ===`);
+    console.log(`\n=== API Server started successfully ===`);
     console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`Listening on http://0.0.0.0:${PORT}`);
-    console.log('Available endpoints:');
-    console.log('- POST /api/backup');
+    console.log(`Internal port: ${PORT}`);
+    console.log(`External port: ${PORT === 5001 ? 3001 : PORT}`);
+    console.log(`Server URL: http://0.0.0.0:${PORT}`);
+    console.log('\nAvailable endpoints:');
+    console.log('- GET /');
     console.log('- GET /api/health');
-    console.log('==============================');
+    console.log('- POST /api/backup');
+    console.log('==============================\n');
   });
 
   // Handle graceful shutdown
