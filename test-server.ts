@@ -1,14 +1,51 @@
 import express, { type Express } from "express";
+import rateLimit from "express-rate-limit";
 import { storage } from "./server/storage.js";
 import { performBackup } from "./server/utils/backup.js";
 import { testDatabaseConnection } from "./server/database.js";
+import path from "path";
+import fs from "fs";
+import helmet from "helmet";
+import compression from "compression";
 
 const app = express();
 const TEST_PORT = 5001;
 
-// Debug logging middleware
+// Basic security headers
+app.use(helmet());
+
+// Enable gzip compression
+app.use(compression());
+
+// Configure rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    error: "Too many requests from this IP, please try again later",
+    timestamp: new Date().toISOString()
+  }
+});
+
+// Apply rate limiting to all routes
+app.use(limiter);
+
+// Setup request logging
+const logDirectory = path.join(process.cwd(), 'logs');
+if (!fs.existsSync(logDirectory)) {
+  fs.mkdirSync(logDirectory);
+}
+
+// Request logging middleware
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  const timestamp = new Date().toISOString();
+  const log = `[${timestamp}] ${req.method} ${req.url} - IP: ${req.ip}\n`;
+  fs.appendFile(path.join(logDirectory, 'backup-server.log'), log, (err) => {
+    if (err) {
+      console.error('Error writing to log file:', err);
+    }
+  });
+  console.log(`[${timestamp}] ${req.method} ${req.url}`);
   next();
 });
 
@@ -22,18 +59,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Basic security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  next();
-});
-
 // Create router instance for better route organization
 const router = express.Router();
 
-// Health check endpoint
+// Health check endpoint with enhanced monitoring
 router.get("/health", async (_req, res) => {
   try {
     const dbStatus = await testDatabaseConnection();
@@ -62,6 +91,32 @@ router.get("/health", async (_req, res) => {
   }
 });
 
+// Backup retention configuration
+const BACKUP_RETENTION_DAYS = 30;
+const BACKUP_DIR = './backups';
+
+// Ensure backup directory exists
+if (!fs.existsSync(BACKUP_DIR)) {
+  fs.mkdirSync(BACKUP_DIR);
+}
+
+// Clean old backups
+const cleanOldBackups = () => {
+  const files = fs.readdirSync(BACKUP_DIR);
+  const now = new Date();
+
+  files.forEach(file => {
+    const filePath = path.join(BACKUP_DIR, file);
+    const stats = fs.statSync(filePath);
+    const daysOld = (now.getTime() - stats.mtime.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (daysOld > BACKUP_RETENTION_DAYS) {
+      fs.unlinkSync(filePath);
+      console.log(`Deleted old backup: ${file}`);
+    }
+  });
+};
+
 // Backup endpoint
 router.post("/backup", async (req, res) => {
   console.log('Backup endpoint hit:', new Date().toISOString());
@@ -69,6 +124,10 @@ router.post("/backup", async (req, res) => {
     console.log('Backup initiated:', new Date().toISOString());
     const backupResult = await performBackup();
     console.log('Backup completed:', backupResult);
+
+    // Clean old backups after successful backup
+    cleanOldBackups();
+
     res.json({ 
       success: true, 
       message: "Backup completed successfully",

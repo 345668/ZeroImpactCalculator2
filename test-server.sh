@@ -27,3 +27,22 @@ curl -i \
      -d "{invalid_json" \
      -X POST \
      http://localhost:5001/api/backup
+
+sleep 2
+
+echo "\n4. Testing Rate Limiting..."
+for i in {1..3}; do
+  echo "\nRequest $i:"
+  curl -i \
+       -H "Accept: application/json" \
+       -H "Content-Type: application/json" \
+       -X POST \
+       http://localhost:5001/api/backup
+  sleep 1
+done
+
+echo "\n5. Checking Security Headers..."
+curl -I \
+     -H "Accept: application/json" \
+     -H "Content-Type: application/json" \
+     http://localhost:5001/api/health
