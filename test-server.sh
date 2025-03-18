@@ -2,16 +2,6 @@
 
 echo "Testing server configuration..."
 
-# Kill any process using ports 5000 and 5001
-echo "Cleaning up ports..."
-for port in 5000 5001; do
-  pid=$(lsof -t -i:$port)
-  if [ ! -z "$pid" ]; then
-    echo "Stopping process on port $port (PID: $pid)"
-    kill -9 $pid 2>/dev/null
-  fi
-done
-
 # Valid payload for testing
 VALID_PAYLOAD='{
   "firstName": "Test",
