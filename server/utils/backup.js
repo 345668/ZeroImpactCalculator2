@@ -1,11 +1,11 @@
 import fs from 'fs';
 import path from 'path';
-import { storage } from '../storage.js';
+import { spawn } from 'child_process';
 
-// Ensure backup directory exists
+// Ensure backup directory exists with proper permissions
 const BACKUP_DIR = path.join(process.cwd(), 'backups');
 if (!fs.existsSync(BACKUP_DIR)) {
-  fs.mkdirSync(BACKUP_DIR, { recursive: true });
+  fs.mkdirSync(BACKUP_DIR, { recursive: true, mode: 0o755 });
 }
 
 export const performBackup = async () => {
@@ -17,20 +17,57 @@ export const performBackup = async () => {
     const filename = `backup-${timestamp}-${Math.floor(Math.random() * 100)}.sql`;
     const backupPath = path.join(BACKUP_DIR, filename);
 
-    console.log('Starting database dump...');
-    // Get backup data from storage
-    const backupData = await storage.backup();
+    // Execute pg_dump directly to file
+    const pgDump = spawn('pg_dump', [
+      '-d', process.env.DATABASE_URL || '',
+      '-f', backupPath,
+      '-F', 'p', // Plain text format
+      '-v' // Verbose output
+    ]);
 
-    if (!backupData || backupData.length === 0) {
-      throw new Error('No backup data received from storage');
-    }
+    // Handle the backup process
+    await new Promise((resolve, reject) => {
+      let error = '';
 
-    // Write backup file
-    await fs.promises.writeFile(backupPath, backupData);
+      pgDump.stdout.on('data', (data) => {
+        console.log('pg_dump stdout:', data.toString());
+      });
 
-    // Get file stats
+      pgDump.stderr.on('data', (data) => {
+        const message = data.toString();
+        console.error('pg_dump stderr:', message);
+        if (!message.includes('connected to database')) {
+          error += message;
+        }
+      });
+
+      pgDump.on('close', (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`pg_dump failed with code ${code}: ${error}`));
+        }
+      });
+
+      pgDump.on('error', reject);
+    });
+
+    // Get file stats after successful backup
     const stats = await fs.promises.stat(backupPath);
     console.log(`Backup file created: ${filename} (${stats.size} bytes)`);
+
+    // Clean up old backups
+    const files = await fs.promises.readdir(BACKUP_DIR);
+    const now = new Date();
+    for (const file of files) {
+      const filePath = path.join(BACKUP_DIR, file);
+      const fileStat = await fs.promises.stat(filePath);
+      const fileAge = (now.getTime() - fileStat.mtime.getTime()) / (1000 * 60 * 60 * 24); // Age in days
+      if (fileAge > 30) { // Keep backups for 30 days
+        await fs.promises.unlink(filePath);
+        console.log(`Deleted old backup: ${file}`);
+      }
+    }
 
     return {
       filename,

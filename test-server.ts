@@ -125,28 +125,17 @@ const cleanOldBackups = () => {
 };
 
 // Backup endpoint
-router.post("/backup", async (req, res) => {
-  console.log('Backup endpoint hit:', new Date().toISOString());
+router.post("/backup", async (_req, res) => {
   try {
-    console.log('Backup initiated:', new Date().toISOString());
+    console.log('Starting backup process...');
     const backupResult = await performBackup();
 
-    if (!backupResult) {
-      throw new Error('Backup failed - no result returned');
-    }
-
-    // Clean old backups after successful backup
-    cleanOldBackups();
-
-    res.json({ 
-      success: true, 
+    console.log('Backup completed:', backupResult);
+    res.json({
+      success: true,
       message: "Backup completed successfully",
       timestamp: new Date().toISOString(),
-      details: {
-        filename: backupResult.filename,
-        size: backupResult.size,
-        path: backupResult.path
-      }
+      details: backupResult
     });
   } catch (error) {
     console.error('Backup failed:', error);
