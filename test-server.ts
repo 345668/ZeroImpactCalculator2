@@ -4,6 +4,7 @@ import { performBackup } from "./server/utils/backup.js";
 import { testDatabaseConnection } from "./server/database.js";
 import { EmailService } from "./server/services/email.js";
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 const PORT = 5001; // Force port 5001
@@ -21,7 +22,36 @@ app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
 // Production security
 if (isProduction) {
-  app.use(helmet());
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+        connectSrc: ["'self'", "https://*.replit.app", "https://api.openai.com"],
+        frameSrc: ["'none'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: []
+      }
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    }
+  }));
+
+  // Rate limiting
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests, please try again later.' }
+  });
+
+  app.use('/api', apiLimiter);
 }
 
 // Request logging middleware
@@ -34,21 +64,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Basic security headers
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  if (isProduction) {
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
-  }
-  next();
-});
-
 // API Routes
 const apiRouter = express.Router();
 
-// Test backup endpoint
+// Production-ready backup endpoint
 apiRouter.post("/backup", async (_req, res) => {
   console.log('[Backup] Starting backup process...');
   try {
@@ -71,14 +90,11 @@ apiRouter.post("/backup", async (_req, res) => {
   }
 });
 
-// Health check endpoint
+// Enhanced health check endpoint
 apiRouter.get("/health", async (_req, res) => {
   console.log('[Health] Starting health check...');
   try {
-    // Check database connection
     const dbStatus = await testDatabaseConnection();
-
-    // Check email service
     let emailStatus = "unknown";
     try {
       await EmailService.sendTestEmail(process.env.ADMIN_EMAIL || "test@example.com");
@@ -121,7 +137,6 @@ app.use('/api', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Handle OPTIONS requests
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -141,7 +156,7 @@ app.get('/', (_req, res) => {
   });
 });
 
-// Start the server
+// Start the server with enhanced error handling
 try {
   const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n=== Test API Server started ===`);
@@ -164,7 +179,7 @@ try {
     }
   });
 
-  // Handle graceful shutdown
+  // Graceful shutdown
   process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
     server.close(() => {
