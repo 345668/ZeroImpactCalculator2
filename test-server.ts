@@ -135,8 +135,6 @@ router.post("/backup", async (req, res) => {
       throw new Error('Backup failed - no result returned');
     }
 
-    console.log('Backup completed successfully:', backupResult);
-
     // Clean old backups after successful backup
     cleanOldBackups();
 
@@ -144,7 +142,11 @@ router.post("/backup", async (req, res) => {
       success: true, 
       message: "Backup completed successfully",
       timestamp: new Date().toISOString(),
-      details: backupResult
+      details: {
+        filename: backupResult.filename,
+        size: backupResult.size,
+        path: backupResult.path
+      }
     });
   } catch (error) {
     console.error('Backup failed:', error);
