@@ -52,7 +52,6 @@ const apiRouter = express.Router();
 apiRouter.post("/backup", async (_req, res) => {
   console.log('[Backup] Starting backup process...');
   try {
-    console.log('Manual backup test initiated');
     await performBackup();
     const response = { 
       success: true, 
@@ -115,10 +114,17 @@ apiRouter.get("/health", async (_req, res) => {
   }
 });
 
-// Mount API router with explicit content type
+// Mount API router with explicit content type and CORS
 app.use('/api', (req, res, next) => {
   res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Add CORS header
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle OPTIONS requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
   next();
 }, apiRouter);
 
