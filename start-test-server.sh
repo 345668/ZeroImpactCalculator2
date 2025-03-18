@@ -25,5 +25,4 @@ for port in 5000 5001; do
 done
 
 echo "Starting test server..."
-# Start the test server in production mode
-NODE_ENV=production tsx test-server.ts
+TEST_PORT=5001 NODE_ENV=production tsx test-server.ts

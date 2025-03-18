@@ -4,10 +4,9 @@ import { testDatabaseConnection } from "./server/database.js";
 import { EmailService } from "./server/services/email.js";
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { createServer } from "http";
 
 const app = express();
-const PORT = process.env.TEST_PORT || process.env.PORT || 5001;
+const PORT = process.env.TEST_PORT || 5001;
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Trust proxy settings for Replit's environment
@@ -39,8 +38,7 @@ if (isProduction) {
     max: 100,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { error: 'Too many requests, please try again later.' },
-    skip: (req) => !isProduction // Skip rate limiting in development
+    message: { error: 'Too many requests, please try again later.' }
   });
 
   app.use('/api', apiLimiter);
@@ -132,48 +130,45 @@ app.get('/', (_req, res) => {
   });
 });
 
-// Start the test server with improved error handling
-console.log(`\n=== Test Server Initialization (PID: ${process.pid}) ===`);
+// Start the server
+console.log(`\n=== Starting Test Server (PID: ${process.pid}) ===`);
 console.log(`Port: ${PORT}`);
 console.log(`Environment: ${process.env.NODE_ENV}`);
-console.log(`Node Version: ${process.version}`);
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n=== Test API Server Started Successfully ===`);
-  console.log(`Environment: ${process.env.NODE_ENV}`);
-  console.log(`Internal port: ${PORT}`);
-  console.log(`External port: 3001`);
-  console.log(`Server URL: http://0.0.0.0:${PORT}`);
-  console.log(`Process ID: ${process.pid}`);
-  console.log('\nAvailable endpoints:');
-  console.log('- GET /');
-  console.log('- GET /api/health');
-  console.log('- POST /api/backup');
-  console.log('==============================\n');
-}).on('error', (error: any) => {
-  if (error.code === 'EADDRINUSE') {
-    console.error(`Error: Port ${PORT} is already in use`);
-    process.exit(1);
-  } else {
-    console.error('Fatal error during server startup:', error);
-    process.exit(1);
-  }
-});
-
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-    process.exit(0);
+try {
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n=== Test Server Started Successfully ===`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Internal port: ${PORT}`);
+    console.log(`External port: 3001`);
+    console.log(`Server URL: http://0.0.0.0:${PORT}`);
+    console.log(`Process ID: ${process.pid}`);
+    console.log('\nAvailable endpoints:');
+    console.log('- GET /');
+    console.log('- GET /api/health');
+    console.log('- POST /api/backup');
+    console.log('==============================\n');
   });
-});
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-  server.close(() => {
-    console.log('Server closed due to uncaught exception');
-    process.exit(1);
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    server.close(() => {
+      console.log('HTTP server closed');
+      process.exit(0);
+    });
   });
-});
+
+  // Handle uncaught exceptions
+  process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    server.close(() => {
+      console.log('Server closed due to uncaught exception');
+      process.exit(1);
+    });
+  });
+
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
