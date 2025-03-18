@@ -12,6 +12,9 @@ for port in 5000 5001; do
   fi
 done
 
+# Make sure npm processes are stopped
+pkill -f "npm run dev" 2>/dev/null
+
 # Wait for ports to clear
 echo "Waiting for ports to clear..."
 sleep 3
@@ -25,4 +28,4 @@ for port in 5000 5001; do
 done
 
 echo "Starting test server..."
-TEST_PORT=5001 NODE_ENV=production tsx test-server.ts
+NODE_ENV=production tsx test-server.ts
