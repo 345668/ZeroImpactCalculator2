@@ -2,7 +2,6 @@ import express, { type Express } from "express";
 import { storage } from "./server/storage.js";
 import { performBackup } from "./server/utils/backup.js";
 import { testDatabaseConnection } from "./server/database.js";
-import { EmailService } from "./server/services/email.js";
 
 const app = express();
 const TEST_PORT = 5001;
@@ -11,7 +10,7 @@ const TEST_PORT = 5001;
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
 
-// Force JSON content type for all routes in test server
+// Force JSON content type for all routes
 app.use((req, res, next) => {
   res.setHeader('Content-Type', 'application/json');
   next();
@@ -25,10 +24,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Test backup endpoint
-app.post("/test-backup", async (_req, res) => {
+// Backup endpoint
+app.post("/api/backup", async (_req, res) => {
   try {
-    console.log('Manual backup test initiated');
+    console.log('Backup initiated:', new Date().toISOString());
     await performBackup();
     res.json({ 
       success: true, 
@@ -36,7 +35,7 @@ app.post("/test-backup", async (_req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Manual backup test failed:', error);
+    console.error('Backup failed:', error);
     res.status(500).json({
       success: false,
       message: "Backup failed",
@@ -49,26 +48,14 @@ app.post("/test-backup", async (_req, res) => {
 // Health check endpoint
 app.get("/health", async (_req, res) => {
   try {
-    // Check database connection
     const dbStatus = await testDatabaseConnection();
 
-    // Check email service
-    let emailStatus = "unknown";
-    try {
-      await EmailService.sendTestEmail(process.env.ADMIN_EMAIL || "test@example.com");
-      emailStatus = "healthy";
-    } catch (error) {
-      emailStatus = "unhealthy";
-      console.error('Email service health check failed:', error);
-    }
-
     const health = {
-      status: dbStatus && emailStatus === "healthy" ? "healthy" : "degraded",
+      status: dbStatus ? "healthy" : "unhealthy",
       timestamp: new Date().toISOString(),
       version: process.env.npm_package_version || "1.0.0",
       services: {
         database: dbStatus ? "healthy" : "unhealthy",
-        email: emailStatus,
       },
       environment: process.env.NODE_ENV,
       uptime: process.uptime(),
@@ -87,21 +74,11 @@ app.get("/health", async (_req, res) => {
   }
 });
 
-// Error handling middleware
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Test server error:', err);
-  res.status(500).json({
-    error: err.message,
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Start the test server
 app.listen(TEST_PORT, '0.0.0.0', () => {
-  console.log(`=== API Test Server started ===`);
+  console.log(`=== Backup Server started ===`);
   console.log(`Listening on http://0.0.0.0:${TEST_PORT}`);
   console.log('Available endpoints:');
-  console.log('- POST /test-backup');
+  console.log('- POST /api/backup');
   console.log('- GET /health');
   console.log('==============================');
 });
