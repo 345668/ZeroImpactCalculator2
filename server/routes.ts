@@ -14,6 +14,7 @@ import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { testDatabaseConnection } from "./database.js";
 import { performBackup } from "./utils/backup.js";
+import { calculateCarbonCredits } from "./calculators/carbon-credits.js";
 
 // Configure multer with stricter limits for production
 const upload = multer({
@@ -49,8 +50,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         console.log('Manual backup test initiated');
         await performBackup();
-        res.json({ 
-          success: true, 
+        res.json({
+          success: true,
           message: "Backup completed successfully",
           timestamp: new Date().toISOString()
         });
@@ -69,7 +70,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Add API route middleware
   app.use('/api', (req, res, next) => {
     if (req.headers.accept && req.headers.accept.includes('application/json')) {
-        res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Type', 'application/json');
     }
     next();
   });
@@ -99,7 +100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-    app.get("/api/submissions", async (req, res) => {
+  app.get("/api/submissions", async (req, res) => {
     try {
       console.log('Fetching all submissions from database');
       const submissions = await storage.getAllSubmissions();
@@ -214,8 +215,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       };
 
       // Set appropriate status code based on service health
-      const statusCode = health.status === "healthy" ? 200 : 
-                        health.status === "degraded" ? 503 : 500;
+      const statusCode = health.status === "healthy" ? 200 :
+        health.status === "degraded" ? 503 : 500;
 
       res.status(statusCode).json(health);
     } catch (error) {
@@ -332,112 +333,81 @@ const EMISSION_FACTORS = {
 const CARBON_PRICE_PER_TON = 50;  // EUR per ton
 const CREDITING_PERIOD_YEARS = 10;
 
-// Calculate endpoint with enhanced carbon calculations
+// Update calculateEndpoint to use new carbon credit calculator
 const calculateEndpoint = async (req: express.Request, res: express.Response) => {
-    const startTime = Date.now();
-    console.log('Received calculation request');
+  const startTime = Date.now();
+  console.log('Received calculation request');
 
-    try {
-      const validatedData = insertSubmissionSchema.parse(req.body);
-      console.log('Validated input data:', validatedData);
+  try {
+    const validatedData = insertSubmissionSchema.parse(req.body);
+    console.log('Validated input data:', validatedData);
 
-      // Production data validation
-      const isProduction = process.env.NODE_ENV === 'production';
-      if (isProduction) {
-        if (validatedData.currentConsumption <= 0 || validatedData.projectedConsumption < 0) {
-          return res.status(400).json({ error: "Invalid consumption values" });
-        }
-      }
-
-      // Current consumption is in kWh/year
-      const currentConsumptionKWh = Number(validatedData.currentConsumption);
-      console.log('Current consumption (kWh):', currentConsumptionKWh);
-
-      // Calculate current CO₂ emissions using natural gas factor (kg CO₂)
-      const currentCO2Emissions = currentConsumptionKWh * EMISSION_FACTORS["natural gas"];
-      console.log('Current CO₂ emissions (kg):', currentCO2Emissions);
-
-      // Calculate new system CO₂ emissions using electricity mix factor (kg CO₂)
-      const projectedConsumptionKWh = Number(validatedData.projectedConsumption);
-      const newCO2Emissions = projectedConsumptionKWh * EMISSION_FACTORS["electricity mix"];
-      console.log('New CO₂ emissions (kg):', newCO2Emissions);
-
-      // Calculate annual CO₂ savings in tons (1000 kg = 1 ton)
-      const annualCO2Savings = (currentCO2Emissions - newCO2Emissions) / 1000;
-      console.log('Annual CO₂ savings (tons):', annualCO2Savings);
-
-      // For single year values (with 2 decimal precision)
-      const co2Savings = annualCO2Savings.toFixed(2);
-      const carbonCredits = co2Savings; // 1:1 ratio with CO2 savings
-      const financialValue = (Number(carbonCredits) * CARBON_PRICE_PER_TON).toFixed(2);
-
-      // Calculate 10-year projections
-      const tenYearCO2Savings = (annualCO2Savings * CREDITING_PERIOD_YEARS).toFixed(2);
-      const tenYearCarbonCredits = tenYearCO2Savings;
-      const tenYearFinancialValue = (Number(tenYearCO2Savings) * CARBON_PRICE_PER_TON).toFixed(2);
-
-      console.log('Calculation results:', {
-        annualValues: {
-          co2Savings,
-          carbonCredits,
-          financialValue
-        },
-        tenYearProjection: {
-          co2Savings: tenYearCO2Savings,
-          carbonCredits: tenYearCarbonCredits,
-          financialValue: tenYearFinancialValue
-        }
-      });
-
-      // Add calculations to the submission data
-      const submissionData = {
-        ...validatedData,
-        co2Savings,
-        carbonCredits,
-        financialValue,
-        calculationDetails: JSON.stringify({
-          currentConsumptionKWh,
-          currentCO2Emissions: currentCO2Emissions.toFixed(2),
-          newCO2Emissions: newCO2Emissions.toFixed(2),
-          annualCO2Savings: annualCO2Savings.toFixed(2),
-          tenYearProjection: {
-            co2Savings: tenYearCO2Savings,
-            carbonCredits: tenYearCarbonCredits,
-            financialValue: tenYearFinancialValue
-          },
-          energyReductionPercent: ((currentConsumptionKWh - projectedConsumptionKWh) / currentConsumptionKWh * 100).toFixed(1)
-        })
-      };
-
-      console.log('Creating submission with data:', submissionData);
-      const result = await storage.createSubmission(submissionData);
-      console.log('Submission created:', result);
-
-      // Log performance metrics in production
-      if (isProduction) {
-        console.log(`Calculation completed in ${Date.now() - startTime}ms`);
-      }
-
-      res.json({
-        ...result,
-        tenYearProjection: {
-          co2Savings: tenYearCO2Savings,
-          carbonCredits: tenYearCarbonCredits,
-          financialValue: tenYearFinancialValue
-        }
-      });
-    } catch (error) {
-      console.error('Calculation error:', error);
-
-      if (error.name === "ZodError") {
-        const validationError = fromZodError(error);
-        res.status(400).json({ error: validationError.message });
-      } else {
-        res.status(500).json({
-          error: isProduction ? "Internal server error" : error.message
-        });
+    // Production data validation
+    const isProduction = process.env.NODE_ENV === 'production';
+    if (isProduction) {
+      if (validatedData.currentConsumption <= 0 || validatedData.projectedConsumption < 0) {
+        return res.status(400).json({ error: "Invalid consumption values" });
       }
     }
+
+    // Use new carbon credit calculation
+    const result = calculateCarbonCredits(
+      Number(validatedData.currentConsumption),
+      Number(validatedData.projectedConsumption),
+      validatedData.currentEnergySource,
+      "heat pump (electricity mix)"
+    );
+
+    console.log('Calculation results:', result);
+
+    // Add calculations to the submission data
+    const submissionData = {
+      ...validatedData,
+      co2Savings: result.annualCO2Savings.toFixed(2),
+      carbonCredits: result.annualCO2Savings.toFixed(2),
+      financialValue: result.financialValue.toFixed(2),
+      calculationDetails: JSON.stringify({
+        currentConsumptionKWh: validatedData.currentConsumption,
+        projectedConsumptionKWh: validatedData.projectedConsumption,
+        annualCO2Savings: result.annualCO2Savings.toFixed(2),
+        tenYearProjection: {
+          co2Savings: result.tenYearCO2Savings.toFixed(2),
+          carbonCredits: result.tenYearCO2Savings.toFixed(2),
+          financialValue: result.tenYearFinancialValue.toFixed(2)
+        },
+        energyReductionPercent: ((Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption)) / Number(validatedData.currentConsumption) * 100).toFixed(1)
+      })
+    };
+
+    console.log('Creating submission with data:', submissionData);
+    const submission = await storage.createSubmission(submissionData);
+    console.log('Submission created:', submission);
+
+    // Log performance metrics in production
+    if (isProduction) {
+      console.log(`Calculation completed in ${Date.now() - startTime}ms`);
+    }
+
+    res.json({
+      ...submission,
+      tenYearProjection: {
+        co2Savings: result.tenYearCO2Savings.toFixed(2),
+        carbonCredits: result.tenYearCO2Savings.toFixed(2),
+        financialValue: result.tenYearFinancialValue.toFixed(2)
+      }
+    });
+  } catch (error) {
+    console.error('Calculation error:', error);
+
+    if (error.name === "ZodError") {
+      const validationError = fromZodError(error);
+      res.status(400).json({ error: validationError.message });
+    } else {
+      res.status(500).json({
+        error: isProduction ? "Internal server error" : error.message
+      });
+    }
+  }
 };
 
 // Document processing function
