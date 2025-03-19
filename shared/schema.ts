@@ -67,12 +67,20 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
   projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
   currentEnergySource: z.enum([
-    "natural gas",
     "heating oil",
+    "natural gas",
     "liquefied petroleum gas",
     "district heating",
     "electricity mix",
-    "heat pump (electricity mix)"
+    "coal heating",
+    "wood pellets",
+    "firewood",
+    "biogas",
+    "heat pump (electricity mix)",
+    "heat pump (green electricity)",
+    "green electricity",
+    "solar thermal",
+    "pv self-consumption"
   ]).default("natural gas"),
   email: z.string().email("Please enter a valid email address"),
   acceptedTerms: z.boolean().or(z.string()).transform(val => 

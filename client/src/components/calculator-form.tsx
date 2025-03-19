@@ -51,10 +51,15 @@ interface ExtractedData {
   fileUrl?: string;
 }
 
+// Update form steps to include energy source selection
 export const formSteps = [
   {
     title: "Building Information",
     description: "Tell us about your building"
+  },
+  {
+    title: "Current Energy Source",
+    description: "Select your current heating system"
   },
   {
     title: "Current Energy Consumption",
@@ -92,7 +97,7 @@ export function CalculatorForm() {
       buildingOwnership: "own",
       buildingSize: 0,
       heatingSystem: "gas",
-      currentEnergySource: "natural gas", // Updated to match schema
+      currentEnergySource: "natural gas",
       currentConsumption: 0,
       projectedConsumption: 0,
       firstName: "",
@@ -274,7 +279,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 5}
+          isLastStep={step === 6}
           isSubmitting={isPending}
           onStartNew={startNewCalculation}
           onSendEmail={handleSendEmail}
@@ -358,20 +363,43 @@ export function CalculatorForm() {
             <div className="space-y-6">
               <FormField
                 control={form.control}
-                name="currentConsumption"
+                name="currentEnergySource"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base mb-4">
-                      What is your current annual energy consumption (excluding solar PV)?
-                    </FormLabel>
+                  <FormItem className="space-y-4">
+                    <FormLabel>What is your current heating system?</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Current Consumption (kWh/year)"
-                        {...field}
-                        value={field.value || ''}
-                        className="text-lg p-6"
-                      />
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="grid grid-cols-1 gap-4"
+                      >
+                        {[
+                          { value: "heating oil", label: "Heating Oil" },
+                          { value: "natural gas", label: "Natural Gas" },
+                          { value: "liquefied petroleum gas", label: "Liquefied Petroleum Gas (LPG)" },
+                          { value: "district heating", label: "District Heating" },
+                          { value: "electricity mix", label: "Electricity Mix" },
+                          { value: "coal heating", label: "Coal Heating" },
+                          { value: "wood pellets", label: "Wood Pellets" },
+                          { value: "firewood", label: "Firewood" },
+                          { value: "biogas", label: "Biogas" },
+                          { value: "heat pump (electricity mix)", label: "Heat Pump (Electricity Mix)" },
+                          { value: "heat pump (green electricity)", label: "Heat Pump (Green Electricity)" },
+                          { value: "green electricity", label: "Green Electricity" },
+                          { value: "solar thermal", label: "Solar Thermal" },
+                          { value: "pv self-consumption", label: "PV Self-Consumption" }
+                        ].map(option => (
+                          <FormItem key={option.value} className="relative flex flex-col items-start space-y-3 rounded-lg border-2 border-muted p-4 hover:border-primary">
+                            <FormControl>
+                              <RadioGroupItem value={option.value} className="absolute right-4 top-4" />
+                            </FormControl>
+                            <FormLabel className="text-base font-semibold">{option.label}</FormLabel>
+                            <p className="text-sm text-muted-foreground">
+                              {option.value === field.value && "Selected energy source"}
+                            </p>
+                          </FormItem>
+                        ))}
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -384,16 +412,16 @@ export function CalculatorForm() {
             <div className="space-y-6">
               <FormField
                 control={form.control}
-                name="projectedConsumption"
+                name="currentConsumption"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base mb-4">
-                      What is your projected annual energy consumption after improvements?
+                      What is your current annual energy consumption (excluding solar PV)?
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Projected Consumption (kWh/year)"
+                        placeholder="Current Consumption (kWh/year)"
                         {...field}
                         value={field.value || ''}
                         className="text-lg p-6"
