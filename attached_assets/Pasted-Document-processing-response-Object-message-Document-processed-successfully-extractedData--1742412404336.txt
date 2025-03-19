@@ -1,0 +1,47 @@
+Document processing response: 
+Object {message: "Document processed successfully", extractedData: {…}}
+Extracted data: 
+Object {language: undefined, buildingSize: 1821, currentConsumption: 146300, projectedConsumption: 81450, heatingSystem: "Gas-NT bzw. Brennwert", …}
+Icon is not defined
+Icon is not defined
+The above error occurred in the <Controller> component:
+
+    at Controller (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JRXU44SF.js?v=4e6a90bd:321:35)
+    at FormField (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/src/components/ui/form.tsx:32:6)
+    at div
+    at MotionComponent (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=4e6a90bd:945:40)
+    at div
+    at MotionComponent (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=4e6a90bd:945:40)
+    at PresenceChild (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=4e6a90bd:121:24)
+    at AnimatePresence (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=4e6a90bd:210:26)
+    at div
+    at _c9 (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/src/components/ui/card.tsx:20:11)
+    at MultiStepForm (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/src/components/multi-step-form.tsx:28:3)
+    at form
+    at FormProvider (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JRXU44SF.js?v=4e6a90bd:103:11)
+    at CalculatorForm (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/src/components/calculator-form.tsx:70:27)
+    at main
+    at div
+    at MotionComponent (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=4e6a90bd:945:40)
+    at PresenceChild (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=4e6a90bd:121:24)
+    at AnimatePresence (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/framer-motion.js?v=4e6a90bd:210:26)
+    at Layout (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/src/components/layout.tsx:18:26)
+    at Home
+    at Route (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4e6a90bd:338:16)
+    at Switch (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=4e6a90bd:394:17)
+    at Router
+    at main
+    at _c9 (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/src/components/ui/sidebar.tsx:416:48)
+    at div
+    at div
+    at Provider (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-JJS7DLG7.js?v=4e6a90bd:38:15)
+    at TooltipProvider (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=4e6a90bd:62:5)
+    at https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/src/components/ui/sidebar.tsx:54:7
+    at QueryClientProvider (https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=4e6a90bd:2881:3)
+    at App
+
+Consider adding an error boundary to your tree to customize error handling behavior.
+Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
+Icon is not defined

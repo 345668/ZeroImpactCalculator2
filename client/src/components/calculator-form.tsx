@@ -6,8 +6,8 @@ import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { 
   Check, Mail, RefreshCw, Loader2, 
-  Droplet, Flame, Flask, Network, Zap, Box,
-  TreePine, Trees, LeafyGreen, Thermometer,
+  Droplet, Flame, Cylinder, Network, Zap, Box,
+  TreePine, Trees, Leaf, Thermometer,
   ThermometerSun, Sun, SunDim, PanelTop
 } from "lucide-react";
 import { DocumentUpload } from "./document-upload.tsx";
@@ -23,6 +23,42 @@ import { Checkbox } from "@/components/ui/checkbox.tsx";
 import { MultiStepForm } from "./multi-step-form.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Card } from "@/components/ui/card.tsx";
+
+// Update energySourceIcons mapping with corrected icons
+const energySourceIcons = {
+  "heating oil": Droplet,
+  "natural gas": Flame,
+  "liquefied petroleum gas": Cylinder,
+  "district heating": Network,
+  "electricity mix": Zap,
+  "coal heating": Box,
+  "wood pellets": TreePine,
+  "firewood": Trees,
+  "biogas": Leaf,
+  "heat pump (electricity mix)": Thermometer,
+  "heat pump (green electricity)": ThermometerSun,
+  "green electricity": Sun,
+  "solar thermal": SunDim,
+  "pv self-consumption": PanelTop
+};
+
+// Energy source options
+const energySourceOptions = [
+  { value: "heating oil", label: "Heating Oil" },
+  { value: "natural gas", label: "Natural Gas" },
+  { value: "liquefied petroleum gas", label: "Liquefied Petroleum Gas (LPG)" },
+  { value: "district heating", label: "District Heating" },
+  { value: "electricity mix", label: "Electricity Mix" },
+  { value: "coal heating", label: "Coal Heating" },
+  { value: "wood pellets", label: "Wood Pellets" },
+  { value: "firewood", label: "Firewood" },
+  { value: "biogas", label: "Biogas" },
+  { value: "heat pump (electricity mix)", label: "Heat Pump (Electricity Mix)" },
+  { value: "heat pump (green electricity)", label: "Heat Pump (Green Electricity)" },
+  { value: "green electricity", label: "Green Electricity" },
+  { value: "solar thermal", label: "Solar Thermal" },
+  { value: "pv self-consumption", label: "PV Self-Consumption" }
+];
 
 // Update the form state type
 interface FormState extends InsertSubmission {
@@ -381,74 +417,61 @@ export function CalculatorForm() {
                         defaultValue={field.value}
                         className="grid grid-cols-1 md:grid-cols-2 gap-4"
                       >
-                        {[
-                          { value: "heating oil", label: "Heating Oil", icon: "Droplet" },
-                          { value: "natural gas", label: "Natural Gas", icon: "Flame" },
-                          { value: "liquefied petroleum gas", label: "Liquefied Petroleum Gas (LPG)", icon: "Flask" },
-                          { value: "district heating", label: "District Heating", icon: "Network" },
-                          { value: "electricity mix", label: "Electricity Mix", icon: "Zap" },
-                          { value: "coal heating", label: "Coal Heating", icon: "Box" },
-                          { value: "wood pellets", label: "Wood Pellets", icon: "TreePine" },
-                          { value: "firewood", label: "Firewood", icon: "Trees" },
-                          { value: "biogas", label: "Biogas", icon: "LeafyGreen" },
-                          { value: "heat pump (electricity mix)", label: "Heat Pump (Electricity Mix)", icon: "Thermometer" },
-                          { value: "heat pump (green electricity)", label: "Heat Pump (Green Electricity)", icon: "ThermometerSun" },
-                          { value: "green electricity", label: "Green Electricity", icon: "Sun" },
-                          { value: "solar thermal", label: "Solar Thermal", icon: "SunDim" },
-                          { value: "pv self-consumption", label: "PV Self-Consumption", icon: "PanelTop" }
-                        ].map((option, index) => (
-                          <motion.div
-                            key={option.value}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
-                          >
-                            <FormItem className="relative">
-                              <FormControl>
-                                <label
-                                  className={`
-                                    relative flex flex-col items-start rounded-lg border-2 p-4 cursor-pointer
-                                    transition-all duration-200 ease-in-out
-                                    ${field.value === option.value 
-                                      ? 'border-primary bg-primary/5 shadow-lg transform scale-[1.02]' 
-                                      : 'border-muted hover:border-primary/50 hover:bg-muted/5'}
-                                  `}
-                                >
-                                  <RadioGroupItem 
-                                    value={option.value} 
-                                    className="absolute right-4 top-4"
-                                  />
-                                  <div className="flex items-center gap-3 mb-2">
-                                    <div className={`
-                                      rounded-full p-2
-                                      ${field.value === option.value ? 'bg-primary/20' : 'bg-muted'}
-                                    `}>
-                                      <Icon
-                                        name={option.icon}
-                                        className={`
-                                          w-5 h-5
-                                          ${field.value === option.value ? 'text-primary' : 'text-muted-foreground'}
-                                        `}
-                                      />
+                        {energySourceOptions.map((option, index) => {
+                          const IconComponent = energySourceIcons[option.value];
+                          return (
+                            <motion.div
+                              key={option.value}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: index * 0.1 }}
+                            >
+                              <FormItem className="relative">
+                                <FormControl>
+                                  <label
+                                    className={`
+                                      relative flex flex-col items-start rounded-lg border-2 p-4 cursor-pointer
+                                      transition-all duration-200 ease-in-out
+                                      ${field.value === option.value 
+                                        ? 'border-primary bg-primary/5 shadow-lg transform scale-[1.02]' 
+                                        : 'border-muted hover:border-primary/50 hover:bg-muted/5'}
+                                    `}
+                                  >
+                                    <RadioGroupItem 
+                                      value={option.value} 
+                                      className="absolute right-4 top-4"
+                                    />
+                                    <div className="flex items-center gap-3 mb-2">
+                                      <div className={`
+                                        rounded-full p-2
+                                        ${field.value === option.value ? 'bg-primary/20' : 'bg-muted'}
+                                      `}>
+                                        <IconComponent
+                                          className={`
+                                            w-5 h-5
+                                            ${field.value === option.value ? 'text-primary' : 'text-muted-foreground'}
+                                          `}
+                                        />
+                                      </div>
+                                      <FormLabel className="text-base font-semibold cursor-pointer">
+                                        {option.label}
+                                      </FormLabel>
                                     </div>
-                                    <FormLabel className="text-base font-semibold cursor-pointer">
-                                      {option.label}
-                                    </FormLabel>
-                                  </div>
-                                  {field.value === option.value && (
-                                    <motion.div
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      className="text-sm text-primary"
-                                    >
-                                      Selected energy source
-                                    </motion.div>
-                                  )}
-                                </label>
-                              </FormControl>
-                            </FormItem>
-                          </motion.div>
-                        ))}
+                                    {field.value === option.value && (
+                                      <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="text-sm text-primary"
+                                      >
+                                        Selected energy source
+                                      </motion.div>
+                                    )}
+                                  </label>
+                                </FormControl>
+                              </FormItem>
+                            </motion.div>
+                          );
+                        })}
                       </RadioGroup>
                     </FormControl>
                     <FormMessage />
