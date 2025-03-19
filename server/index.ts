@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, log } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
 import { performBackup } from "./utils/backup.js";
+import { createServer } from "http";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -116,15 +117,18 @@ app.use((req, res, next) => {
       }
     }
 
+    // Create HTTP server instance
+    const server = createServer(app);
+
     // Register routes first (API endpoints)
     console.log('Registering routes...');
-    const server = await registerRoutes(app);
+    await registerRoutes(app);
     console.log('✓ Routes registered successfully');
 
     // Setup environment-specific middleware last
     if (!isProduction) {
       console.log('Setting up Vite for development...');
-      await setupVite(app);
+      await setupVite(app, server); // Pass both app and server to setupVite
       console.log('✓ Vite setup complete');
     }
 
