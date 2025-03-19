@@ -4,23 +4,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Mail, RefreshCw, Loader2 } from "lucide-react";
+import { 
+  Check, Mail, RefreshCw, Loader2, 
+  Droplet, Flame, Flask, Network, Zap, Box,
+  TreePine, Trees, LeafyGreen, Thermometer,
+  ThermometerSun, Sun, SunDim, PanelTop
+} from "lucide-react";
 import { DocumentUpload } from "./document-upload.tsx";
 import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { SuccessModal } from "./success-modal.tsx";
 import { TermsModal } from "./terms-modal.tsx";
 import { GDPRModal } from "./gdpr-modal.tsx";
-
-// Import necessary UI components
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form.tsx";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.tsx";
 import { Checkbox } from "@/components/ui/checkbox.tsx";
@@ -360,44 +356,98 @@ export function CalculatorForm() {
           )}
 
           {step === 2 && (
-            <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="space-y-6"
+            >
               <FormField
                 control={form.control}
                 name="currentEnergySource"
                 render={({ field }) => (
                   <FormItem className="space-y-4">
-                    <FormLabel>What is your current heating system?</FormLabel>
+                    <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      <FormLabel className="text-2xl font-bold block mb-2">What is your current heating system?</FormLabel>
+                      <p className="text-muted-foreground mb-6">Select your primary energy source for heating</p>
+                    </motion.div>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
                         defaultValue={field.value}
-                        className="grid grid-cols-1 gap-4"
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4"
                       >
                         {[
-                          { value: "heating oil", label: "Heating Oil" },
-                          { value: "natural gas", label: "Natural Gas" },
-                          { value: "liquefied petroleum gas", label: "Liquefied Petroleum Gas (LPG)" },
-                          { value: "district heating", label: "District Heating" },
-                          { value: "electricity mix", label: "Electricity Mix" },
-                          { value: "coal heating", label: "Coal Heating" },
-                          { value: "wood pellets", label: "Wood Pellets" },
-                          { value: "firewood", label: "Firewood" },
-                          { value: "biogas", label: "Biogas" },
-                          { value: "heat pump (electricity mix)", label: "Heat Pump (Electricity Mix)" },
-                          { value: "heat pump (green electricity)", label: "Heat Pump (Green Electricity)" },
-                          { value: "green electricity", label: "Green Electricity" },
-                          { value: "solar thermal", label: "Solar Thermal" },
-                          { value: "pv self-consumption", label: "PV Self-Consumption" }
-                        ].map(option => (
-                          <FormItem key={option.value} className="relative flex flex-col items-start space-y-3 rounded-lg border-2 border-muted p-4 hover:border-primary">
-                            <FormControl>
-                              <RadioGroupItem value={option.value} className="absolute right-4 top-4" />
-                            </FormControl>
-                            <FormLabel className="text-base font-semibold">{option.label}</FormLabel>
-                            <p className="text-sm text-muted-foreground">
-                              {option.value === field.value && "Selected energy source"}
-                            </p>
-                          </FormItem>
+                          { value: "heating oil", label: "Heating Oil", icon: "Droplet" },
+                          { value: "natural gas", label: "Natural Gas", icon: "Flame" },
+                          { value: "liquefied petroleum gas", label: "Liquefied Petroleum Gas (LPG)", icon: "Flask" },
+                          { value: "district heating", label: "District Heating", icon: "Network" },
+                          { value: "electricity mix", label: "Electricity Mix", icon: "Zap" },
+                          { value: "coal heating", label: "Coal Heating", icon: "Box" },
+                          { value: "wood pellets", label: "Wood Pellets", icon: "TreePine" },
+                          { value: "firewood", label: "Firewood", icon: "Trees" },
+                          { value: "biogas", label: "Biogas", icon: "LeafyGreen" },
+                          { value: "heat pump (electricity mix)", label: "Heat Pump (Electricity Mix)", icon: "Thermometer" },
+                          { value: "heat pump (green electricity)", label: "Heat Pump (Green Electricity)", icon: "ThermometerSun" },
+                          { value: "green electricity", label: "Green Electricity", icon: "Sun" },
+                          { value: "solar thermal", label: "Solar Thermal", icon: "SunDim" },
+                          { value: "pv self-consumption", label: "PV Self-Consumption", icon: "PanelTop" }
+                        ].map((option, index) => (
+                          <motion.div
+                            key={option.value}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                          >
+                            <FormItem className="relative">
+                              <FormControl>
+                                <label
+                                  className={`
+                                    relative flex flex-col items-start rounded-lg border-2 p-4 cursor-pointer
+                                    transition-all duration-200 ease-in-out
+                                    ${field.value === option.value 
+                                      ? 'border-primary bg-primary/5 shadow-lg transform scale-[1.02]' 
+                                      : 'border-muted hover:border-primary/50 hover:bg-muted/5'}
+                                  `}
+                                >
+                                  <RadioGroupItem 
+                                    value={option.value} 
+                                    className="absolute right-4 top-4"
+                                  />
+                                  <div className="flex items-center gap-3 mb-2">
+                                    <div className={`
+                                      rounded-full p-2
+                                      ${field.value === option.value ? 'bg-primary/20' : 'bg-muted'}
+                                    `}>
+                                      <Icon
+                                        name={option.icon}
+                                        className={`
+                                          w-5 h-5
+                                          ${field.value === option.value ? 'text-primary' : 'text-muted-foreground'}
+                                        `}
+                                      />
+                                    </div>
+                                    <FormLabel className="text-base font-semibold cursor-pointer">
+                                      {option.label}
+                                    </FormLabel>
+                                  </div>
+                                  {field.value === option.value && (
+                                    <motion.div
+                                      initial={{ opacity: 0 }}
+                                      animate={{ opacity: 1 }}
+                                      className="text-sm text-primary"
+                                    >
+                                      Selected energy source
+                                    </motion.div>
+                                  )}
+                                </label>
+                              </FormControl>
+                            </FormItem>
+                          </motion.div>
                         ))}
                       </RadioGroup>
                     </FormControl>
@@ -405,7 +455,7 @@ export function CalculatorForm() {
                   </FormItem>
                 )}
               />
-            </div>
+            </motion.div>
           )}
 
           {step === 3 && (
@@ -807,7 +857,7 @@ export function CalculatorForm() {
                         ) : isEmailSent ? (
                           <motion.div
                             key="success"
-                            initial={{ opacity: 0, scale: 0.5 }}
+                            initial={{ opacity:0, scale: 0.5 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0 }}
                             className="flex items-center"
