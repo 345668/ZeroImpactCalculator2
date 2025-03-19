@@ -15,6 +15,8 @@ import helmet from 'helmet';
 import { testDatabaseConnection } from "./database.js";
 import { performBackup } from "./utils/backup.js";
 import { calculateCarbonCredits } from "./calculators/carbon-credits.js";
+import * as z from 'zod';
+import { calculationResultSchema } from "@shared/schema"; // Import the schema
 
 // Configure multer with stricter limits for production
 const upload = multer({
@@ -343,14 +345,13 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
     console.log('Validated input data:', validatedData);
 
     // Production data validation
-    const isProduction = process.env.NODE_ENV === 'production';
-    if (isProduction) {
+    if (process.env.NODE_ENV === 'production') {
       if (validatedData.currentConsumption <= 0 || validatedData.projectedConsumption < 0) {
         return res.status(400).json({ error: "Invalid consumption values" });
       }
     }
 
-    // Use new carbon credit calculation
+    // Use carbon credit calculation
     const result = calculateCarbonCredits(
       Number(validatedData.currentConsumption),
       Number(validatedData.projectedConsumption),
@@ -360,22 +361,30 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
 
     console.log('Calculation results:', result);
 
+    // Validate calculation results against schema
+    const calculationResults = calculationResultSchema.parse({
+      co2Savings: result.annualCO2Savings,
+      carbonCredits: result.annualCO2Savings,
+      financialValue: result.financialValue,
+      tenYearProjection: {
+        co2Savings: result.tenYearCO2Savings,
+        carbonCredits: result.tenYearCO2Savings,
+        financialValue: result.tenYearFinancialValue
+      }
+    });
+
     // Add calculations to the submission data
     const submissionData = {
       ...validatedData,
-      co2Savings: result.annualCO2Savings.toFixed(2),
-      carbonCredits: result.annualCO2Savings.toFixed(2),
-      financialValue: result.financialValue.toFixed(2),
+      co2Savings: calculationResults.co2Savings,
+      carbonCredits: calculationResults.carbonCredits,
+      financialValue: calculationResults.financialValue,
       calculationDetails: JSON.stringify({
         currentConsumptionKWh: validatedData.currentConsumption,
         projectedConsumptionKWh: validatedData.projectedConsumption,
-        annualCO2Savings: result.annualCO2Savings.toFixed(2),
-        tenYearProjection: {
-          co2Savings: result.tenYearCO2Savings.toFixed(2),
-          carbonCredits: result.tenYearCO2Savings.toFixed(2),
-          financialValue: result.tenYearFinancialValue.toFixed(2)
-        },
-        energyReductionPercent: ((Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption)) / Number(validatedData.currentConsumption) * 100).toFixed(1)
+        annualCO2Savings: calculationResults.co2Savings,
+        tenYearProjection: calculationResults.tenYearProjection,
+        energyReductionPercent: ((Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption)) / Number(validatedData.currentConsumption) * 100)
       })
     };
 
@@ -384,29 +393,26 @@ const calculateEndpoint = async (req: express.Request, res: express.Response) =>
     console.log('Submission created:', submission);
 
     // Log performance metrics in production
-    if (isProduction) {
+    if (process.env.NODE_ENV === 'production') {
       console.log(`Calculation completed in ${Date.now() - startTime}ms`);
     }
 
     res.json({
       ...submission,
-      tenYearProjection: {
-        co2Savings: result.tenYearCO2Savings.toFixed(2),
-        carbonCredits: result.tenYearCO2Savings.toFixed(2),
-        financialValue: result.tenYearFinancialValue.toFixed(2)
-      }
+      tenYearProjection: calculationResults.tenYearProjection
     });
   } catch (error) {
     console.error('Calculation error:', error);
 
-    if (error.name === "ZodError") {
+    if (error instanceof z.ZodError) {
       const validationError = fromZodError(error);
-      res.status(400).json({ error: validationError.message });
-    } else {
-      res.status(500).json({
-        error: isProduction ? "Internal server error" : error.message
-      });
+      return res.status(400).json({ error: validationError.message });
     }
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    res.status(500).json({
+      error: isProduction ? "Internal server error" : error instanceof Error ? error.message : "Unknown error"
+    });
   }
 };
 

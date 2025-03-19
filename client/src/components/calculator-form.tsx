@@ -28,6 +28,15 @@ import { MultiStepForm } from "./multi-step-form.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Card } from "@/components/ui/card.tsx";
 
+// Update the form state type
+interface FormState extends InsertSubmission {
+  tenYearProjection?: {
+    co2Savings: number;
+    carbonCredits: number;
+    financialValue: number;
+  };
+}
+
 // Type for extracted data
 interface ExtractedData {
   language?: string;
@@ -74,16 +83,16 @@ export function CalculatorForm() {
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const [isEmailSending, setIsEmailSending] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showGDPRModal, setShowGDPRModal] = useState(false);
 
-  const form = useForm<InsertSubmission>({
+  const form = useForm<FormState>({
     resolver: zodResolver(insertSubmissionSchema),
     defaultValues: {
       buildingOwnership: "own",
       buildingSize: 0,
       heatingSystem: "gas",
+      currentEnergySource: "gas",
       currentConsumption: 0,
       projectedConsumption: 0,
       firstName: "",
@@ -98,6 +107,46 @@ export function CalculatorForm() {
       energyConsultantBafaNumber: "",
       fileUrl: ""
     }
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (data: FormState) => {
+      console.log('Submitting form data:', data);
+      const response = await fetch("/api/calculate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to submit calculation");
+      }
+
+      return await response.json();
+    },
+    onSuccess: (data) => {
+      console.log('Form submission successful:', data);
+
+      // Update form with calculation results
+      form.setValue("co2Savings", data.co2Savings);
+      form.setValue("carbonCredits", data.carbonCredits);
+      form.setValue("financialValue", data.financialValue);
+      form.setValue("tenYearProjection", data.tenYearProjection);
+
+      setIsSubmitSuccess(true);
+      setLocation("/results");
+    },
+    onError: (error: Error) => {
+      console.error('Form submission error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit calculation",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleExtractedData = (data: ExtractedData) => {
@@ -135,66 +184,7 @@ export function CalculatorForm() {
     nextStep();
   };
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (data: InsertSubmission) => {
-      console.log('Submitting form data:', data);
-      const response = await fetch("/api/calculate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit calculation");
-      }
-
-      const result = await response.json();
-      console.log('Calculation result:', result);
-      return result;
-    },
-    onSuccess: (data) => {
-      console.log('Form submission successful:', data);
-
-      // Set the calculation results in the form
-      form.setValue("co2Savings", data.co2Savings);
-      form.setValue("carbonCredits", data.carbonCredits);
-      form.setValue("financialValue", data.financialValue);
-
-      // Set the 10-year projection data
-      form.setValue("tenYearProjection", {
-        co2Savings: data.tenYearProjection.co2Savings,
-        carbonCredits: data.tenYearProjection.carbonCredits,
-        financialValue: data.tenYearProjection.financialValue
-      });
-
-      setIsSubmitSuccess(true);
-
-      // Store result data for the results page
-      const result = {
-        ...form.getValues(),
-        co2Savings: data.co2Savings,
-        carbonCredits: data.carbonCredits,
-        financialValue: data.financialValue,
-        tenYearProjection: data.tenYearProjection
-      };
-
-      console.log('Storing result:', result);
-      window.history.pushState({ result }, '', '/results');
-    },
-    onError: (error: Error) => {
-      console.error('Form submission error:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to submit calculation",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const onSubmit = async (data: InsertSubmission) => {
+  const onSubmit = async (data: FormState) => {
     console.log('Form submit triggered with data:', data);
     try {
       await mutate(data);
@@ -820,9 +810,9 @@ export function CalculatorForm() {
       </form>
 
       <SuccessModal
-        open={showSuccessModal}
+        open={false}
         onClose={() => {
-          setShowSuccessModal(false);
+          //setShowSuccessModal(false);
           setLocation('/results');
         }}
       />
