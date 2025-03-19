@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage.js";
-import { insertSubmissionSchema } from "@shared/schema";
+import { insertSubmissionSchema, calculationResultSchema } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor.js";
 import { EmailService } from "./services/email.js";
@@ -16,7 +16,6 @@ import { testDatabaseConnection } from "./database.js";
 import { performBackup } from "./utils/backup.js";
 import { calculateCarbonCredits } from "./calculators/carbon-credits.js";
 import * as z from 'zod';
-import { calculationResultSchema } from "@shared/schema"; // Import the schema
 
 // Configure multer with stricter limits for production
 const upload = multer({
@@ -34,61 +33,133 @@ const upload = multer({
   }
 });
 
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 100 : 0,
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5,
+  message: { error: 'Too many authentication attempts, please try again later.' }
+});
+
+const calculationLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10,
+  message: { error: 'Too many calculation requests, please try again later.' }
+});
+
+// Calculate endpoint with updated error handling and validation
+const calculateEndpoint = async (req: express.Request, res: express.Response) => {
+  const startTime = Date.now();
+  console.log('Received calculation request:', req.body);
+
+  try {
+    const validatedData = insertSubmissionSchema.parse(req.body);
+    console.log('Validated input data:', validatedData);
+
+    // Production data validation
+    if (process.env.NODE_ENV === 'production') {
+      if (validatedData.currentConsumption <= 0 || validatedData.projectedConsumption < 0) {
+        return res.status(400).json({ error: "Invalid consumption values" });
+      }
+    }
+
+    // Calculate carbon credits with validated energy source
+    const result = calculateCarbonCredits(
+      Number(validatedData.currentConsumption),
+      Number(validatedData.projectedConsumption),
+      validatedData.currentEnergySource,
+      "heat pump (electricity mix)" // Target energy source is always heat pump
+    );
+
+    console.log('Carbon credit calculation results:', result);
+
+    // Validate calculation results
+    const calculationResults = calculationResultSchema.parse({
+      co2Savings: result.annualCO2Savings,
+      carbonCredits: result.annualCO2Savings,
+      financialValue: result.financialValue,
+      tenYearProjection: {
+        co2Savings: result.tenYearCO2Savings,
+        carbonCredits: result.tenYearCO2Savings,
+        financialValue: result.tenYearFinancialValue
+      }
+    });
+
+    // Prepare submission data with validated calculations
+    const submissionData = {
+      ...validatedData,
+      co2Savings: calculationResults.co2Savings,
+      carbonCredits: calculationResults.carbonCredits,
+      financialValue: calculationResults.financialValue,
+      calculationDetails: JSON.stringify({
+        currentConsumptionKWh: validatedData.currentConsumption,
+        projectedConsumptionKWh: validatedData.projectedConsumption,
+        annualCO2Savings: calculationResults.co2Savings,
+        tenYearProjection: calculationResults.tenYearProjection,
+        energyReductionPercent: ((Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption)) / Number(validatedData.currentConsumption) * 100)
+      })
+    };
+
+    console.log('Creating submission with data:', submissionData);
+    const submission = await storage.createSubmission(submissionData);
+    console.log('Submission created successfully:', submission);
+
+    // Log performance metrics in production
+    if (process.env.NODE_ENV === 'production') {
+      console.log(`Calculation completed in ${Date.now() - startTime}ms`);
+    }
+
+    res.json({
+      ...submission,
+      tenYearProjection: calculationResults.tenYearProjection
+    });
+  } catch (error) {
+    console.error('Calculation error:', error);
+
+    if (error instanceof z.ZodError) {
+      const validationError = fromZodError(error);
+      return res.status(400).json({ error: validationError.message });
+    }
+
+    res.status(500).json({
+      error: process.env.NODE_ENV === 'production' 
+        ? "Internal server error" 
+        : error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+};
+
 export async function registerRoutes(app: Express): Promise<Server> {
   console.log('Starting route registration...');
-  const isProduction = process.env.NODE_ENV === 'production';
-
-  // Create HTTP server
   const httpServer = createServer(app);
 
-  // Production-only middleware
-  if (isProduction) {
+  // Apply security middleware in production
+  if (process.env.NODE_ENV === 'production') {
     app.use(helmet());
   }
 
-  // Development-only backup test endpoint
-  if (!isProduction) {
-    app.post("/api/test-backup", async (_req, res) => {
-      try {
-        console.log('Manual backup test initiated');
-        await performBackup();
-        res.json({
-          success: true,
-          message: "Backup completed successfully",
-          timestamp: new Date().toISOString()
-        });
-      } catch (error) {
-        console.error('Manual backup test failed:', error);
-        res.status(500).json({
-          success: false,
-          message: "Backup failed",
-          error: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date().toISOString()
-        });
-      }
-    });
-  }
-
-  // Add API route middleware
-  app.use('/api', (req, res, next) => {
-    if (req.headers.accept && req.headers.accept.includes('application/json')) {
-      res.setHeader('Content-Type', 'application/json');
-    }
-    next();
-  });
-
-  // Apply rate limiting to specific routes
-  if (isProduction) {
-    app.use('/api/auth', authLimiter);
-    app.use('/api/calculate', calculationLimiter);
-    app.use('/api/', apiLimiter); // General API rate limiting
-  }
-
-  // Register all API routes first
+  // Register API routes
   app.use('/api/ai', aiRouter);
   app.use('/api/email', emailRouter);
   app.use('/api/auth', authRouter);
+
+  // Apply rate limiting
+  if (process.env.NODE_ENV === 'production') {
+    app.use('/api/auth', authLimiter);
+    app.use('/api/calculate', calculationLimiter);
+    app.use('/api/', apiLimiter);
+  }
+
+  // Register calculation endpoint
   app.post("/api/calculate", calculateEndpoint);
+
+  // Submissions endpoints
   app.post("/api/submissions/sync", async (_req, res) => {
     try {
       console.log('Received submissions sync request');
@@ -102,9 +173,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  app.get("/api/submissions", async (req, res) => {
+
+  app.get("/api/submissions", async (_req, res) => {
     try {
-      console.log('Fetching all submissions from database');
+      console.log('Fetching all submissions');
       const submissions = await storage.getAllSubmissions();
       console.log(`Found ${submissions.length} submissions`);
       res.json(submissions);
@@ -116,6 +188,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Email report endpoint
   app.post("/api/send-report", async (req, res) => {
     try {
       console.log('Received report email request:', req.body);
@@ -125,16 +199,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Submission ID is required" });
       }
 
-      // Get the submission
       const submission = await storage.getSubmissionById(submissionId);
       if (!submission) {
         return res.status(404).json({ error: "Submission not found" });
       }
 
-      // Send the email
       await EmailService.sendCarbonReport(submission);
-
-      // Update email status in database
       await storage.updateEmailStatus(submissionId);
 
       console.log('Report sent and status updated for submission:', submissionId);
@@ -147,7 +217,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  // Document upload endpoint with production safeguards
+
+  // Document upload endpoint
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
     const startTime = Date.now();
     console.log('Upload request received:', req.file ? 'File present' : 'No file');
@@ -157,19 +228,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      // Production file validation
-      if (isProduction) {
-        // Additional security checks for production
-        if (req.file.size === 0) {
-          return res.status(400).json({ error: "Empty file detected" });
-        }
-      }
-
-      console.log('Processing file:', req.file.originalname);
+      // Process document
+      console.log('Processing document:', req.file.originalname);
       const processedData = await processDocument(req.file);
 
       // Log processing time in production
-      if (isProduction) {
+      if (process.env.NODE_ENV === 'production') {
         console.log(`Document processing completed in ${Date.now() - startTime}ms`);
       }
 
@@ -179,21 +243,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Document processing error:', error);
-
-      // Production-safe error response
       res.status(500).json({
-        error: isProduction ? "Error processing document" : error.message
+        error: process.env.NODE_ENV === 'production' 
+          ? "Error processing document" 
+          : error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
 
-  // Enhanced health check endpoint
-  app.get("/api/health", async (req, res) => {
+  // Health check endpoint
+  app.get("/api/health", async (_req, res) => {
     try {
-      // Check database connection
       const dbStatus = await testDatabaseConnection();
 
-      // Check email service
       let emailStatus = "unknown";
       try {
         await EmailService.sendTestEmail(process.env.ADMIN_EMAIL || "test@example.com");
@@ -216,7 +278,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         memory: process.memoryUsage()
       };
 
-      // Set appropriate status code based on service health
       const statusCode = health.status === "healthy" ? 200 :
         health.status === "degraded" ? 503 : 500;
 
@@ -226,54 +287,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(503).json({
         status: "unhealthy",
         timestamp: new Date().toISOString(),
-        error: process.env.NODE_ENV === 'production' ? "Service unavailable" : error.message
+        error: process.env.NODE_ENV === 'production' ? "Service unavailable" : error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
 
-  // Ensure Azure container exists
+  // Azure container setup
   try {
     await ensureContainerExists();
     console.log('Azure container setup complete');
   } catch (error) {
     console.error('Failed to setup Azure container:', error);
-    throw error; // In production, we want to fail fast if critical services are unavailable
+    throw error;
   }
 
-
-  // Enhanced error handling middleware
+  // Error handling middleware
   app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
     const errorId = Math.random().toString(36).substring(7);
 
-    // Log error with context
     console.error('Express error:', {
       errorId,
       error: err.message,
-      stack: isProduction ? undefined : err.stack,
+      stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
       path: req.path,
       method: req.method,
-      body: isProduction ? undefined : req.body,
+      body: process.env.NODE_ENV === 'production' ? undefined : req.body,
       timestamp: new Date().toISOString(),
-      headers: isProduction ? undefined : req.headers
+      headers: process.env.NODE_ENV === 'production' ? undefined : req.headers
     });
 
-    // Determine status code based on error type
     let statusCode = 500;
     if (err.name === "ValidationError") statusCode = 400;
     if (err.name === "UnauthorizedError") statusCode = 401;
     if (err.name === "NotFoundError") statusCode = 404;
 
-    // Send safe error response
     res.status(statusCode).json({
-      error: isProduction ? "An error occurred" : err.message,
+      error: process.env.NODE_ENV === 'production' ? "An error occurred" : err.message,
       errorId,
-      ...(isProduction ? {} : { stack: err.stack })
+      ...(process.env.NODE_ENV === 'production' ? {} : { stack: err.stack })
     });
   });
 
-  // Production-only middleware
-  if (isProduction) {
-    // Log all requests in production
+  // Development-only backup test endpoint
+  if (process.env.NODE_ENV !== 'production') {
+    app.post("/api/test-backup", async (_req, res) => {
+      try {
+        console.log('Manual backup test initiated');
+        await performBackup();
+        res.json({
+          success: true,
+          message: "Backup completed successfully",
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('Manual backup test failed:', error);
+        res.status(500).json({
+          success: false,
+          message: "Backup failed",
+          error: error instanceof Error ? error.message : "Unknown error",
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+  }
+
+    // Add API route middleware
+  app.use('/api', (req, res, next) => {
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      res.setHeader('Content-Type', 'application/json');
+    }
+    next();
+  });
+
+
+  // Production-only middleware for logging requests
+  if (process.env.NODE_ENV === 'production') {
     app.use((req, res, next) => {
       const start = Date.now();
       res.on('finish', () => {
@@ -293,27 +381,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: process.env.NODE_ENV === 'production' ? 100 : 0, // Limit each IP to 100 requests per windowMs in production
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Document processing helper
+async function processDocument(file: Express.Multer.File) {
+  try {
+    console.log('Starting document processing...');
 
-// Create specific limiters for different endpoints
-const authLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 5, // Limit auth attempts
-  message: { error: 'Too many authentication attempts, please try again later.' }
-});
+    // Upload to Azure Blob Storage
+    console.log('Uploading to Azure Blob Storage...');
+    const fileUrl = await uploadFileToBlobStorage(file);
+    console.log('File uploaded successfully, URL:', fileUrl);
 
-const calculationLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 10, // Limit calculations per minute
-  message: { error: 'Too many calculation requests, please try again later.' }
-});
+    // Extract and process text
+    const extractedText = await extractTextFromDocument(file);
+    console.log('Text extracted successfully');
 
+    const processedData = await processWithMistral(extractedText);
+    console.log('Mistral processing complete:', processedData);
+
+    return {
+      ...processedData,
+      fileUrl
+    };
+  } catch (error) {
+    console.error('Document processing error:', error);
+    throw error;
+  }
+}
 
 // Energy conversion constants (2024)
 const CONVERSION_FACTORS = {
@@ -334,112 +427,3 @@ const EMISSION_FACTORS = {
 
 const CARBON_PRICE_PER_TON = 50;  // EUR per ton
 const CREDITING_PERIOD_YEARS = 10;
-
-// Update calculateEndpoint to use new carbon credit calculator
-const calculateEndpoint = async (req: express.Request, res: express.Response) => {
-  const startTime = Date.now();
-  console.log('Received calculation request');
-
-  try {
-    const validatedData = insertSubmissionSchema.parse(req.body);
-    console.log('Validated input data:', validatedData);
-
-    // Production data validation
-    if (process.env.NODE_ENV === 'production') {
-      if (validatedData.currentConsumption <= 0 || validatedData.projectedConsumption < 0) {
-        return res.status(400).json({ error: "Invalid consumption values" });
-      }
-    }
-
-    // Use carbon credit calculation
-    const result = calculateCarbonCredits(
-      Number(validatedData.currentConsumption),
-      Number(validatedData.projectedConsumption),
-      validatedData.currentEnergySource,
-      "heat pump (electricity mix)"
-    );
-
-    console.log('Calculation results:', result);
-
-    // Validate calculation results against schema
-    const calculationResults = calculationResultSchema.parse({
-      co2Savings: result.annualCO2Savings,
-      carbonCredits: result.annualCO2Savings,
-      financialValue: result.financialValue,
-      tenYearProjection: {
-        co2Savings: result.tenYearCO2Savings,
-        carbonCredits: result.tenYearCO2Savings,
-        financialValue: result.tenYearFinancialValue
-      }
-    });
-
-    // Add calculations to the submission data
-    const submissionData = {
-      ...validatedData,
-      co2Savings: calculationResults.co2Savings,
-      carbonCredits: calculationResults.carbonCredits,
-      financialValue: calculationResults.financialValue,
-      calculationDetails: JSON.stringify({
-        currentConsumptionKWh: validatedData.currentConsumption,
-        projectedConsumptionKWh: validatedData.projectedConsumption,
-        annualCO2Savings: calculationResults.co2Savings,
-        tenYearProjection: calculationResults.tenYearProjection,
-        energyReductionPercent: ((Number(validatedData.currentConsumption) - Number(validatedData.projectedConsumption)) / Number(validatedData.currentConsumption) * 100)
-      })
-    };
-
-    console.log('Creating submission with data:', submissionData);
-    const submission = await storage.createSubmission(submissionData);
-    console.log('Submission created:', submission);
-
-    // Log performance metrics in production
-    if (process.env.NODE_ENV === 'production') {
-      console.log(`Calculation completed in ${Date.now() - startTime}ms`);
-    }
-
-    res.json({
-      ...submission,
-      tenYearProjection: calculationResults.tenYearProjection
-    });
-  } catch (error) {
-    console.error('Calculation error:', error);
-
-    if (error instanceof z.ZodError) {
-      const validationError = fromZodError(error);
-      return res.status(400).json({ error: validationError.message });
-    }
-
-    const isProduction = process.env.NODE_ENV === 'production';
-    res.status(500).json({
-      error: isProduction ? "Internal server error" : error instanceof Error ? error.message : "Unknown error"
-    });
-  }
-};
-
-// Document processing function
-async function processDocument(file: Express.Multer.File) {
-  try {
-    console.log('Starting document processing...');
-
-    // First upload to Azure Blob Storage
-    console.log('Uploading to Azure Blob Storage...');
-    const fileUrl = await uploadFileToBlobStorage(file);
-    console.log('File uploaded successfully, URL:', fileUrl);
-
-    // Extract text from document
-    const extractedText = await extractTextFromDocument(file);
-    console.log('Text extracted successfully');
-
-    // Process with Mistral
-    const processedData = await processWithMistral(extractedText);
-    console.log('Mistral processing complete:', processedData);
-
-    return {
-      ...processedData,
-      fileUrl // Include the Azure Blob Storage URL
-    };
-  } catch (error) {
-    console.error('Document processing error:', error);
-    throw error;
-  }
-}
