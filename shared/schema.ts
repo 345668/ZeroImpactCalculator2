@@ -66,7 +66,14 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   buildingSize: z.coerce.number().min(1, "Building size must be greater than 0"),
   currentConsumption: z.coerce.number().min(0, "Current consumption must be non-negative"),
   projectedConsumption: z.coerce.number().min(0, "Projected consumption must be non-negative"),
-  currentEnergySource: z.enum(["gas", "oil", "pellet"]).default("gas"),
+  currentEnergySource: z.enum([
+    "natural gas",
+    "heating oil",
+    "liquefied petroleum gas",
+    "district heating",
+    "electricity mix",
+    "heat pump (electricity mix)"
+  ]).default("natural gas"),
   email: z.string().email("Please enter a valid email address"),
   acceptedTerms: z.boolean().or(z.string()).transform(val => 
     String(val === true || val === "true")
@@ -90,6 +97,13 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   emailSentAt: true
 });
 
+// Export types
+export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
+export type Submission = typeof submissions.$inferSelect;
+export type CalculationResult = z.infer<typeof calculationResultSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 // Define user schema after users table
 export const insertUserSchema = createInsertSchema(users)
   .extend({
@@ -103,10 +117,3 @@ export const insertUserSchema = createInsertSchema(users)
     createdAt: true,
     updatedAt: true,
   });
-
-// Export types
-export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
-export type Submission = typeof submissions.$inferSelect;
-export type CalculationResult = z.infer<typeof calculationResultSchema>;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;

@@ -92,7 +92,7 @@ export function CalculatorForm() {
       buildingOwnership: "own",
       buildingSize: 0,
       heatingSystem: "gas",
-      currentEnergySource: "gas",
+      currentEnergySource: "natural gas", // Updated to match schema
       currentConsumption: 0,
       projectedConsumption: 0,
       firstName: "",
