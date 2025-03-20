@@ -18,6 +18,44 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { Component, ErrorInfo, ReactNode } from "react";
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(_: Error) {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Dashboard Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 text-center">
+          <h2 className="text-xl font-bold text-destructive">Something went wrong</h2>
+          <Button
+            variant="outline"
+            onClick={() => {
+              this.setState({ hasError: false });
+              window.location.reload();
+            }}
+            className="mt-4"
+          >
+            Try again
+          </Button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Add type safety for metrics
 interface Metrics {
@@ -70,6 +108,19 @@ const chartConfig = {
   },
 };
 
+function SafeChart({ data, children }: { data: any[]; children: ReactNode }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-[300px]">
+        <p className="text-muted-foreground">No data available</p>
+      </div>
+    );
+  }
+
+  return children;
+}
+
+
 export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -81,6 +132,14 @@ export default function Dashboard() {
     queryKey: ["/api/submissions"],
     retry: 3,
     staleTime: 30000,
+    onError: (error) => {
+      console.error('Data fetching error:', error);
+      toast({
+        title: "Error loading data",
+        description: "Please try refreshing the page",
+        variant: "destructive",
+      });
+    }
   });
 
   // Update the handleRefresh function to include database sync
@@ -257,470 +316,480 @@ export default function Dashboard() {
 
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <motion.h1
-          className="text-3xl font-bold"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          Analytics Dashboard
-        </motion.h1>
-        <div className="flex gap-4">
-          <Link href="/">
+    <ErrorBoundary>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <motion.h1
+            className="text-3xl font-bold"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            Analytics Dashboard
+          </motion.h1>
+          <div className="flex gap-4">
+            <Link href="/">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 transition-all duration-200"
+              >
+                <Home className="h-4 w-4" />
+                Home
+              </Button>
+            </Link>
             <Button
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 transition-all duration-200"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className={`flex items-center gap-2 transition-all duration-200 ${
+                isRefreshing ? 'bg-primary/5' : ''
+              }`}
             >
-              <Home className="h-4 w-4" />
-              Home
+              <RefreshCw className={`h-4 w-4 transition-all ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? "Refreshing..." : "Refresh Data"}
             </Button>
-          </Link>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className={`flex items-center gap-2 transition-all duration-200 ${
-              isRefreshing ? 'bg-primary/5' : ''
-            }`}
-          >
-            <RefreshCw className={`h-4 w-4 transition-all ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? "Refreshing..." : "Refresh Data"}
-          </Button>
-          <Select value={timeRange} onValueChange={setTimeRange}>
-            <SelectTrigger className="w-[180px]">
-              <Calendar className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Select time range" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Time</SelectItem>
-              <SelectItem value="week">Last Week</SelectItem>
-              <SelectItem value="month">Last Month</SelectItem>
-              <SelectItem value="year">Last Year</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={timeRange} onValueChange={setTimeRange}>
+              <SelectTrigger className="w-[180px]">
+                <Calendar className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Select time range" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="week">Last Week</SelectItem>
+                <SelectItem value="month">Last Month</SelectItem>
+                <SelectItem value="year">Last Year</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-      </div>
 
-      {isLoading ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="space-y-0 pb-2">
-                <Skeleton className="h-4 w-[150px]" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-[100px] mb-2" />
-                <Skeleton className="h-4 w-[180px]" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : error ? (
-        <motion.div
-          className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-center text-destructive"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <p>Error loading dashboard data. Please try refreshing.</p>
-        </motion.div>
-      ) : (
-        <>
+        {isLoading ? (
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <Card key={i}>
+                <CardHeader className="space-y-0 pb-2">
+                  <Skeleton className="h-4 w-[150px]" />
+                </CardHeader>
+                <CardContent>
+                  <Skeleton className="h-8 w-[100px] mb-2" />
+                  <Skeleton className="h-4 w-[180px]" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : error ? (
           <motion.div
-            className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-center text-destructive"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
           >
-            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total CO₂ Savings (30 Days)</CardTitle>
-                <Factory className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{co2Metrics.totalCO2.toFixed(2)} tons</div>
-                <p className="text-xs text-muted-foreground">
-                  Average: {safeDiv(co2Metrics.totalCO2, co2Metrics.count)} tons per project
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Projects (30 Days)</CardTitle>
-                <Building2 className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{projectMetrics.count}</div>
-                <p className="text-xs text-muted-foreground">
-                  Average Size: {safeDiv(projectMetrics.totalSize, projectMetrics.count, 0)} m²
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Energy Reduction</CardTitle>
-                <Coins className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{metrics.totalEnergyReduction.toFixed(2)} kWh</div>
-                <p className="text-xs text-muted-foreground">
-                  Average: {metrics.averageReduction.toFixed(1)}% per building
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Buildings</CardTitle>
-                <Building2 className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{metrics.totalBuildings}</div>
-                <p className="text-xs text-muted-foreground">Participating in program</p>
-              </CardContent>
-            </Card>
+            <p>Error loading dashboard data. Please try refreshing.</p>
           </motion.div>
+        ) : (
+          <>
+            <motion.div
+              className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total CO₂ Savings (30 Days)</CardTitle>
+                  <Factory className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{co2Metrics.totalCO2.toFixed(2)} tons</div>
+                  <p className="text-xs text-muted-foreground">
+                    Average: {safeDiv(co2Metrics.totalCO2, co2Metrics.count)} tons per project
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Projects (30 Days)</CardTitle>
+                  <Building2 className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{projectMetrics.count}</div>
+                  <p className="text-xs text-muted-foreground">
+                    Average Size: {safeDiv(projectMetrics.totalSize, projectMetrics.count, 0)} m²
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Energy Reduction</CardTitle>
+                  <Coins className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metrics.totalEnergyReduction.toFixed(2)} kWh</div>
+                  <p className="text-xs text-muted-foreground">
+                    Average: {metrics.averageReduction.toFixed(1)}% per building
+                  </p>
+                </CardContent>
+              </Card>
 
-          <motion.div
-            className="grid gap-4 grid-cols-1 md:grid-cols-2"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
-              <CardHeader>
-                <CardTitle>CO₂ Savings Trend (30 Days)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer className="h-[300px]" config={chartConfig}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={co2GraphData}>
-                      <XAxis dataKey="date" />
-                      <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip content={({ active, payload }: ChartTooltipProps) => {
-                        if (!active || !payload?.length) return null;
-                        return (
-                          <div className="rounded-lg border bg-background p-2 shadow-sm">
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="flex flex-col">
-                                <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                  Total CO₂
-                                </span>
-                                <span className="font-bold text-muted-foreground">
-                                  {safeNumber(payload[0]?.value).toFixed(2)} tons
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                  Average
-                                </span>
-                                <span className="font-bold text-muted-foreground">
-                                  {safeNumber(payload[1]?.value).toFixed(2)} tons
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      }} />
-                      <Line
-                        yAxisId="left"
-                        type="monotone"
-                        dataKey="totalCO2"
-                        name="Total CO₂ Savings"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                      />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="averageCO2"
-                        name="Average CO₂ per Project"
-                        stroke="hsl(var(--muted-foreground))"
-                        strokeWidth={2}
-                        strokeDasharray="4 4"
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+              <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Buildings</CardTitle>
+                  <Building2 className="h-4 w-4 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{metrics.totalBuildings}</div>
+                  <p className="text-xs text-muted-foreground">Participating in program</p>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
-              <CardHeader>
-                <CardTitle>Project Statistics (30 Days)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer className="h-[300px]" config={chartConfig}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={projectGraphData}>
-                      <XAxis dataKey="date" />
-                      <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
-                      <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip content={({ active, payload }: ChartTooltipProps) => {
-                        if (!active || !payload?.length) return null;
-                        return (
-                          <div className="rounded-lg border bg-background p-2 shadow-sm">
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="flex flex-col">
-                                <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                  Projects
-                                </span>
-                                <span className="font-bold text-muted-foreground">
-                                  {safeNumber(payload[0]?.value)}
-                                </span>
+            <motion.div
+              className="grid gap-4 grid-cols-1 md:grid-cols-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+                <CardHeader>
+                  <CardTitle>CO₂ Savings Trend (30 Days)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SafeChart data={co2GraphData}>
+                    <ChartContainer className="h-[300px]" config={chartConfig}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={co2GraphData}>
+                          <XAxis dataKey="date" />
+                          <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
+                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+                          <Tooltip content={({ active, payload }: ChartTooltipProps) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="flex flex-col">
+                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                      Total CO₂
+                                    </span>
+                                    <span className="font-bold text-muted-foreground">
+                                      {safeNumber(payload[0]?.value).toFixed(2)} tons
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                      Average
+                                    </span>
+                                    <span className="font-bold text-muted-foreground">
+                                      {safeNumber(payload[1]?.value).toFixed(2)} tons
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="flex flex-col">
-                                <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                  Avg. Size
-                                </span>
-                                <span className="font-bold text-muted-foreground">
-                                  {safeNumber(payload[1]?.value).toFixed(0)} m²
-                                </span>
+                            );
+                          }} />
+                          <Line
+                            yAxisId="left"
+                            type="monotone"
+                            dataKey="totalCO2"
+                            name="Total CO₂ Savings"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={2}
+                          />
+                          <Line
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey="averageCO2"
+                            name="Average CO₂ per Project"
+                            stroke="hsl(var(--muted-foreground))"
+                            strokeWidth={2}
+                            strokeDasharray="4 4"
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </SafeChart>
+                </CardContent>
+              </Card>
+
+              <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+                <CardHeader>
+                  <CardTitle>Project Statistics (30 Days)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SafeChart data={projectGraphData}>
+                    <ChartContainer className="h-[300px]" config={chartConfig}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={projectGraphData}>
+                          <XAxis dataKey="date" />
+                          <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--primary))" />
+                          <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" />
+                          <Tooltip content={({ active, payload }: ChartTooltipProps) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                <div className="grid grid-cols-2 gap-2">
+                                  <div className="flex flex-col">
+                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                      Projects
+                                    </span>
+                                    <span className="font-bold text-muted-foreground">
+                                      {safeNumber(payload[0]?.value)}
+                                    </span>
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                      Avg. Size
+                                    </span>
+                                    <span className="font-bold text-muted-foreground">
+                                      {safeNumber(payload[1]?.value).toFixed(0)} m²
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
-                          </div>
-                        );
-                      }} />
-                      <Bar
-                        yAxisId="left"
-                        dataKey="projectCount"
-                        name="Number of Projects"
-                        fill="hsl(var(--primary))"
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Line
-                        yAxisId="right"
-                        type="monotone"
-                        dataKey="averageSize"
-                        name="Average Building Size"
-                        stroke="hsl(var(--muted-foreground))"
-                        strokeWidth={2}
-                        strokeDasharray="4 4"
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
-              <CardHeader>
-                <CardTitle>CO₂ Savings Trend (All Time)</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer className="h-[300px]" config={chartConfig}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip content={({ active, payload }: ChartTooltipProps) => {
-                        if (!active || !payload?.length) return null;
-                        return (
-                          <div className="rounded-lg border bg-background p-2 shadow-sm">
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                CO₂ Savings
-                              </span>
-                              <span className="font-bold text-muted-foreground">
-                                {safeNumber(payload[0]?.value).toFixed(2)} tons
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      }} />
-                      <Line
-                        type="monotone"
-                        dataKey="co2Savings"
-                        name="CO₂ Savings (tons)"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={2}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+                            );
+                          }} />
+                          <Bar
+                            yAxisId="left"
+                            dataKey="projectCount"
+                            name="Number of Projects"
+                            fill="hsl(var(--primary))"
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Line
+                            yAxisId="right"
+                            type="monotone"
+                            dataKey="averageSize"
+                            name="Average Building Size"
+                            stroke="hsl(var(--muted-foreground))"
+                            strokeWidth={2}
+                            strokeDasharray="4 4"
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </SafeChart>
+                </CardContent>
+              </Card>
+              <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+                <CardHeader>
+                  <CardTitle>CO₂ Savings Trend (All Time)</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SafeChart data={chartData}>
+                    <ChartContainer className="h-[300px]" config={chartConfig}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData}>
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip content={({ active, payload }: ChartTooltipProps) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                <div className="flex flex-col">
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    CO₂ Savings
+                                  </span>
+                                  <span className="font-bold text-muted-foreground">
+                                    {safeNumber(payload[0]?.value).toFixed(2)} tons
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }} />
+                          <Line
+                            type="monotone"
+                            dataKey="co2Savings"
+                            name="CO₂ Savings (tons)"
+                            stroke="hsl(var(--primary))"
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </SafeChart>
+                </CardContent>
+              </Card>
 
-            <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
-              <CardHeader>
-                <CardTitle>Energy Reduction Analysis</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer className="h-[300px]" config={chartConfig}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                      <XAxis dataKey="date" />
-                      <YAxis />
-                      <Tooltip content={({ active, payload }: ChartTooltipProps) => {
-                        if (!active || !payload?.length) return null;
-                        return (
-                          <div className="rounded-lg border bg-background p-2 shadow-sm">
-                            <div className="flex flex-col">
-                              <span className="text-[0.70rem] uppercase text-muted-foreground">
-                                Energy Reduction
-                              </span>
-                              <span className="font-bold text-muted-foreground">
-                                {safeNumber(payload[0]?.value).toFixed(2)} kWh
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      }} />
-                      <Bar
-                        dataKey="energyReduction"
-                        name="Energy Reduction (kWh)"
-                        fill="hsl(var(--primary))"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </motion.div>
+              <Card className="transition-all duration-200 hover:shadow-lg hover:border-primary/50">
+                <CardHeader>
+                  <CardTitle>Energy Reduction Analysis</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <SafeChart data={chartData}>
+                    <ChartContainer className="h-[300px]" config={chartConfig}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData}>
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip content={({ active, payload }: ChartTooltipProps) => {
+                            if (!active || !payload?.length) return null;
+                            return (
+                              <div className="rounded-lg border bg-background p-2 shadow-sm">
+                                <div className="flex flex-col">
+                                  <span className="text-[0.70rem] uppercase text-muted-foreground">
+                                    Energy Reduction
+                                  </span>
+                                  <span className="font-bold text-muted-foreground">
+                                    {safeNumber(payload[0]?.value).toFixed(2)} kWh
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          }} />
+                          <Bar
+                            dataKey="energyReduction"
+                            name="Energy Reduction (kWh)"
+                            fill="hsl(var(--primary))"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </SafeChart>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            <Card className="transition-all duration-200">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Recent Submissions</CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.location.href = '/api/submissions/export'}
-                    className="flex items-center gap-2 hover:bg-primary/5"
-                  >
-                    <FileDown className="h-4 w-4" />
-                    Export Data
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="hover:bg-muted/5">
-                        <TableHead className="font-semibold">Date</TableHead>
-                        <TableHead className="font-semibold">Customer</TableHead>
-                        <TableHead className="font-semibold">Energy Consultant</TableHead>
-                        <TableHead className="font-semibold">Building Size</TableHead>
-                        <TableHead className="font-semibold">Energy Reduction</TableHead>
-                        <TableHead className="font-semibold">CO₂ Savings</TableHead>
-                        <TableHead className="font-semibold">Carbon Credits</TableHead>
-                        <TableHead className="font-semibold">Financial Value</TableHead>
-                        <TableHead className="font-semibold">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredSubmissions.slice(0, 10).map((submission) => (
-                        <TableRow
-                          key={submission.id}
-                          className="transition-colors hover:bg-muted/5"
-                        >
-                          <TableCell>
-                            {submission.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : "N/A"}
-                          </TableCell>
-                          <TableCell>
-                            {`${submission.firstName} ${submission.lastName}`}
-                            <br />
-                            <span className="text-xs text-muted-foreground">{submission.address}</span>
-                          </TableCell>
-                          <TableCell>
-                            {submission.energyConsultantName ? (
-                              <>
-                                {submission.energyConsultantName}
-                                <br />
-                                <span className="text-xs text-muted-foreground">
-                                  {submission.energyConsultantCompany}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.6 }}
+            >
+              <Card className="transition-all duration-200">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Recent Submissions</CardTitle>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.location.href = '/api/submissions/export'}
+                      className="flex items-center gap-2 hover:bg-primary/5"
+                    >
+                      <FileDown className="h-4 w-4" />
+                      Export Data
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="hover:bg-muted/5">
+                          <TableHead className="font-semibold">Date</TableHead>
+                          <TableHead className="font-semibold">Customer</TableHead>
+                          <TableHead className="font-semibold">Energy Consultant</TableHead>
+                          <TableHead className="font-semibold">Building Size</TableHead>
+                          <TableHead className="font-semibold">Energy Reduction</TableHead>
+                          <TableHead className="font-semibold">CO₂ Savings</TableHead>
+                          <TableHead className="font-semibold">Carbon Credits</TableHead>
+                          <TableHead className="font-semibold">Financial Value</TableHead>
+                          <TableHead className="font-semibold">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredSubmissions.slice(0, 10).map((submission) => (
+                          <TableRow
+                            key={submission.id}
+                            className="transition-colors hover:bg-muted/5"
+                          >
+                            <TableCell>
+                              {submission.submittedAt ? new Date(submission.submittedAt).toLocaleDateString() : "N/A"}
+                            </TableCell>
+                            <TableCell>
+                              {`${submission.firstName} ${submission.lastName}`}
+                              <br />
+                              <span className="text-xs text-muted-foreground">{submission.address}</span>
+                            </TableCell>
+                            <TableCell>
+                              {submission.energyConsultantName ? (
+                                <>
+                                  {submission.energyConsultantName}
                                   <br />
-                                  ID: {submission.energyConsultantId}
-                                  <br />
-                                  BAFA: {submission.energyConsultantBafaNumber}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">No consultant info</span>
-                            )}
-                          </TableCell>
-                          <TableCell>{safeNumber(submission.buildingSize)} m²</TableCell>
-                          <TableCell>
-                            {safeDiv(safeNumber(submission.currentConsumption) - safeNumber(submission.projectedConsumption), safeNumber(submission.currentConsumption), 1)}%
-                          </TableCell>
-                          <TableCell>{safeNumber(submission.co2Savings).toFixed(2)} tons</TableCell>
-                          <TableCell>{safeNumber(submission.carbonCredits).toFixed(2)}</TableCell>
-                          <TableCell>€{safeNumber(submission.financialValue).toFixed(2)}</TableCell>
-                          <TableCell>
-                            <div className="space-y-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={async () => {
-                                  try {
-                                    const response = await fetch('/api/send-report', {
-                                      method: 'POST',
-                                      headers: {
-                                        'Content-Type': 'application/json',
-                                      },
-                                      body: JSON.stringify({ submissionId: submission.id }),
-                                    });
-
-                                    if (!response.ok) {
-                                      throw new Error('Failed to send report');
-                                    }
-
-                                    // Invalidate the query to refresh the data
-                                    await queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
-
-                                    toast({
-                                      title: "Success",
-                                      description: "Report has been sent to your email",
-                                    });
-                                  } catch (error) {
-                                    console.error('Error sending report:', error);
-                                    toast({
-                                      title: "Error",
-                                      description: "Failed to send report email",
-                                      variant: "destructive",
-                                    });
-                                  }
-                                }}
-                                className="w-full justify-center"
-                                disabled={submission.emailSent === "yes"}
-                              >
-                                <FileDown className="h-4 w-4 mr-1" />
-                                {submission.emailSent === "yes" ? "Report Sent" : "Send Report"}
-                              </Button>
-                              {submission.fileUrl && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {submission.energyConsultantCompany}
+                                    <br />
+                                    ID: {submission.energyConsultantId}
+                                    <br />
+                                    BAFA: {submission.energyConsultantBafaNumber}
+                                  </span>
+                                </>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No consultant info</span>
+                              )}
+                            </TableCell>
+                            <TableCell>{safeNumber(submission.buildingSize)} m²</TableCell>
+                            <TableCell>
+                              {safeDiv(safeNumber(submission.currentConsumption) - safeNumber(submission.projectedConsumption), safeNumber(submission.currentConsumption), 1)}%
+                            </TableCell>
+                            <TableCell>{safeNumber(submission.co2Savings).toFixed(2)} tons</TableCell>
+                            <TableCell>{safeNumber(submission.carbonCredits).toFixed(2)}</TableCell>
+                            <TableCell>€{safeNumber(submission.financialValue).toFixed(2)}</TableCell>
+                            <TableCell>
+                              <div className="space-y-2">
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => window.open(submission.fileUrl, '_blank')}
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch('/api/send-report', {
+                                        method: 'POST',
+                                        headers: {
+                                          'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({ submissionId: submission.id }),
+                                      });
+
+                                      if (!response.ok) {
+                                        throw new Error('Failed to send report');
+                                      }
+
+                                      // Invalidate the query to refresh the data
+                                      await queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
+
+                                      toast({
+                                        title: "Success",
+                                        description: "Report has been sent to your email",
+                                      });
+                                    } catch (error) {
+                                      console.error('Error sending report:', error);
+                                      toast({
+                                        title: "Error",
+                                        description: "Failed to send report email",
+                                        variant: "destructive",
+                                      });
+                                    }
+                                  }}
                                   className="w-full justify-center"
+                                  disabled={submission.emailSent === "yes"}
                                 >
                                   <FileDown className="h-4 w-4 mr-1" />
-                                  View Document
+                                  {submission.emailSent === "yes" ? "Report Sent" : "Send Report"}
                                 </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </>
-      )}
-    </div>
+                                {submission.fileUrl && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.open(submission.fileUrl, '_blank')}
+                                    className="w-full justify-center"
+                                  >
+                                    <FileDown className="h-4 w-4 mr-1" />
+                                    View Document
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
