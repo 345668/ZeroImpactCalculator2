@@ -29,20 +29,6 @@ A cutting-edge web application that helps building owners and tenants calculate 
 - SendGrid API Key
 - Mistral AI API Key
 
-# Dependency Management
-
-Our project uses a modern JavaScript/TypeScript stack with dependencies managed through npm. For detailed information about project dependencies and their purposes, please refer to [DEPENDENCIES.md](DEPENDENCIES.md).
-
-## Adding New Dependencies
-
-To add new dependencies to the project:
-
-1. Never modify package.json directly
-2. Use Replit's package management system
-3. Document new dependencies in DEPENDENCIES.md
-4. Update security policies as needed
-5. Test the application after adding dependencies
-
 ## Environment Setup
 
 The following environment variables are required:
@@ -51,12 +37,10 @@ The following environment variables are required:
 DATABASE_URL=postgresql://user:password@host:port/dbname
 AZURE_STORAGE_CONNECTION_STRING=your_azure_connection_string
 SENDGRID_API_KEY=your_sendgrid_api_key
-OPENAI_API_KEY=your_openai_api_key
+MISTRAL_API_KEY=your_mistral_api_key
 ```
 
-For local development, create a `.env` file with these variables. In production, use Replit's Secrets system.
-
-## Installation 🚀
+## Quick Start 🚀
 
 1. Clone the repository:
 ```bash
@@ -79,6 +63,21 @@ npm run db:push
 npm run dev
 ```
 
+5. Visit `http://localhost:5000` in your browser
+
+## Project Structure 📁
+
+```
+radical-zero/
+├── client/           # Frontend React application
+├── server/           # Backend Express services
+│   ├── calculators/  # Carbon credit calculation logic
+│   ├── routes/      # API route handlers
+│   └── services/    # Business logic services
+├── shared/          # Shared types and utilities
+└── docs/           # Documentation
+```
+
 ## API Endpoints 📡
 
 ### Document Processing
@@ -86,6 +85,15 @@ npm run dev
 - `POST /api/calculate`: Calculate carbon savings and credits
 - `GET /api/submissions`: Retrieve all submissions
 - `POST /api/send-report`: Send email reports
+
+## Security 🔒
+
+- HTTPS enforced in production
+- CSRF protection
+- Rate limiting
+- Input validation
+- Secure session management
+- File upload restrictions
 
 ## Contributing 🤝
 
@@ -95,16 +103,17 @@ npm run dev
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## Security 🔒
+Please ensure your PR follows our coding standards and includes appropriate tests.
 
-- HTTPS enforced
-- CSRF protection
-- Rate limiting
-- Input validation
-- Secure session management
-- File upload restrictions
+## Development Guidelines 📝
 
-## License 📝
+- Follow TypeScript best practices
+- Use ESLint and Prettier for code formatting
+- Write tests for new features
+- Update documentation as needed
+- Keep PRs focused and concise
+
+## License 📄
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
