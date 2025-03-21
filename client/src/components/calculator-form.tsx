@@ -319,9 +319,9 @@ export function CalculatorForm() {
           {step === 1 && (
             <div className="space-y-6">
               <div className="p-6 bg-primary/5 rounded-lg">
-                <h3 className="text-lg font-medium mb-2">Upload Energy Certificate</h3>
+                <h3 className="text-lg font-medium mb-2">Upload Your iSFP Document</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  For faster results, upload your energy certificate or renovation plan to automatically fill the form
+                  For faster results, upload your iSFP document or renovation plan to automatically fill the form
                 </p>
                 <DocumentUpload 
                   onDataExtracted={handleExtractedData} 
