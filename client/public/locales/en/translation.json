@@ -46,7 +46,11 @@
     "startNew": "Start New Calculation",
     "sendEmail": "Send Email Report",
     "viewResults": "View Your Results",
-    "returnHome": "Return to Home"
+    "returnHome": "Return to Home",
+    "perYear": "Per year",
+    "potentialMarketValue": "Potential market value",
+    "ownershipType": "Ownership Type",
+    "energyConsumptionReduction": "Energy Consumption Reduction"
   },
   "navigation": {
     "home": "Home",
@@ -126,7 +130,14 @@
       "financialValue": "Financial Value",
       "tonsCO2": "tons of CO₂",
       "creditValue": "Carbon Credits Value",
-      "tenYearProjection": "10-Year Projection"
+      "tenYearProjection": "10-Year Projection",
+      "emailDetails": "The detailed results will be sent to your email after completing the form."
+    },
+    "tenYearProjection": {
+      "title": "10-Year Projection",
+      "totalCO2Savings": "Total CO₂ Savings",
+      "totalCarbonCredits": "Total Carbon Credits",
+      "totalFinancialValue": "Total Financial Value"
     },
     "contactDetails": {
       "title": "Contact Details",

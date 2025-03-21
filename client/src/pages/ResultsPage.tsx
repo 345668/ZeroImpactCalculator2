@@ -4,9 +4,11 @@ import { Check, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
 import { NavigationBar } from "@/components/navigation-bar";
+import { useTranslation } from "react-i18next";
 
 export function ResultsPage() {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
 
   return (
     <Layout>
@@ -30,7 +32,7 @@ export function ResultsPage() {
           </motion.div>
 
           <h1 className="text-3xl font-bold mb-4">
-            Submission Successful!
+            {t('calculator.success.title')}
           </h1>
 
           <motion.div
@@ -40,10 +42,10 @@ export function ResultsPage() {
             className="space-y-4 mb-12"
           >
             <p className="text-lg">
-              Thank you for your submission! A detailed report has been sent to your email.
+              {t('calculator.success.message')}
             </p>
             <p className="text-muted-foreground">
-              A Radical Zero representative will be in touch with you shortly to discuss your energy savings potential.
+              {t('calculator.results.emailDetails')}
             </p>
           </motion.div>
 
@@ -58,7 +60,7 @@ export function ResultsPage() {
               className="w-full max-w-md mx-auto bg-calmBlue-600 hover:bg-calmBlue-700"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Return to Homepage
+              {t('common.returnHome')}
             </Button>
           </motion.div>
         </motion.div>

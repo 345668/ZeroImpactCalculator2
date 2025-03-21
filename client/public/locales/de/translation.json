@@ -46,7 +46,11 @@
     "startNew": "Neue Berechnung starten",
     "sendEmail": "E-Mail-Bericht senden",
     "viewResults": "Ergebnisse anzeigen",
-    "returnHome": "Zurück zur Startseite"
+    "returnHome": "Zurück zur Startseite",
+    "perYear": "Pro Jahr",
+    "potentialMarketValue": "Potenzieller Marktwert",
+    "ownershipType": "Eigentümertyp",
+    "energyConsumptionReduction": "Energieverbrauchsreduzierung"
   },
   "navigation": {
     "home": "Startseite",
@@ -126,7 +130,14 @@
       "financialValue": "Finanzieller Wert",
       "tonsCO2": "Tonnen CO₂",
       "creditValue": "Wert der CO₂-Gutschriften",
-      "tenYearProjection": "10-Jahres-Prognose"
+      "tenYearProjection": "10-Jahres-Prognose",
+      "emailDetails": "Die detaillierten Ergebnisse werden nach Abschluss des Formulars an Ihre E-Mail gesendet."
+    },
+    "tenYearProjection": {
+      "title": "10-Jahres-Prognose",
+      "totalCO2Savings": "Gesamte CO₂-Einsparungen",
+      "totalCarbonCredits": "Gesamte CO₂-Gutschriften",
+      "totalFinancialValue": "Gesamter finanzieller Wert"
     },
     "contactDetails": {
       "title": "Kontaktdaten",
