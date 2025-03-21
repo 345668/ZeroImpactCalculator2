@@ -584,15 +584,15 @@ export function CalculatorForm() {
                             <Check className="w-6 h-6 text-calmBlue-600" />
                           </motion.div>
                         </div>
-                        <h3 className="text-center font-semibold mb-1">CO₂ Savings</h3>
+                        <h3 className="text-center font-semibold mb-1">{t('calculator.results.co2Savings')}</h3>
                         <div className="text-3xl text-center font-bold mb-1 blur-md">
                           {isPending ? (
-                            <span className="animate-pulse">Calculating...</span>
+                            <span className="animate-pulse">{t('common.loading')}</span>
                           ) : (
-                            `${Number(form.getValues("co2Savings") || 0).toFixed(2)} tons`
+                            `${Number(form.getValues("co2Savings") || 0).toFixed(2)} ${t('calculator.results.tonsCO2')}`
                           )}
                         </div>
-                        <p className="text-sm text-center text-muted-foreground">Per year</p>
+                        <p className="text-sm text-center text-muted-foreground">{t('common.perYear')}</p>
                       </div>
                     </div>
                   </Card>
@@ -616,15 +616,15 @@ export function CalculatorForm() {
                             <Check className="w-6 h-6 text-calmBlue-600" />
                           </motion.div>
                         </div>
-                        <h3 className="text-center font-semibold mb-1">Carbon Credits</h3>
+                        <h3 className="text-center font-semibold mb-1">{t('calculator.results.carbonCredits')}</h3>
                         <div className="text-3xl text-center font-bold mb-1 blur-md">
                           {isPending ? (
-                            <span className="animate-pulse">Calculating...</span>
+                            <span className="animate-pulse">{t('common.loading')}</span>
                           ) : (
                             Number(form.getValues("carbonCredits") || 0).toFixed(2)
                           )}
                         </div>
-                        <p className="text-sm text-center text-muted-foreground">Credits (1:1 with CO₂)</p>
+                        <p className="text-sm text-center text-muted-foreground">{t('calculator.results.creditValue')}</p>
                       </div>
                     </div>
                   </Card>
@@ -648,15 +648,15 @@ export function CalculatorForm() {
                             <Check className="w-6 h-6 text-calmBlue-600" />
                           </motion.div>
                         </div>
-                        <h3 className="text-center font-semibold mb-1">Financial Value</h3>
+                        <h3 className="text-center font-semibold mb-1">{t('calculator.results.financialValue')}</h3>
                         <div className="text-3xl text-center font-bold mb-1 blur-md">
                           {isPending ? (
-                            <span className="animate-pulse">Calculating...</span>
+                            <span className="animate-pulse">{t('common.loading')}</span>
                           ) : (
                             `€${Number(form.getValues("financialValue") || 0).toFixed(2)}`
                           )}
                         </div>
-                        <p className="text-sm text-center text-muted-foreground">Potential market value</p>
+                        <p className="text-sm text-center text-muted-foreground">{t('common.potentialMarketValue')}</p>
                       </div>
                     </div>
                   </Card>
@@ -671,26 +671,26 @@ export function CalculatorForm() {
               >
                 <div className="p-6 bg-gray-50 rounded-lg transition-all duration-300">
                   <div className="transition-all duration-300">
-                    <h3 className="text-lg font-semibold mb-4">Building Information</h3>
+                    <h3 className="text-lg font-semibold mb-4">{t('calculator.buildingInfo.title')}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground">Ownership Type</p>
+                        <p className="text-sm text-muted-foreground">{t('common.ownershipType')}</p>
                         <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Building Size</p>
+                        <p className="text-sm text-muted-foreground">{t('calculator.buildingInfo.size')}</p>
                         <p className="font-medium blur-md">{form.getValues("buildingSize")} m²</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Current Consumption</p>
+                        <p className="text-sm text-muted-foreground">{t('calculator.currentConsumption.title')}</p>
                         <p className="font-medium blur-md">{form.getValues("currentConsumption")} kWh/year</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Projected Consumption</p>
+                        <p className="text-sm text-muted-foreground">{t('calculator.projectedConsumption.title')}</p>
                         <p className="font-medium blur-md">{form.getValues("projectedConsumption")} kWh/year</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground">Energy Consumption Reduction</p>
+                        <p className="text-sm text-muted-foreground">{t('common.energyConsumptionReduction')}</p>
                         <motion.div
                           className="h-2 bg-calmBlue-100 rounded-full mt-2 overflow-hidden"
                           initial={{ width: "0%" }}
@@ -721,33 +721,33 @@ export function CalculatorForm() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 1 }}
               >
-                <h3 className="text-xl font-semibold mb-4">10-Year Projection</h3>
+                <h3 className="text-xl font-semibold mb-4">{t('calculator.tenYearProjection.title')}</h3>
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total CO₂ Savings</p>
+                    <p className="text-sm text-muted-foreground">{t('calculator.tenYearProjection.totalCO2Savings')}</p>
                     <p className="text-2xl font-bold blur-md">
                       {isPending ? (
-                        <span className="animate-pulse">Calculating...</span>
+                        <span className="animate-pulse">{t('common.loading')}</span>
                       ) : (
-                        `${Number(form.getValues("tenYearProjection.co2Savings") || 0).toFixed(2)} tons`
+                        `${Number(form.getValues("tenYearProjection.co2Savings") || 0).toFixed(2)} ${t('calculator.results.tonsCO2')}`
                       )}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Carbon Credits</p>
+                    <p className="text-sm text-muted-foreground">{t('calculator.tenYearProjection.totalCarbonCredits')}</p>
                     <p className="text-2xl font-bold blur-md">
                       {isPending ? (
-                        <span className="animate-pulse">Calculating...</span>
+                        <span className="animate-pulse">{t('common.loading')}</span>
                       ) : (
                         Number(form.getValues("tenYearProjection.carbonCredits") || 0).toFixed(2)
                       )}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Total Financial Value</p>
+                    <p className="text-sm text-muted-foreground">{t('calculator.tenYearProjection.totalFinancialValue')}</p>
                     <p className="text-2xl font-bold blur-md">
                       {isPending ? (
-                        <span className="animate-pulse">Calculating...</span>
+                        <span className="animate-pulse">{t('common.loading')}</span>
                       ) : (
                         `€${Number(form.getValues("tenYearProjection.financialValue") || 0).toFixed(2)}`
                       )}
