@@ -280,13 +280,13 @@ export async function updateSubmission(submission: any): Promise<boolean> {
       partitionKey: submission.email,
       rowKey: submission.id.toString(),
       
-      // Update fields with new values
-      fileUrl: submission.fileUrl || existingEntity.fileUrl,
-      fileName: submission.fileName || existingEntity.fileName,
+      // Update fields with new values, prioritizing submission data but preserving existing when needed
+      fileUrl: submission.fileUrl || existingEntity.fileUrl || "",
+      fileName: submission.fileName || existingEntity.fileName || "",
       fileSize: submission.fileSize ? Number(submission.fileSize) : (existingEntity.fileSize ? Number(existingEntity.fileSize) : 0),
-      fileType: submission.fileType || existingEntity.fileType,
+      fileType: submission.fileType || existingEntity.fileType || "",
       fileUploadedAt: submission.fileUploadedAt ? new Date(submission.fileUploadedAt) : (existingEntity.fileUploadedAt ? new Date(existingEntity.fileUploadedAt) : new Date()),
-      fileMetadata: submission.fileMetadata || existingEntity.fileMetadata,
+      fileMetadata: submission.fileMetadata || existingEntity.fileMetadata || "",
       
       // Email status
       emailSent: submission.emailSent || existingEntity.emailSent,
