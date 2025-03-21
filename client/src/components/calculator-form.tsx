@@ -887,12 +887,12 @@ export function CalculatorForm() {
 
                   <FormField
                     control={form.control}
-                    name="city"
+                    name="region"
                     render={({ field }) => {
                       const country = form.watch('country');
-                      let cityOptions = [];
+                      let regionOptions = [];
                       
-                      // Populate cities based on selected country
+                      // Populate regions based on selected country
                       switch (country) {
                         case 'germany':
                           cityOptions = [
