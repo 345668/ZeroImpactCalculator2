@@ -145,7 +145,12 @@
       "firstName": "First Name",
       "lastName": "Last Name",
       "email": "Email Address",
-      "address": "Address",
+      "street": "Street",
+      "postalCode": "Postal Code",
+      "city": "City",
+      "country": "Country",
+      "selectCountry": "Select country",
+      "selectCity": "Select city",
       "acceptTerms": "I accept the Terms of Service",
       "acceptGDPR": "I consent to the processing of my data as described in the Privacy Policy"
     },

@@ -145,7 +145,10 @@
       "firstName": "Vorname",
       "lastName": "Nachname",
       "email": "E-Mail-Adresse",
-      "address": "Adresse",
+      "street": "Straße",
+      "postalCode": "Postleitzahl",
+      "city": "Stadt",
+      "country": "Land",
       "acceptTerms": "Ich akzeptiere die Nutzungsbedingungen",
       "acceptGDPR": "Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu"
     },
