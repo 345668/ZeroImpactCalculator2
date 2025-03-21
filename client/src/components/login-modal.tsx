@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
-import { useNavigate } from "wouter";
+import { useLocation } from "wouter";
 
 interface LoginModalProps {
   open: boolean;
@@ -20,7 +20,7 @@ interface LoginFormValues {
 export function LoginModal({ open, onOpenChange }: LoginModalProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
     defaultValues: {
@@ -57,7 +57,7 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
       
       // Close the modal and navigate to the company page
       onOpenChange(false);
-      navigate("/company");
+      setLocation("/company");
       
     } catch (error) {
       console.error("Login error:", error);
