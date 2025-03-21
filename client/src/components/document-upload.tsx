@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Upload, AlertCircle, FileText, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
 
 interface DocumentUploadProps {
   onDataExtracted: (data: {
@@ -44,22 +45,23 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
     uploadedAt?: string;
   } | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   const validateFile = useCallback((file: File): boolean => {
     setError(null);
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      setError("Please upload a PDF or image file (JPG, PNG)");
+      setError(t('document.errors.fileType'));
       return false;
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      setError("File size must be less than 10MB");
+      setError(t('document.errors.fileSize'));
       return false;
     }
 
     return true;
-  }, []);
+  }, [t]);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (formData: FormData) => {
@@ -102,8 +104,8 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
       });
       
       toast({
-        title: "Success",
-        description: `Document processed successfully in ${extractedData.language || 'unknown language'}`,
+        title: t('document.toast.success'),
+        description: t('document.toast.processedSuccessfully', { language: extractedData.language || t('document.toast.unknownLanguage') }),
       });
 
       // Prepare data for parent component with enhanced file information
@@ -136,7 +138,7 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
       console.error('Upload error:', error);
       setError(error.message);
       toast({
-        title: "Error",
+        title: t('document.toast.error'),
         description: error.message,
         variant: "destructive",
       });
@@ -155,7 +157,7 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
 
   const handleUpload = () => {
     if (!file) {
-      setError("Please select a file to upload");
+      setError(t('document.errors.noFile'));
       return;
     }
 
@@ -166,10 +168,10 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
 
   // Format file size for display
   const formatFileSize = (bytes?: number): string => {
-    if (!bytes) return 'Unknown size';
-    if (bytes < 1024) return bytes + ' bytes';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    if (!bytes) return t('document.fileInfo.unknownSize');
+    if (bytes < 1024) return bytes + ' ' + t('document.fileInfo.bytes');
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' ' + t('document.fileInfo.kb');
+    return (bytes / (1024 * 1024)).toFixed(1) + ' ' + t('document.fileInfo.mb');
   };
 
   return (
@@ -197,12 +199,12 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
           {isPending ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing
+              {t('document.actions.processing')}
             </>
           ) : (
             <>
               <Upload className="mr-2 h-4 w-4" />
-              Upload
+              {t('document.actions.upload')}
             </>
           )}
         </Button>
@@ -210,7 +212,7 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
 
       {file && !error && !uploadedFileInfo && (
         <p className="text-sm text-muted-foreground">
-          Selected file: {file.name}
+          {t('document.fileInfo.selectedFile')}: {file.name}
         </p>
       )}
 
@@ -220,24 +222,24 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
           <div className="flex items-start space-x-3">
             <FileText className="h-5 w-5 text-primary mt-0.5" />
             <div className="space-y-1 flex-1">
-              <h4 className="font-medium text-sm">Uploaded Document</h4>
+              <h4 className="font-medium text-sm">{t('document.fileInfo.uploadedDocument')}</h4>
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>
-                  <span className="font-semibold">Name:</span> {uploadedFileInfo.name}
+                  <span className="font-semibold">{t('document.fileInfo.name')}:</span> {uploadedFileInfo.name}
                 </p>
                 {uploadedFileInfo.size && (
                   <p>
-                    <span className="font-semibold">Size:</span> {formatFileSize(uploadedFileInfo.size)}
+                    <span className="font-semibold">{t('document.fileInfo.size')}:</span> {formatFileSize(uploadedFileInfo.size)}
                   </p>
                 )}
                 {uploadedFileInfo.type && (
                   <p>
-                    <span className="font-semibold">Type:</span> {uploadedFileInfo.type}
+                    <span className="font-semibold">{t('document.fileInfo.type')}:</span> {uploadedFileInfo.type}
                   </p>
                 )}
                 {uploadedFileInfo.uploadedAt && (
                   <p>
-                    <span className="font-semibold">Uploaded:</span> {new Date(uploadedFileInfo.uploadedAt).toLocaleString()}
+                    <span className="font-semibold">{t('document.fileInfo.uploaded')}:</span> {new Date(uploadedFileInfo.uploadedAt).toLocaleString()}
                   </p>
                 )}
               </div>
@@ -252,7 +254,7 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
                     fetch(`/api/documents/url?path=${encodeURIComponent(uploadedFileInfo.url || '')}`)
                       .then(response => {
                         if (!response.ok) {
-                          throw new Error('Failed to fetch document URL');
+                          throw new Error(t('document.errors.failedFetchUrl'));
                         }
                         return response.json();
                       })
@@ -262,8 +264,8 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
                           window.open(data.url, '_blank');
                         } else {
                           toast({
-                            title: "Document not found",
-                            description: "The document URL could not be retrieved",
+                            title: t('document.toast.documentNotFound'),
+                            description: t('document.errors.urlNotRetrieved'),
                             variant: "destructive",
                           });
                         }
@@ -271,15 +273,15 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
                       .catch(error => {
                         console.error('Error fetching document URL:', error);
                         toast({
-                          title: "Error",
-                          description: "Unable to access document. Please try again later.",
+                          title: t('document.toast.error'),
+                          description: t('document.errors.unableToAccess'),
                           variant: "destructive",
                         });
                       });
                   }}
                   className="text-xs text-primary hover:underline inline-flex items-center mt-1"
                 >
-                  View Document <Info className="h-3 w-3 ml-1" />
+                  {t('document.actions.viewDocument')} <Info className="h-3 w-3 ml-1" />
                 </a>
               )}
             </div>
