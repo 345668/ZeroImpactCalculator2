@@ -49,23 +49,7 @@ export function HeroSection() {
               Get an estimate of the earnings with our calculator:
             </motion.p>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            >
-              <Button
-                size="lg"
-                variant="secondary"
-                className="px-8 py-6 text-lg font-medium bg-white hover:bg-white/90 text-calmBlue-600 transition-all duration-300 group"
-                onClick={() => {
-                  document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
-                Calculate Your Potential
-                <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Button>
-            </motion.div>
+            {/* Button removed as requested */}
           </div>
 
           <motion.div 
@@ -95,22 +79,26 @@ export function HeroSection() {
         {/* Down arrow indicator for calculator section */}
         <motion.div
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ 
-            duration: 0.5, 
-            delay: 1,
-            repeat: Infinity,
-            repeatType: "reverse",
-            repeatDelay: 0.5
-          }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
           onClick={() => {
             document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' });
           }}
         >
-          <div className="cursor-pointer p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all">
+          <motion.div 
+            className="cursor-pointer p-3 rounded-full bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-all shadow-lg"
+            animate={{ y: [0, 8, 0] }}
+            transition={{
+              duration: 1.5,
+              ease: "easeInOut",
+              repeat: Infinity,
+              repeatType: "loop"
+            }}
+            whileHover={{ scale: 1.1 }}
+          >
             <ArrowDown className="h-8 w-8 text-white" />
-          </div>
+          </motion.div>
         </motion.div>
       </div>
     </div>
