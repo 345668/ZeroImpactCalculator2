@@ -684,6 +684,7 @@ export default function Dashboard() {
                           <TableHead className="font-semibold">CO₂ Savings</TableHead>
                           <TableHead className="font-semibold">Carbon Credits</TableHead>
                           <TableHead className="font-semibold">Financial Value</TableHead>
+                          <TableHead className="font-semibold">Document</TableHead>
                           <TableHead className="font-semibold">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -726,6 +727,39 @@ export default function Dashboard() {
                             <TableCell>{safeNumber(submission.carbonCredits).toFixed(2)}</TableCell>
                             <TableCell>€{safeNumber(submission.financialValue).toFixed(2)}</TableCell>
                             <TableCell>
+                              {submission.fileUrl ? (
+                                <div className="space-y-1">
+                                  <Button
+                                    variant="link"
+                                    size="sm"
+                                    onClick={() => window.open(submission.fileUrl, '_blank')}
+                                    className="p-0 h-auto text-primary hover:text-primary/80 font-medium"
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                      <polyline points="14 2 14 8 20 8"></polyline>
+                                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                                      <polyline points="10 9 9 9 8 9"></polyline>
+                                    </svg>
+                                    View Document
+                                  </Button>
+                                  {submission.fileName && (
+                                    <div className="text-xs text-muted-foreground pl-5">
+                                      {submission.fileName}
+                                      {submission.fileSize && (
+                                        <span className="ml-1">
+                                          ({Math.round(safeNumber(submission.fileSize) / 1024)} KB)
+                                        </span>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">No document</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
                               <div className="space-y-2">
                                 <Button
                                   variant="outline"
@@ -766,17 +800,6 @@ export default function Dashboard() {
                                   <FileDown className="h-4 w-4 mr-1" />
                                   {submission.emailSent === "yes" ? "Report Sent" : "Send Report"}
                                 </Button>
-                                {submission.fileUrl && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => window.open(submission.fileUrl, '_blank')}
-                                    className="w-full justify-center"
-                                  >
-                                    <FileDown className="h-4 w-4 mr-1" />
-                                    View Document
-                                  </Button>
-                                )}
                               </div>
                             </TableCell>
                           </TableRow>
