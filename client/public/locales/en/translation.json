@@ -44,7 +44,9 @@
     "calculate": "Calculate",
     "continue": "Continue",
     "startNew": "Start New Calculation",
-    "sendEmail": "Send Email Report"
+    "sendEmail": "Send Email Report",
+    "viewResults": "View Your Results",
+    "returnHome": "Return to Home"
   },
   "navigation": {
     "home": "Home",

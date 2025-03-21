@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Mail } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
+import { useTranslation } from "react-i18next";
 
 interface SuccessModalProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface SuccessModalProps {
 
 export function SuccessModal({ open, onClose }: SuccessModalProps) {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -32,14 +34,11 @@ export function SuccessModal({ open, onClose }: SuccessModalProps) {
                 <Check className="h-6 w-6 text-[#4CAF50]" />
               </div>
             </motion.div>
-            Submission Successful!
+            {t("calculator.success.title")}
           </DialogTitle>
           <DialogDescription className="text-center pt-2 space-y-2">
             <p>
-              Thank you for your submission! A detailed report has been sent to your email.
-            </p>
-            <p className="text-muted-foreground">
-              A Radical Zero representative will be in touch with you shortly to discuss your energy savings potential.
+              {t("calculator.success.message")}
             </p>
           </DialogDescription>
         </DialogHeader>
@@ -49,13 +48,13 @@ export function SuccessModal({ open, onClose }: SuccessModalProps) {
             className="bg-[#4CAF50] hover:bg-[#45a049]"
           >
             <Mail className="mr-2 h-4 w-4" />
-            View Your Results
+            {t("common.viewResults")}
           </Button>
           <Button
             variant="outline"
             onClick={() => setLocation("/")}
           >
-            Return to Home
+            {t("common.returnHome")}
           </Button>
         </div>
       </DialogContent>

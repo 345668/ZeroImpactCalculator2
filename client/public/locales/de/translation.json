@@ -44,7 +44,9 @@
     "calculate": "Berechnen",
     "continue": "Fortfahren",
     "startNew": "Neue Berechnung starten",
-    "sendEmail": "E-Mail-Bericht senden"
+    "sendEmail": "E-Mail-Bericht senden",
+    "viewResults": "Ergebnisse anzeigen",
+    "returnHome": "Zurück zur Startseite"
   },
   "navigation": {
     "home": "Startseite",
