@@ -34,7 +34,10 @@ export class DbStorage implements IStorage {
         firstName: String(insertSubmission.firstName),
         lastName: String(insertSubmission.lastName),
         email: String(insertSubmission.email),
-        address: String(insertSubmission.address),
+        street: String(insertSubmission.street),
+        postalCode: String(insertSubmission.postalCode),
+        city: String(insertSubmission.city),
+        country: String(insertSubmission.country),
         buildingOwnership: String(insertSubmission.buildingOwnership),
         // Convert numeric fields to strings for PostgreSQL
         buildingSize: String(insertSubmission.buildingSize),

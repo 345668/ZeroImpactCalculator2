@@ -21,6 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input.tsx";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group.tsx";
 import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select.tsx";
 import { MultiStepForm } from "./multi-step-form.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Card } from "@/components/ui/card.tsx";
@@ -141,7 +142,10 @@ export function CalculatorForm() {
       firstName: "",
       lastName: "",
       email: "",
-      address: "",
+      street: "",
+      postalCode: "",
+      city: "",
+      country: "germany",
       acceptedTerms: false,
       gdprConsent: false,
       energyConsultantName: "",
@@ -817,16 +821,144 @@ export function CalculatorForm() {
 
                   <FormField
                     control={form.control}
-                    name="address"
+                    name="street"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('calculator.contactDetails.address')}</FormLabel>
+                        <FormLabel>{t('calculator.contactDetails.street')}</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input placeholder="Street name" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="postalCode"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('calculator.contactDetails.postalCode')}</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Postal code" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="country"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('calculator.contactDetails.country')}</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            // Reset city when country changes
+                            form.setValue('city', '');
+                          }}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t('calculator.contactDetails.selectCountry')} />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="germany">Germany</SelectItem>
+                            <SelectItem value="austria">Austria</SelectItem>
+                            <SelectItem value="switzerland">Switzerland</SelectItem>
+                            <SelectItem value="france">France</SelectItem>
+                            <SelectItem value="netherlands">Netherlands</SelectItem>
+                            <SelectItem value="belgium">Belgium</SelectItem>
+                            <SelectItem value="luxembourg">Luxembourg</SelectItem>
+                            <SelectItem value="uk">United Kingdom</SelectItem>
+                            <SelectItem value="italy">Italy</SelectItem>
+                            <SelectItem value="spain">Spain</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="city"
+                    render={({ field }) => {
+                      const country = form.watch('country');
+                      let cityOptions = [];
+                      
+                      // Populate cities based on selected country
+                      switch (country) {
+                        case 'germany':
+                          cityOptions = [
+                            { value: 'berlin', label: 'Berlin' },
+                            { value: 'hamburg', label: 'Hamburg' },
+                            { value: 'munich', label: 'Munich' },
+                            { value: 'cologne', label: 'Cologne' },
+                            { value: 'frankfurt', label: 'Frankfurt' },
+                            { value: 'other_de', label: 'Other city in Germany' }
+                          ];
+                          break;
+                        case 'austria':
+                          cityOptions = [
+                            { value: 'vienna', label: 'Vienna' },
+                            { value: 'salzburg', label: 'Salzburg' },
+                            { value: 'graz', label: 'Graz' },
+                            { value: 'innsbruck', label: 'Innsbruck' },
+                            { value: 'other_at', label: 'Other city in Austria' }
+                          ];
+                          break;
+                        case 'switzerland':
+                          cityOptions = [
+                            { value: 'zurich', label: 'Zurich' },
+                            { value: 'geneva', label: 'Geneva' },
+                            { value: 'bern', label: 'Bern' },
+                            { value: 'basel', label: 'Basel' },
+                            { value: 'other_ch', label: 'Other city in Switzerland' }
+                          ];
+                          break;
+                        // Add cases for other countries as needed
+                        default:
+                          cityOptions = [
+                            { value: 'other_city', label: 'Type your city' }
+                          ];
+                      }
+                      
+                      return (
+                        <FormItem>
+                          <FormLabel>{t('calculator.contactDetails.city')}</FormLabel>
+                          {cityOptions.length > 1 ? (
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={t('calculator.contactDetails.selectCity')} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {cityOptions.map(option => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          ) : (
+                            <FormControl>
+                              <Input placeholder="Enter your city" {...field} />
+                            </FormControl>
+                          )}
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
 
                   <FormField
