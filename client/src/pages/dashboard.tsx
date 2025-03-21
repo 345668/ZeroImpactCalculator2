@@ -740,6 +740,39 @@ export default function Dashboard() {
                                       target="_blank" 
                                       rel="noopener noreferrer"
                                       className="flex items-center"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        console.log('Accessing document via API endpoint');
+                                        
+                                        // Make a fetch request to get the document URL through our API endpoint
+                                        fetch(`/api/documents/url?path=${encodeURIComponent(submission.fileUrl)}`)
+                                          .then(response => {
+                                            if (!response.ok) {
+                                              throw new Error('Failed to fetch document URL');
+                                            }
+                                            return response.json();
+                                          })
+                                          .then(data => {
+                                            if (data.url) {
+                                              console.log('Opening document with URL:', data.url);
+                                              window.open(data.url, '_blank');
+                                            } else {
+                                              toast({
+                                                title: "Document not found",
+                                                description: "The document URL could not be retrieved",
+                                                variant: "destructive",
+                                              });
+                                            }
+                                          })
+                                          .catch(error => {
+                                            console.error('Error fetching document URL:', error);
+                                            toast({
+                                              title: "Error",
+                                              description: "Unable to access document. Please try again later.",
+                                              variant: "destructive",
+                                            });
+                                          });
+                                      }}
                                     >
                                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>

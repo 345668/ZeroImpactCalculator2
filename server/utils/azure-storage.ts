@@ -141,11 +141,11 @@ export async function ensureContainerExists(): Promise<void> {
         leaseDuration: properties.leaseDuration,
         leaseState: properties.leaseState,
         leaseStatus: properties.leaseStatus,
-        publicAccess: properties.publicAccess
+        blobPublicAccess: properties.blobPublicAccess
       });
       
       // If container doesn't have public access, try to set it
-      if (properties.publicAccess !== 'blob') {
+      if (properties.blobPublicAccess !== 'blob') {
         console.log(`Setting public access for container "${containerName}"`);
         await containerClient.setAccessPolicy('blob');
       }

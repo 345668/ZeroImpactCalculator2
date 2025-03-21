@@ -6,7 +6,7 @@ import { insertSubmissionSchema, calculationResultSchema } from "@shared/schema"
 import { fromZodError } from "zod-validation-error";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor.js";
 import { EmailService } from "./services/email.js";
-import { uploadFileToBlobStorage, ensureContainerExists } from "./utils/azure-storage.js";
+import { uploadFileToBlobStorage, ensureContainerExists, getBlobUrl } from "./utils/azure-storage.js";
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
 import authRouter from "./routes/auth.js";
@@ -372,7 +372,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   }
 
-    // Add API route middleware
+  // Document URL retrieval endpoint
+  app.get("/api/documents/url", async (req, res) => {
+    try {
+      const { path } = req.query;
+      
+      if (!path || typeof path !== 'string') {
+        return res.status(400).json({
+          success: false,
+          message: "Missing or invalid document path"
+        });
+      }
+
+      console.log(`Attempting to get secure URL for document path: ${path}`);
+      
+      // Extract the blob name from the URL if it's a full URL
+      let blobPath = path;
+      
+      // If this is a full URL, extract just the path part
+      if (path.includes('://')) {
+        try {
+          const url = new URL(path);
+          const segments = url.pathname.split('/');
+          
+          // Remove the container name if it's in the path
+          const containerIndex = segments.findIndex(segment => 
+            segment === 'carbon-credits-docs');
+            
+          if (containerIndex !== -1 && containerIndex < segments.length - 1) {
+            // Extract the path after the container name
+            blobPath = segments.slice(containerIndex + 1).join('/');
+          } else {
+            // Use the path as-is without the leading slash
+            blobPath = url.pathname.startsWith('/') 
+              ? url.pathname.substring(1) 
+              : url.pathname;
+          }
+        } catch (parseError) {
+          console.error('Error parsing document URL:', parseError);
+          // If URL parsing fails, use the original path
+        }
+      }
+
+      console.log(`Resolved blob path: ${blobPath}`);
+      
+      // Get a fresh URL from the Azure Storage
+      const url = await getBlobUrl(blobPath);
+      
+      if (!url) {
+        return res.status(404).json({
+          success: false,
+          message: "Document not found or inaccessible"
+        });
+      }
+      
+      res.json({
+        success: true,
+        url
+      });
+    } catch (error) {
+      console.error('Error retrieving document URL:', error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to retrieve document URL",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Add API route middleware
   app.use('/api', (req, res, next) => {
     if (req.headers.accept && req.headers.accept.includes('application/json')) {
       res.setHeader('Content-Type', 'application/json');
