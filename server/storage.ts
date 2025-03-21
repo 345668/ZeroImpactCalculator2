@@ -175,6 +175,7 @@ export class DbStorage implements IStorage {
     try {
       console.log('Updating email status for submission:', id);
 
+      // Update PostgreSQL database
       await db
         .update(submissions)
         .set({
@@ -183,7 +184,27 @@ export class DbStorage implements IStorage {
         })
         .where(eq(submissions.id, id));
 
-      console.log('Email status updated successfully');
+      console.log('Email status updated in PostgreSQL');
+      
+      // Get the updated submission to sync with Azure Table Storage
+      if (AZURE_STORAGE_CONFIG.tableStorage.enabled) {
+        try {
+          const submission = await this.getSubmissionById(id);
+          
+          if (submission) {
+            console.log('Syncing updated email status to Azure Table Storage');
+            await syncSubmissionToTable(submission);
+            console.log('Email status synced to Azure Table Storage successfully');
+          } else {
+            console.warn(`Cannot sync email status to Azure: Submission with ID ${id} not found`);
+          }
+        } catch (syncError) {
+          console.error('Failed to sync email status update to Azure Table Storage:', syncError);
+          // Don't throw the error, just log it - we don't want to block the main operation
+        }
+      }
+      
+      console.log('Email status update completed');
     } catch (error) {
       console.error('Error updating email status:', error);
       throw error;

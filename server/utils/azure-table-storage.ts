@@ -81,6 +81,14 @@ export async function initializeTableStorage(): Promise<boolean> {
     
     if (tableClient) {
       console.log(`Azure Table '${TABLE_NAME}' is ready for use`);
+      
+      // Enable table storage in the current runtime environment
+      // This is a runtime-only change and doesn't modify the .env file
+      process.env.AZURE_TABLE_STORAGE_ENABLED = "true";
+      
+      // Note: We can't modify the AZURE_STORAGE_CONFIG directly as it's defined as const
+      // But we've set the environment variable which will be used in subsequent operations
+      
       return true;
     }
     
@@ -351,4 +359,88 @@ function mapEntityToSubmission(entity: Record<string, any>): any {
     emailSentAt: entity.emailSentAt ? new Date(entity.emailSentAt) : new Date(0),
     submittedAt: entity.submittedAt ? new Date(entity.submittedAt) : new Date(),
   };
+}
+
+/**
+ * Get all submissions from Azure Table Storage
+ */
+export async function getAllSubmissions(): Promise<any[]> {
+  try {
+    if (!CONNECTION_STRING || !AZURE_STORAGE_CONFIG.tableStorage.enabled) {
+      return [];
+    }
+    
+    const tableClient = TableClient.fromConnectionString(CONNECTION_STRING, TABLE_NAME);
+    
+    const entities = tableClient.listEntities();
+    
+    const results: any[] = [];
+    for await (const entity of entities) {
+      results.push(mapEntityToSubmission(entity as Record<string, any>));
+    }
+    
+    // Sort by submission date, newest first
+    results.sort((a, b) => {
+      return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+    });
+    
+    return results;
+  } catch (error) {
+    console.error('Error getting all submissions from Azure Table Storage:', error);
+    return [];
+  }
+}
+
+/**
+ * Get all submissions for a specific consultant
+ */
+export async function getSubmissionsByConsultant(consultantId: string): Promise<any[]> {
+  try {
+    if (!CONNECTION_STRING || !AZURE_STORAGE_CONFIG.tableStorage.enabled) {
+      return [];
+    }
+    
+    const tableClient = TableClient.fromConnectionString(CONNECTION_STRING, TABLE_NAME);
+    
+    const entities = tableClient.listEntities({
+      queryOptions: {
+        filter: odata`energyConsultantId eq ${consultantId}`
+      }
+    });
+    
+    const results: any[] = [];
+    for await (const entity of entities) {
+      results.push(mapEntityToSubmission(entity as Record<string, any>));
+    }
+    
+    // Sort by submission date, newest first
+    results.sort((a, b) => {
+      return new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime();
+    });
+    
+    return results;
+  } catch (error) {
+    console.error(`Error getting submissions for consultant ${consultantId}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Delete a submission from Azure Table Storage
+ */
+export async function deleteSubmission(email: string, id: number): Promise<boolean> {
+  try {
+    if (!CONNECTION_STRING || !AZURE_STORAGE_CONFIG.tableStorage.enabled) {
+      return false;
+    }
+    
+    const tableClient = TableClient.fromConnectionString(CONNECTION_STRING, TABLE_NAME);
+    
+    await tableClient.deleteEntity(email, id.toString());
+    console.log(`Submission with ID ${id} deleted from Azure Table Storage`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting submission with ID ${id}:`, error);
+    return false;
+  }
 }

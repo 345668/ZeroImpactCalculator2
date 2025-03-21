@@ -105,6 +105,16 @@ app.use((req, res, next) => {
       const tableStorageInitialized = await initializeTableStorage();
       if (tableStorageInitialized) {
         console.log('✓ Azure Table Storage initialized successfully');
+        
+        // Sync all existing submissions to Azure Table Storage
+        console.log('Syncing all existing submissions to Azure Table Storage...');
+        try {
+          const { storage } = await import('./storage.js');
+          await storage.syncSubmissions();
+          console.log('✓ Submission sync to Azure Table Storage completed');
+        } catch (syncError) {
+          console.error('Failed to sync submissions to Azure Table Storage:', syncError);
+        }
       } else {
         console.warn('Azure Table Storage initialization skipped (connection string not provided)');
       }
