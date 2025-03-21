@@ -1,4 +1,38 @@
 {
+  "document": {
+    "errors": {
+      "fileType": "Bitte laden Sie eine PDF- oder Bilddatei (JPG, PNG) hoch",
+      "fileSize": "Die Dateigröße muss kleiner als 10 MB sein",
+      "noFile": "Bitte wählen Sie eine Datei zum Hochladen aus",
+      "failedFetchUrl": "Fehler beim Abrufen der Dokument-URL",
+      "urlNotRetrieved": "Die Dokument-URL konnte nicht abgerufen werden",
+      "unableToAccess": "Auf das Dokument kann nicht zugegriffen werden. Bitte versuchen Sie es später erneut."
+    },
+    "fileInfo": {
+      "unknownSize": "Unbekannte Größe",
+      "bytes": "Bytes",
+      "kb": "KB",
+      "mb": "MB",
+      "selectedFile": "Ausgewählte Datei",
+      "uploadedDocument": "Hochgeladenes Dokument",
+      "name": "Name",
+      "size": "Größe",
+      "type": "Typ",
+      "uploaded": "Hochgeladen"
+    },
+    "actions": {
+      "processing": "Verarbeitung",
+      "upload": "Hochladen",
+      "viewDocument": "Dokument anzeigen"
+    },
+    "toast": {
+      "success": "Erfolg",
+      "error": "Fehler",
+      "documentNotFound": "Dokument nicht gefunden",
+      "processedSuccessfully": "Dokument erfolgreich verarbeitet in {{language}}",
+      "unknownLanguage": "unbekannte Sprache"
+    }
+  },
   "common": {
     "language": "Deutsch",
     "submit": "Absenden",

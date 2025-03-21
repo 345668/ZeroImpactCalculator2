@@ -1,4 +1,38 @@
 {
+  "document": {
+    "errors": {
+      "fileType": "Please upload a PDF or image file (JPG, PNG)",
+      "fileSize": "File size must be less than 10MB",
+      "noFile": "Please select a file to upload",
+      "failedFetchUrl": "Failed to fetch document URL",
+      "urlNotRetrieved": "The document URL could not be retrieved",
+      "unableToAccess": "Unable to access document. Please try again later."
+    },
+    "fileInfo": {
+      "unknownSize": "Unknown size",
+      "bytes": "bytes",
+      "kb": "KB",
+      "mb": "MB",
+      "selectedFile": "Selected file",
+      "uploadedDocument": "Uploaded Document",
+      "name": "Name",
+      "size": "Size",
+      "type": "Type",
+      "uploaded": "Uploaded"
+    },
+    "actions": {
+      "processing": "Processing",
+      "upload": "Upload",
+      "viewDocument": "View Document"
+    },
+    "toast": {
+      "success": "Success",
+      "error": "Error",
+      "documentNotFound": "Document not found",
+      "processedSuccessfully": "Document processed successfully in {{language}}",
+      "unknownLanguage": "unknown language"
+    }
+  },
   "common": {
     "language": "English",
     "submit": "Submit",
