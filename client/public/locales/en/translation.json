@@ -20,6 +20,13 @@
     "logout": "Log Out",
     "company": "Company"
   },
+  "hero": {
+    "title": {
+      "first": "We transform the energy efficiency of your home into",
+      "highlighted": "earnings"
+    },
+    "subtitle": "Get an estimate of the earnings with our calculator:"
+  },
   "calculator": {
     "title": "Carbon Credit Calculator",
     "description": "Calculate your potential carbon savings and credit value",

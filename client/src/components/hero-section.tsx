@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button.tsx";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { RadicalZeroLogo } from "@/components/ui/radical-zero-logo.tsx";
+import { useTranslation } from "react-i18next";
 
 export function HeroSection() {
+  const { t } = useTranslation();
+  
   return (
     <div className="relative overflow-hidden">
       <motion.div 
@@ -29,14 +32,14 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              We transform the energy efficiency of your home in{" "}
+              {t('hero.title.first')}{" "}
               <motion.span 
                 className="text-radicalBlue-200"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
-                earnings
+                {t('hero.title.highlighted')}
               </motion.span>
             </motion.h1>
 
@@ -46,7 +49,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Get an estimate of the earnings with our calculator:
+              {t('hero.subtitle')}
             </motion.p>
 
             {/* Button removed as requested */}

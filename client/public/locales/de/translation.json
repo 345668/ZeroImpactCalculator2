@@ -20,6 +20,13 @@
     "logout": "Abmelden",
     "company": "Unternehmen"
   },
+  "hero": {
+    "title": {
+      "first": "Wir verwandeln die Energieeffizienz Ihres Hauses in",
+      "highlighted": "Einnahmen"
+    },
+    "subtitle": "Schätzen Sie Ihre möglichen Einnahmen mit unserem Rechner:"
+  },
   "calculator": {
     "title": "CO₂-Gutschriften-Rechner",
     "description": "Berechnen Sie Ihre potenziellen CO₂-Einsparungen und den Wert Ihrer Gutschriften",

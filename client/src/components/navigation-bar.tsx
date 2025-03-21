@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { LoginModal } from "@/components/login-modal";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export function NavigationBar() {
   const [location] = useLocation();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const { t } = useTranslation();
   
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -40,7 +43,7 @@ export function NavigationBar() {
             size="sm" 
             className="text-sm font-medium text-foreground/90 hover:text-foreground"
           >
-            Home
+            {t('navigation.home')}
           </Button>
         </Link>
         
@@ -51,7 +54,7 @@ export function NavigationBar() {
               size="sm" 
               className="text-sm font-medium text-foreground/90 hover:text-foreground"
             >
-              Company
+              {t('navigation.company')}
             </Button>
           </Link>
         ) : (
@@ -61,9 +64,12 @@ export function NavigationBar() {
             className="text-sm font-medium text-foreground/90 hover:text-foreground"
             onClick={handleCompanyClick}
           >
-            Company
+            {t('navigation.company')}
           </Button>
         )}
+        
+        {/* Language switcher */}
+        <LanguageSwitcher />
       </nav>
       
       <LoginModal 
