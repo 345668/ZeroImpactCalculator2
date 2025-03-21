@@ -9,9 +9,11 @@ import {
 import { Globe } from 'lucide-react';
 import { useEffect } from 'react';
 import { fetchUserLanguage } from '@/lib/i18n';
+import { useToast } from '@/hooks/use-toast';
 
 export function LanguageSwitcher() {
-  const { i18n, t } = useTranslation();
+  const { i18n } = useTranslation();
+  const { toast } = useToast();
   
   useEffect(() => {
     // Detect user's language based on IP on component mount
@@ -19,7 +21,23 @@ export function LanguageSwitcher() {
   }, []);
 
   const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
+    try {
+      // Force language change and reload resources
+      i18n.changeLanguage(lng);
+      
+      // Store language preference in localStorage for persistence
+      localStorage.setItem('i18nextLng', lng);
+      
+      // Provide visual feedback
+      const languageName = lng === 'en' ? 'English' : 'Deutsch';
+      toast({
+        title: "Language Changed",
+        description: `The language has been changed to ${languageName}`,
+        duration: 2000
+      });
+    } catch (error) {
+      console.error('Language change error:', error);
+    }
   };
 
   return (
