@@ -763,7 +763,7 @@ export function CalculatorForm() {
                 transition={{ duration: 0.5, delay: 1.4 }}
               >
                 <p className="text-sm text-muted-foreground mb-4">
-                  The detailed results will be sent to your email after completing the form.
+                  {t('calculator.results.emailDetails')}
                 </p>
               </motion.div>
             </div>
