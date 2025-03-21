@@ -512,6 +512,42 @@ export function CalculatorForm() {
 
           {step === 4 && (
             <div className="space-y-6">
+              <motion.div
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <h2 className="text-2xl font-bold mb-2">Final Energy Consumption</h2>
+                <p className="text-muted-foreground mb-8">Enter your expected energy usage after improvements (Endenergieverbrauch)</p>
+              </motion.div>
+              
+              <FormField
+                control={form.control}
+                name="projectedConsumption"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base mb-4">
+                      What is your projected annual energy consumption after improvements?
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Projected Consumption (kWh/year)"
+                        {...field}
+                        value={field.value || ''}
+                        className="text-lg p-6"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-6">
               {/* Results section with restored styling */}
               <motion.div
                 className="text-center"
