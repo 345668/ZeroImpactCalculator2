@@ -3,6 +3,8 @@ import { eq, desc } from "drizzle-orm";
 import { db } from "./db";
 import bcrypt from "bcryptjs";
 import { spawn } from "child_process";
+import { AZURE_STORAGE_CONFIG } from "../shared/config";
+import { syncSubmissionToTable } from "./utils/azure-table-storage";
 
 export interface IStorage {
   // Submission operations
@@ -26,23 +28,59 @@ export class DbStorage implements IStorage {
     console.log('Creating submission with data:', insertSubmission);
 
     try {
-      // No additional calculations here - use the values directly
+      // Prepare submission data with proper types for PostgreSQL
+      // Convert string-like values to strings and numeric values will be handled by Drizzle
       const submissionData = {
-        ...insertSubmission,
-        co2Savings: insertSubmission.co2Savings,
-        carbonCredits: insertSubmission.carbonCredits,
-        financialValue: insertSubmission.financialValue,
+        firstName: String(insertSubmission.firstName),
+        lastName: String(insertSubmission.lastName),
+        email: String(insertSubmission.email),
+        address: String(insertSubmission.address),
+        buildingOwnership: String(insertSubmission.buildingOwnership),
+        // Convert numeric fields to strings for PostgreSQL
+        buildingSize: String(insertSubmission.buildingSize),
+        heatingSystem: String(insertSubmission.heatingSystem),
+        currentEnergySource: String(insertSubmission.currentEnergySource),
+        currentConsumption: String(insertSubmission.currentConsumption),
+        projectedConsumption: String(insertSubmission.projectedConsumption),
+        co2Savings: insertSubmission.co2Savings !== undefined ? String(insertSubmission.co2Savings) : undefined,
+        carbonCredits: insertSubmission.carbonCredits !== undefined ? String(insertSubmission.carbonCredits) : undefined,
+        financialValue: insertSubmission.financialValue !== undefined ? String(insertSubmission.financialValue) : undefined,
+        calculationDetails: insertSubmission.calculationDetails,
         acceptedTerms: String(insertSubmission.acceptedTerms),
+        gdprConsent: String(insertSubmission.gdprConsent),
+        energyConsultantName: insertSubmission.energyConsultantName,
+        energyConsultantCompany: insertSubmission.energyConsultantCompany,
+        energyConsultantId: insertSubmission.energyConsultantId,
+        energyConsultantBafaNumber: insertSubmission.energyConsultantBafaNumber,
+        fileUrl: insertSubmission.fileUrl,
+        fileName: insertSubmission.fileName,
+        fileSize: insertSubmission.fileSize !== undefined ? String(insertSubmission.fileSize) : undefined,
+        fileType: insertSubmission.fileType,
+        fileUploadedAt: insertSubmission.fileUploadedAt ? new Date(insertSubmission.fileUploadedAt) : undefined,
+        fileMetadata: insertSubmission.fileMetadata,
         submittedAt: new Date()
       };
 
       console.log('Inserting submission data:', submissionData);
 
       const [submission] = await db.insert(submissions)
-        .values(submissionData)
+        .values([submissionData])
         .returning();
 
       console.log('Submission created successfully:', submission);
+      
+      // Sync with Azure Table Storage if enabled
+      if (AZURE_STORAGE_CONFIG.tableStorage.enabled) {
+        try {
+          console.log('Syncing submission to Azure Table Storage:', submission.id);
+          await syncSubmissionToTable(submission);
+          console.log('Submission synced to Azure Table Storage successfully');
+        } catch (syncError) {
+          console.error('Failed to sync submission to Azure Table Storage:', syncError);
+          // Don't throw the error, just log it - we don't want to block the main operation
+        }
+      }
+      
       return submission;
     } catch (error) {
       console.error('Error creating submission:', error);
@@ -97,13 +135,36 @@ export class DbStorage implements IStorage {
   }
   async syncSubmissions(): Promise<void> {
     try {
-      console.log('Starting submissions sync...');
+      console.log('Starting submissions sync to Azure Table Storage...');
+      
+      // Only proceed if Azure Table Storage is enabled
+      if (!AZURE_STORAGE_CONFIG.tableStorage.enabled) {
+        console.log('Azure Table Storage sync is disabled. Skipping sync operation.');
+        return;
+      }
+      
       const results = await db
         .select()
         .from(submissions)
         .orderBy(desc(submissions.submittedAt));
-
-      console.log(`Successfully synced ${results.length} submissions`);
+        
+      console.log(`Found ${results.length} submissions to sync`);
+      
+      // Sync each submission to Azure Table Storage
+      const syncPromises = results.map(async (submission) => {
+        try {
+          await syncSubmissionToTable(submission);
+          return { id: submission.id, success: true };
+        } catch (error) {
+          console.error(`Failed to sync submission ${submission.id}:`, error);
+          return { id: submission.id, success: false, error };
+        }
+      });
+      
+      const syncResults = await Promise.all(syncPromises);
+      const successCount = syncResults.filter(r => r.success).length;
+      
+      console.log(`Successfully synced ${successCount} of ${results.length} submissions to Azure Table Storage`);
       return;
     } catch (error) {
       console.error('Error syncing submissions:', error);
@@ -139,12 +200,12 @@ export class DbStorage implements IStorage {
 
       // Insert new user
       const [user] = await db.insert(users)
-        .values({
+        .values([{
           email: data.email,
           username: data.username,
           passwordHash,
           role: data.role || 'user'
-        })
+        }])
         .returning();
 
       console.log('User created successfully');
