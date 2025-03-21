@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { 
   Check, Mail, RefreshCw, Loader2, 
   Droplet, Flame, Cylinder, Network, Zap, Box,
@@ -84,30 +85,31 @@ interface ExtractedData {
 }
 
 // Update form steps to include energy source selection
-export const formSteps = [
+// We'll create the translated steps within the component to access the translation function
+const getFormSteps = (t: any) => [
   {
-    title: "Building Information",
-    description: "Tell us about your building"
+    title: t('calculator.buildingInfo.title'),
+    description: t('calculator.buildingInfo.description')
   },
   {
-    title: "Current Energy Source",
-    description: "Select your current heating system"
+    title: t('calculator.energySource.title'),
+    description: t('calculator.energySource.description')
   },
   {
-    title: "Current Energy Consumption",
-    description: "Enter your current energy usage"
+    title: t('calculator.currentConsumption.title', 'Current Energy Consumption'),
+    description: t('calculator.currentConsumption.description', 'Enter your current energy usage')
   },
   {
-    title: "Projected Energy Consumption",
-    description: "Enter your expected energy usage after improvements"
+    title: t('calculator.projectedConsumption.title', 'Projected Energy Consumption'),
+    description: t('calculator.projectedConsumption.description', 'Enter your expected energy usage after improvements')
   },
   {
-    title: "Results Analysis",
-    description: "Review your potential savings"
+    title: t('calculator.results.title', 'Results Analysis'),
+    description: t('calculator.results.description', 'Review your potential savings')
   },
   {
-    title: "Contact Details",
-    description: "Please provide your contact information to receive the report"
+    title: t('calculator.contactDetails.title', 'Contact Details'),
+    description: t('calculator.contactDetails.description', 'Please provide your contact information to receive the report')
   }
 ];
 
@@ -116,12 +118,16 @@ export function CalculatorForm() {
   const [documentLanguage, setDocumentLanguage] = useState<string>("en");
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
   const [isDocumentUploaded, setIsDocumentUploaded] = useState(false);
   const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
   const [isEmailSending, setIsEmailSending] = useState(false);
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showGDPRModal, setShowGDPRModal] = useState(false);
+  
+  // Get translation for steps
+  const formSteps = getFormSteps(t);
 
   const form = useForm<FormState>({
     resolver: zodResolver(insertSubmissionSchema),
