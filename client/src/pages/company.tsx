@@ -2,13 +2,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { Layout } from "@/components/layout";
-import { Building2, BarChart2, Users, Mail } from "lucide-react";
+import { Building2, BarChart2, Users, Mail, Home } from "lucide-react";
 
 export default function CompanyPage() {
   return (
     <Layout>
       <div className="container max-w-7xl mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-8">Radical Zero Company Portal</h1>
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold">Radical Zero Company Portal</h1>
+          <Link href="/">
+            <Button variant="outline" className="flex items-center gap-2">
+              <Home className="h-4 w-4" />
+              Home
+            </Button>
+          </Link>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Dashboard Card */}
