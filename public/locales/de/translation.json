@@ -1,0 +1,114 @@
+{
+  "common": {
+    "language": "Deutsch",
+    "submit": "Absenden",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "loading": "Wird geladen...",
+    "calculate": "Berechnen",
+    "continue": "Fortfahren",
+    "startNew": "Neue Berechnung starten",
+    "sendEmail": "E-Mail-Bericht senden"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "dashboard": "Dashboard",
+    "about": "Über uns",
+    "login": "Anmelden",
+    "logout": "Abmelden",
+    "company": "Unternehmen"
+  },
+  "calculator": {
+    "title": "CO₂-Gutschriften-Rechner",
+    "description": "Berechnen Sie Ihre potenziellen CO₂-Einsparungen und den Wert Ihrer Gutschriften",
+    "uploadTitle": "Laden Sie Ihr iSFP-Dokument hoch",
+    "uploadDescription": "Für schnellere Ergebnisse laden Sie Ihr iSFP-Dokument oder Ihren Sanierungsplan hoch, um das Formular automatisch auszufüllen",
+    "uploadSuccess": "Dokument erfolgreich verarbeitet",
+    "orFillManually": "Oder manuell ausfüllen",
+    "buildingInfo": {
+      "title": "Gebäudeinformationen",
+      "description": "Informationen zu Ihrem Gebäude",
+      "ownership": {
+        "question": "Sind Sie Eigentümer des Gebäudes oder Mieter?",
+        "owner": "Gebäudeeigentümer",
+        "ownerDesc": "Ich besitze das Gebäude und kann Energieeffizienzmaßnahmen umsetzen.",
+        "tenant": "Mieter",
+        "tenantDesc": "Ich miete das Gebäude und möchte Energieeffizienzoptionen erkunden."
+      },
+      "size": "Wie groß ist Ihr Gebäude in Quadratmetern?"
+    },
+    "energySource": {
+      "title": "Aktuelle Energiequelle",
+      "description": "Wählen Sie Ihr aktuelles Heizsystem",
+      "question": "Was ist Ihr aktuelles Heizsystem?",
+      "subheading": "Wählen Sie Ihre primäre Energiequelle für die Heizung",
+      "selected": "Ausgewählte Energiequelle",
+      "options": {
+        "naturalGas": "Erdgas",
+        "heatingOil": "Heizöl",
+        "electricity": "Elektrizität",
+        "district": "Fernwärme",
+        "biogas": "Biogas",
+        "heatPump": "Wärmepumpe",
+        "wood": "Holz/Pellets",
+        "solar": "Solarthermie",
+        "hybrid": "Hybridsystem",
+        "propane": "Propan/Flüssiggas",
+        "geothermal": "Geothermie",
+        "coal": "Kohle",
+        "pvSelf": "PV-Eigenverbrauch"
+      }
+    },
+    "consumption": {
+      "title": "Energieverbrauch",
+      "currentTitle": "Aktueller Energieverbrauch",
+      "currentDescription": "Geben Sie Ihren aktuellen Energieverbrauch ein",
+      "currentQuestion": "Wie hoch ist Ihr aktueller jährlicher Energieverbrauch (ohne Photovoltaik)?",
+      "currentPlaceholder": "Aktueller Verbrauch (kWh/Jahr)",
+      "projectedTitle": "Prognostizierter Energieverbrauch",
+      "projectedDescription": "Geben Sie Ihren erwarteten Energieverbrauch nach den Verbesserungen ein (Endenergieverbrauch)",
+      "projectedQuestion": "Wie hoch ist Ihr prognostizierter jährlicher Energieverbrauch nach den Verbesserungen?",
+      "projectedPlaceholder": "Prognostizierter Verbrauch (kWh/Jahr)"
+    },
+    "results": {
+      "title": "Ihre CO₂-Einsparungsergebnisse",
+      "description": "Hier ist die potenzielle Auswirkung Ihrer Energieeffizienzverbesserungen",
+      "co2Savings": "CO₂-Einsparungen",
+      "perYear": "Pro Jahr",
+      "carbonCredits": "CO₂-Gutschriften",
+      "creditDetails": "Gutschriften (1:1 mit CO₂)",
+      "financialValue": "Finanzieller Wert",
+      "perTon": "Pro Tonne CO₂",
+      "totalValue": "Geschätzter Gesamtwert",
+      "disclaimer": "Dies sind geschätzte Werte basierend auf aktuellen CO₂-Märkten",
+      "summary": "Glückwunsch! Ihre Energieeffizienzverbesserungen könnten jährlich etwa {{co2}} Tonnen CO₂ einsparen, was {{credits}} CO₂-Gutschriften mit einem geschätzten Wert von {{value}}€ entspricht."
+    },
+    "contact": {
+      "title": "Kontaktdaten",
+      "description": "Bitte geben Sie Ihre Kontaktdaten ein, um den Bericht zu erhalten",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail",
+      "address": "Adresse",
+      "terms": "Ich akzeptiere die Allgemeinen Geschäftsbedingungen",
+      "gdpr": "Ich stimme der Verarbeitung meiner personenbezogenen Daten zu",
+      "viewTerms": "AGB anzeigen",
+      "viewPrivacy": "Datenschutzerklärung anzeigen"
+    }
+  },
+  "success": {
+    "title": "Berechnung abgeschlossen",
+    "description": "Ihre CO₂-Gutschriftenberechnung wurde erfolgreich verarbeitet",
+    "emailSent": "Ein detaillierter Bericht wurde an Ihre E-Mail-Adresse gesendet",
+    "whatNext": "Was passiert als Nächstes?",
+    "steps": {
+      "review": "Unser Team wird Ihre Einreichung überprüfen",
+      "verification": "Wir werden Sie zur Überprüfung der Energieverbesserungen kontaktieren",
+      "certification": "Nach der Überprüfung werden CO₂-Gutschriften zertifiziert",
+      "marketplace": "Die Gutschriften können dann auf CO₂-Marktplätzen verkauft werden"
+    },
+    "questions": "Bei Fragen kontaktieren Sie uns bitte unter support@radicalzero.com"
+  }
+}

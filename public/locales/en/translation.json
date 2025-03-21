@@ -1,0 +1,114 @@
+{
+  "common": {
+    "language": "English",
+    "submit": "Submit",
+    "next": "Next",
+    "previous": "Previous",
+    "cancel": "Cancel",
+    "save": "Save",
+    "loading": "Loading...",
+    "calculate": "Calculate",
+    "continue": "Continue",
+    "startNew": "Start New Calculation",
+    "sendEmail": "Send Email Report"
+  },
+  "navigation": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "about": "About",
+    "login": "Log In",
+    "logout": "Log Out",
+    "company": "Company"
+  },
+  "calculator": {
+    "title": "Carbon Credit Calculator",
+    "description": "Calculate your potential carbon savings and credit value",
+    "uploadTitle": "Upload Your iSFP Document",
+    "uploadDescription": "For faster results, upload your iSFP document or renovation plan to automatically fill the form",
+    "uploadSuccess": "Document processed successfully",
+    "orFillManually": "Or fill manually",
+    "buildingInfo": {
+      "title": "Building Information",
+      "description": "Tell us about your building",
+      "ownership": {
+        "question": "Do you own the building or are you a tenant?",
+        "owner": "Building Owner",
+        "ownerDesc": "I own the building and can implement energy efficiency measures.",
+        "tenant": "Tenant",
+        "tenantDesc": "I rent the building and want to explore energy efficiency options."
+      },
+      "size": "What is the size of your building in square meters?"
+    },
+    "energySource": {
+      "title": "Current Energy Source",
+      "description": "Select your current heating system",
+      "question": "What is your current heating system?",
+      "subheading": "Select your primary energy source for heating",
+      "selected": "Selected energy source",
+      "options": {
+        "naturalGas": "Natural Gas",
+        "heatingOil": "Heating Oil",
+        "electricity": "Electricity",
+        "district": "District Heating",
+        "biogas": "Biogas",
+        "heatPump": "Heat Pump",
+        "wood": "Wood/Pellets",
+        "solar": "Solar Thermal",
+        "hybrid": "Hybrid System",
+        "propane": "Propane/LPG",
+        "geothermal": "Geothermal",
+        "coal": "Coal",
+        "pvSelf": "PV Self-Consumption"
+      }
+    },
+    "consumption": {
+      "title": "Energy Consumption",
+      "currentTitle": "Current Energy Consumption",
+      "currentDescription": "Enter your current energy usage",
+      "currentQuestion": "What is your current annual energy consumption (excluding solar PV)?",
+      "currentPlaceholder": "Current Consumption (kWh/year)",
+      "projectedTitle": "Projected Energy Consumption",
+      "projectedDescription": "Enter your expected energy usage after improvements (Endenergieverbrauch)",
+      "projectedQuestion": "What is your projected annual energy consumption after improvements?",
+      "projectedPlaceholder": "Projected Consumption (kWh/year)"
+    },
+    "results": {
+      "title": "Your Carbon Savings Results",
+      "description": "Here's the potential impact of your energy efficiency improvements",
+      "co2Savings": "CO₂ Savings",
+      "perYear": "Per year",
+      "carbonCredits": "Carbon Credits",
+      "creditDetails": "Credits (1:1 with CO₂)",
+      "financialValue": "Financial Value",
+      "perTon": "Per ton of CO₂",
+      "totalValue": "Estimated total value",
+      "disclaimer": "These are estimated values based on current carbon markets",
+      "summary": "Congratulations! Your energy efficiency improvements could save approximately {{co2}} tons of CO₂ per year, which translates to {{credits}} carbon credits with an estimated value of €{{value}}."
+    },
+    "contact": {
+      "title": "Contact Details",
+      "description": "Please provide your contact information to receive the report",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "address": "Address",
+      "terms": "I accept the terms and conditions",
+      "gdpr": "I consent to the processing of my personal data",
+      "viewTerms": "View Terms & Conditions",
+      "viewPrivacy": "View Privacy Policy"
+    }
+  },
+  "success": {
+    "title": "Calculation Complete",
+    "description": "Your carbon credit calculation has been successfully processed",
+    "emailSent": "A detailed report has been sent to your email address",
+    "whatNext": "What happens next?",
+    "steps": {
+      "review": "Our team will review your submission",
+      "verification": "We'll contact you for verification of energy improvements",
+      "certification": "Upon verification, carbon credits will be certified",
+      "marketplace": "Credits can then be sold on carbon marketplaces"
+    },
+    "questions": "If you have any questions, please contact us at support@radicalzero.com"
+  }
+}
