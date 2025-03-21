@@ -218,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Document upload endpoint
+  // Document upload endpoint with improved data handling
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
     const startTime = Date.now();
     console.log('Upload request received:', req.file ? 'File present' : 'No file');
@@ -228,18 +228,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      // Process document
-      console.log('Processing document:', req.file.originalname);
-      const processedData = await processDocument(req.file);
+      // Get email from request body or query params if provided
+      const userEmail = req.body.email || req.query.email as string;
+      const submissionId = req.body.submissionId ? parseInt(req.body.submissionId as string) : 
+                          (req.query.submissionId ? parseInt(req.query.submissionId as string) : undefined);
+
+      // Process document with user context if available
+      console.log('Processing document with context:', {
+        filename: req.file.originalname,
+        email: userEmail || 'Not provided',
+        submissionId: submissionId || 'Not provided'
+      });
+      
+      const processedData = await processDocument(req.file, {
+        email: userEmail,
+        submissionId: submissionId
+      });
 
       // Log processing time in production
       if (process.env.NODE_ENV === 'production') {
         console.log(`Document processing completed in ${Date.now() - startTime}ms`);
       }
 
+      // Return enhanced response with extracted data and file information
       res.json({
         message: "Document processed successfully",
-        extractedData: processedData
+        extractedData: processedData,
+        fileInfo: {
+          name: req.file.originalname,
+          size: req.file.size,
+          type: req.file.mimetype,
+          url: processedData.fileUrl,
+          uploadedAt: new Date().toISOString()
+        }
       });
     } catch (error) {
       console.error('Document processing error:', error);
@@ -382,13 +403,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 }
 
 // Document processing helper
-async function processDocument(file: Express.Multer.File) {
+async function processDocument(file: Express.Multer.File, options?: { email?: string; submissionId?: number }) {
   try {
     console.log('Starting document processing...');
 
-    // Upload to Azure Blob Storage
-    console.log('Uploading to Azure Blob Storage...');
-    const fileUrl = await uploadFileToBlobStorage(file);
+    // Set document type based on file mime type
+    const documentType = file.mimetype.startsWith('image/') 
+      ? 'energy-certificates-images' 
+      : 'energy-certificates-pdf';
+
+    // Upload to Azure Blob Storage with organized structure
+    console.log('Uploading to Azure Blob Storage with organization...');
+    const fileUrl = await uploadFileToBlobStorage(file, {
+      documentType,
+      email: options?.email,
+      submissionId: options?.submissionId
+    });
     console.log('File uploaded successfully, URL:', fileUrl);
 
     // Extract and process text
@@ -398,9 +428,23 @@ async function processDocument(file: Express.Multer.File) {
     const processedData = await processWithMistral(extractedText);
     console.log('Mistral processing complete:', processedData);
 
+    // Store information about the extracted data for traceability
+    const extractionMetadata = {
+      processingDate: new Date().toISOString(),
+      documentType,
+      fileSize: file.size,
+      fileName: file.originalname,
+      mimeType: file.mimetype,
+      languageDetected: processedData.language || 'unknown',
+      extractedFields: Object.keys(processedData).join(',')
+    };
+
+    console.log('Document processing metadata:', extractionMetadata);
+
     return {
       ...processedData,
-      fileUrl
+      fileUrl,
+      extractionMetadata
     };
   } catch (error) {
     console.error('Document processing error:', error);
