@@ -243,9 +243,40 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
               </div>
               {uploadedFileInfo.url && (
                 <a 
-                  href={uploadedFileInfo.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    console.log('Accessing document via API endpoint');
+                    
+                    // Make a fetch request to get the document URL through our API endpoint
+                    fetch(`/api/documents/url?path=${encodeURIComponent(uploadedFileInfo.url || '')}`)
+                      .then(response => {
+                        if (!response.ok) {
+                          throw new Error('Failed to fetch document URL');
+                        }
+                        return response.json();
+                      })
+                      .then(data => {
+                        if (data.url) {
+                          console.log('Opening document with URL:', data.url);
+                          window.open(data.url, '_blank');
+                        } else {
+                          toast({
+                            title: "Document not found",
+                            description: "The document URL could not be retrieved",
+                            variant: "destructive",
+                          });
+                        }
+                      })
+                      .catch(error => {
+                        console.error('Error fetching document URL:', error);
+                        toast({
+                          title: "Error",
+                          description: "Unable to access document. Please try again later.",
+                          variant: "destructive",
+                        });
+                      });
+                  }}
                   className="text-xs text-primary hover:underline inline-flex items-center mt-1"
                 >
                   View Document <Info className="h-3 w-3 ml-1" />
