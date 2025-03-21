@@ -230,9 +230,9 @@ export function CalculatorForm() {
     }
   };
 
-  // When moving to step 4, trigger the calculation
+  // When moving to step 5 (results), trigger the calculation
   const nextStep = () => {
-    if (step === 3) {
+    if (step === 4) {
       // Trigger calculation before showing results
       form.handleSubmit(onSubmit)();
     }
@@ -311,7 +311,7 @@ export function CalculatorForm() {
           steps={formSteps}
           onNext={nextStep}
           onPrevious={previousStep}
-          isLastStep={step === 6}
+          isLastStep={step === 5}
           isSubmitting={isPending}
           onStartNew={startNewCalculation}
           onSendEmail={handleSendEmail}
