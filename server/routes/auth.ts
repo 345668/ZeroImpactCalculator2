@@ -41,10 +41,10 @@ router.post("/signup", async (req, res) => {
         role: user.role
       }
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Signup error:', error);
-    if (error.name === "ZodError") {
-      const validationError = fromZodError(error);
+    if (error instanceof Error && error.name === "ZodError") {
+      const validationError = fromZodError(error as any);
       return res.status(400).json({ message: validationError.message });
     }
     res.status(500).json({ 
@@ -64,10 +64,10 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ message: "Login and password are required" });
     }
 
-    // Try to find user by email or username
-    let user = await storage.getUserByEmail(login);
+    // Try to find user by username first, then by email (for backward compatibility)
+    let user = await storage.getUserByUsername(login);
     if (!user) {
-      user = await storage.getUserByUsername(login);
+      user = await storage.getUserByEmail(login);
     }
 
     if (!user) {
@@ -93,7 +93,7 @@ router.post("/login", async (req, res) => {
         role: user.role
       }
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Login error:', error);
     res.status(500).json({ 
       message: "Error during login",

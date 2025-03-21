@@ -75,18 +75,18 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Sign In</DialogTitle>
+          <DialogTitle>Sign In to Company Portal</DialogTitle>
           <DialogDescription>
-            Enter your credentials to access the company portal
+            Enter your username and password to access the company dashboard
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="login">Email or Username</Label>
+            <Label htmlFor="login">Username</Label>
             <Input
               id="login"
-              placeholder="email@example.com"
-              {...register("login", { required: "Email or username is required" })}
+              placeholder="Enter your username"
+              {...register("login", { required: "Username is required" })}
             />
             {errors.login && (
               <p className="text-sm text-red-500">{errors.login.message}</p>
