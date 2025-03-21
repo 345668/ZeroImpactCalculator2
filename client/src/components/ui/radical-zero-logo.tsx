@@ -43,31 +43,23 @@ export const RadicalZeroLogo = memo(({ size = 160, className = "" }: RadicalZero
         <div className="w-full h-full rounded-full bg-blue-100 animate-pulse"></div>
       )}
       
-      {/* Eye Animation GIF with Enhanced Motion Effects */}
+      {/* Static Eye Animation GIF (No Rotation/Tilt) with Transparency */}
       <motion.div
-        className="w-full h-full overflow-hidden rounded-full"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ 
-          opacity: isLoaded ? 1 : 0,
-          scale: isLoaded ? 1 : 0.8,
-        }}
+        className="w-full h-full overflow-hidden rounded-full bg-transparent"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: isLoaded ? 1 : 0 }}
         transition={{ duration: 0.5 }}
       >
-        <motion.img
+        <img
           src="/eye-animation.gif"
           alt="Radical Zero Eye Animation"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain mix-blend-lighten"
           onLoad={handleImageLoad}
-          animate={{ 
-            rotate: isLoaded ? [0, 5, -5, 0] : 0 
+          style={{ 
+            visibility: isLoaded ? 'visible' : 'hidden',
+            filter: 'contrast(1.2) brightness(1.2)',
+            mixBlendMode: 'screen' // This helps with transparency
           }}
-          transition={{ 
-            duration: 8, 
-            repeat: Infinity, 
-            ease: "easeInOut",
-            repeatType: "reverse"
-          }}
-          style={{ visibility: isLoaded ? 'visible' : 'hidden' }}
         />
       </motion.div>
     </div>
