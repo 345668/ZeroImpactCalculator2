@@ -125,8 +125,9 @@ export function CalculatorForm() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [showGDPRModal, setShowGDPRModal] = useState(false);
   
-  // Get translation for steps
+  // Get translations
   const formSteps = getFormSteps(t);
+  const energySourceOptions = getEnergySourceOptions(t);
 
   const form = useForm<FormState>({
     resolver: zodResolver(insertSubmissionSchema),
@@ -425,7 +426,7 @@ export function CalculatorForm() {
                         defaultValue={field.value}
                         className="grid grid-cols-1 md:grid-cols-2 gap-4"
                       >
-                        {energySourceOptions.map((option, index) => {
+                        {getEnergySourceOptions(t).map((option, index) => {
                           const IconComponent = energySourceIcons[option.value];
                           return (
                             <motion.div
