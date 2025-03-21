@@ -7,7 +7,6 @@ if (!process.env.SENDGRID_API_KEY) {
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// Use a verified sender email - this should be verified in your SendGrid account
 const SENDER_EMAIL = 'pmm@sands-neptune.de';
 const SENDER_NAME = 'Radical Zero Carbon Credits';
 
@@ -31,36 +30,49 @@ export class EmailService {
 
       console.log('Email content generated successfully');
 
-      // Structure the message in a simpler format to avoid potential API issues
+      // Structure the message according to SendGrid Web API format
       const msg = {
-        to: data.email,
+        to: {
+          email: data.email,
+          name: `${data.firstName} ${data.lastName}`
+        },
         from: {
           email: SENDER_EMAIL,
           name: SENDER_NAME
         },
         subject: 'Your Carbon Savings Report from Radical Zero',
-        html: emailContent
+        html: emailContent,
+        trackingSettings: {
+          clickTracking: { enable: true },
+          openTracking: { enable: true }
+        },
+        categories: ['carbon-report'],
+        replyTo: SENDER_EMAIL,
+        mailSettings: {
+          sandboxMode: {
+            enable: false // Ensure sandbox mode is disabled for production emails
+          }
+        }
       };
 
       console.log('Attempting to send email with configured message:', {
-        to: msg.to,
+        to: msg.to.email,
         from: msg.from.email,
         subject: msg.subject,
         contentLength: emailContent.length,
         timestamp: new Date().toISOString()
       });
 
-      // Send the email with simplified structure
-      const response = await sgMail.send(msg);
-      
+      const [response] = await sgMail.send(msg);
       console.log('SendGrid API Response:', {
-        statusCode: response[0].statusCode,
-        headers: response[0].headers,
+        statusCode: response.statusCode,
+        headers: response.headers,
+        body: response.body,
         timestamp: new Date().toISOString()
       });
 
-      if (response[0].statusCode !== 202) {
-        throw new Error(`SendGrid API error: ${response[0].statusCode}`);
+      if (response.statusCode !== 202) {
+        throw new Error(`SendGrid API error: ${response.statusCode}`);
       }
 
       console.log('Email sent successfully to:', data.email);
@@ -80,7 +92,6 @@ export class EmailService {
     try {
       console.log('Sending test email to:', toEmail);
 
-      // Simplify the message format
       const msg = {
         to: toEmail,
         from: {
@@ -99,7 +110,12 @@ export class EmailService {
               Sent by Radical Zero Carbon Credits System
             </p>
           </div>
-        `
+        `,
+        mailSettings: {
+          sandboxMode: {
+            enable: false
+          }
+        }
       };
 
       console.log('Attempting to send test email with configuration:', {
@@ -109,13 +125,13 @@ export class EmailService {
         timestamp: new Date().toISOString()
       });
 
-      const response = await sgMail.send(msg);
+      const [response] = await sgMail.send(msg);
       console.log('Test email response:', {
-        statusCode: response[0].statusCode,
-        headers: response[0].headers,
+        statusCode: response.statusCode,
+        headers: response.headers,
         timestamp: new Date().toISOString()
       });
-      return response[0].statusCode === 202;
+      return response.statusCode === 202;
     } catch (error: any) {
       console.error('Test email error:', {
         error: error.message,
