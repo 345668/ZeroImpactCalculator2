@@ -325,16 +325,16 @@ export function CalculatorForm() {
           {step === 1 && (
             <div className="space-y-6">
               <div className="p-6 bg-primary/5 rounded-lg">
-                <h3 className="text-lg font-medium mb-2">Upload Your iSFP Document</h3>
+                <h3 className="text-lg font-medium mb-2">{t('calculator.uploadTitle')}</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  For faster results, upload your iSFP document or renovation plan to automatically fill the form
+                  {t('calculator.uploadDescription')}
                 </p>
                 <DocumentUpload 
                   onDataExtracted={handleExtractedData} 
                   email={form.getValues("email")} 
                 />
                 {isDocumentUploaded && (
-                  <p className="mt-2 text-sm text-primary">✓ Document processed successfully</p>
+                  <p className="mt-2 text-sm text-primary">✓ {t('calculator.uploadSuccess')}</p>
                 )}
               </div>
 
@@ -343,7 +343,7 @@ export function CalculatorForm() {
                   <span className="w-full border-t" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or fill manually</span>
+                  <span className="bg-background px-2 text-muted-foreground">{t('calculator.orFillManually')}</span>
                 </div>
               </div>
 
@@ -352,7 +352,7 @@ export function CalculatorForm() {
                 name="buildingOwnership"
                 render={({ field }) => (
                   <FormItem className="space-y-4">
-                    <FormLabel>Do you own the building or are you a tenant?</FormLabel>
+                    <FormLabel>{t('calculator.buildingInfo.ownership.question')}</FormLabel>
                     <FormControl>
                       <RadioGroup
                         onValueChange={field.onChange}
@@ -363,18 +363,18 @@ export function CalculatorForm() {
                           <FormControl>
                             <RadioGroupItem value="own" className="absolute right-4 top-4" />
                           </FormControl>
-                          <FormLabel className="text-base font-semibold">Building Owner</FormLabel>
+                          <FormLabel className="text-base font-semibold">{t('calculator.buildingInfo.ownership.owner')}</FormLabel>
                           <p className="text-sm text-muted-foreground">
-                            I own the building and can implement energy efficiency measures.
+                            {t('calculator.buildingInfo.ownership.ownerDesc')}
                           </p>
                         </FormItem>
                         <FormItem className="relative flex flex-col items-start space-y-3 rounded-lg border-2 border-muted p-4 hover:border-primary">
                           <FormControl>
                             <RadioGroupItem value="rent" className="absolute right-4 top-4" />
                           </FormControl>
-                          <FormLabel className="text-base font-semibold">Tenant</FormLabel>
+                          <FormLabel className="text-base font-semibold">{t('calculator.buildingInfo.ownership.tenant')}</FormLabel>
                           <p className="text-sm text-muted-foreground">
-                            I rent the building and want to explore energy efficiency options.
+                            {t('calculator.buildingInfo.ownership.tenantDesc')}
                           </p>
                         </FormItem>
                       </RadioGroup>
@@ -389,9 +389,9 @@ export function CalculatorForm() {
                 name="buildingSize"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>What is the size of your building in square meters?</FormLabel>
+                    <FormLabel>{t('calculator.buildingInfo.size')}</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="Enter building size" {...field} />
+                      <Input type="number" placeholder={t('calculator.buildingInfo.size')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -67,6 +67,38 @@
         "coal": "Kohle",
         "pvSelf": "PV-Eigenverbrauch"
       }
+    },
+    "currentConsumption": {
+      "title": "Aktueller Energieverbrauch",
+      "description": "Geben Sie Ihren aktuellen Energieverbrauch ein",
+      "question": "Wie hoch ist Ihr aktueller jährlicher Energieverbrauch (ohne Photovoltaik)?",
+      "placeholder": "Aktueller Verbrauch (kWh/Jahr)"
+    },
+    "projectedConsumption": {
+      "title": "Prognostizierter Energieverbrauch",
+      "description": "Geben Sie Ihren erwarteten Energieverbrauch nach den Verbesserungen ein",
+      "question": "Wie hoch ist Ihr erwarteter jährlicher Energieverbrauch nach den geplanten Verbesserungen?",
+      "placeholder": "Prognostizierter Verbrauch (kWh/Jahr)"
+    },
+    "results": {
+      "title": "Ergebnisanalyse",
+      "description": "Überprüfen Sie Ihre potenziellen Einsparungen",
+      "co2Savings": "CO₂-Einsparungen",
+      "carbonCredits": "CO₂-Gutschriften",
+      "financialValue": "Finanzieller Wert",
+      "tonsCO2": "Tonnen CO₂",
+      "creditValue": "Wert der CO₂-Gutschriften",
+      "tenYearProjection": "10-Jahres-Prognose"
+    },
+    "contactDetails": {
+      "title": "Kontaktdaten",
+      "description": "Bitte geben Sie Ihre Kontaktdaten an, um den Bericht zu erhalten",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail-Adresse",
+      "address": "Adresse",
+      "acceptTerms": "Ich akzeptiere die Nutzungsbedingungen",
+      "acceptGDPR": "Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu"
     }
   }
 }

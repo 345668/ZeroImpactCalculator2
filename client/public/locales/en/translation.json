@@ -67,6 +67,38 @@
         "coal": "Coal",
         "pvSelf": "PV Self-Consumption"
       }
+    },
+    "currentConsumption": {
+      "title": "Current Energy Consumption",
+      "description": "Enter your current energy usage",
+      "question": "What is your current annual energy consumption (excluding solar PV)?",
+      "placeholder": "Current Consumption (kWh/year)"
+    },
+    "projectedConsumption": {
+      "title": "Projected Energy Consumption",
+      "description": "Enter your expected energy usage after improvements",
+      "question": "What is your expected annual energy consumption after planned improvements?",
+      "placeholder": "Projected Consumption (kWh/year)"
+    },
+    "results": {
+      "title": "Results Analysis",
+      "description": "Review your potential savings",
+      "co2Savings": "CO₂ Savings",
+      "carbonCredits": "Carbon Credits",
+      "financialValue": "Financial Value",
+      "tonsCO2": "tons of CO₂",
+      "creditValue": "Carbon Credits Value",
+      "tenYearProjection": "10-Year Projection"
+    },
+    "contactDetails": {
+      "title": "Contact Details",
+      "description": "Please provide your contact information to receive the report",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email Address",
+      "address": "Address",
+      "acceptTerms": "I accept the Terms of Service",
+      "acceptGDPR": "I consent to the processing of my data as described in the Privacy Policy"
     }
   }
 }
