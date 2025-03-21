@@ -150,7 +150,7 @@
       "city": "State/Region",
       "country": "Country",
       "selectCountry": "Select country",
-      "selectCity": "Select city",
+      "selectCity": "Select state/region",
       "acceptTerms": "I accept the Terms of Service",
       "acceptGDPR": "I consent to the processing of my data as described in the Privacy Policy"
     },
