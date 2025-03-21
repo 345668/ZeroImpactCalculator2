@@ -83,34 +83,13 @@ export function HeroSection() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.6 }}
           onClick={() => {
-            // Custom slower and smoother scroll implementation
+            // Use the standard smooth scroll behavior which works more reliably
             const calculatorSection = document.getElementById('calculator');
             if (calculatorSection) {
-              const targetPosition = calculatorSection.getBoundingClientRect().top + window.pageYOffset;
-              const startPosition = window.pageYOffset;
-              const distance = targetPosition - startPosition;
-              
-              // Longer duration for slower animation (2000ms = 2 seconds)
-              const duration = 2000;
-              let startTime: number | null = null;
-              
-              function scrollAnimation(currentTime: number) {
-                if (startTime === null) startTime = currentTime;
-                const timeElapsed = currentTime - startTime;
-                const progress = Math.min(timeElapsed / duration, 1);
-                
-                // Easing function for smoother motion
-                const easeInOutCubic = (t: number) => 
-                  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-                
-                window.scrollTo(0, startPosition + distance * easeInOutCubic(progress));
-                
-                if (timeElapsed < duration) {
-                  requestAnimationFrame(scrollAnimation);
-                }
-              }
-              
-              requestAnimationFrame(scrollAnimation);
+              calculatorSection.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start'
+              });
             }
           }}
         >

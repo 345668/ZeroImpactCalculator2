@@ -9,7 +9,7 @@ export default function Home() {
     <Layout>
       <NavigationBar />
       <HeroSection />
-      <main className="container mx-auto px-4 py-12">
+      <main id="calculator" className="container mx-auto px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
