@@ -90,11 +90,14 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
       const extractedData = data.extractedData || {};
       
       // Store uploaded file info for display
+      const fileUrl = fileInfo.url || extractedData.fileUrl;
+      console.log('File URL received:', fileUrl);
+      
       setUploadedFileInfo({
         name: fileInfo.name || file?.name,
         size: fileInfo.size || file?.size,
         type: fileInfo.type || file?.type,
-        url: fileInfo.url || extractedData.fileUrl,
+        url: fileUrl,
         uploadedAt: fileInfo.uploadedAt || new Date().toISOString()
       });
       
@@ -114,8 +117,8 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
         energyConsultantCompany: extractedData.energy_consultant_company,
         energyConsultantId: extractedData.energy_consultant_id,
         energyConsultantBafaNumber: extractedData.energy_consultant_bafa_number,
-        // Enhanced file details
-        fileUrl: fileInfo.url || extractedData.fileUrl,
+        // Enhanced file details - use the previously validated fileUrl
+        fileUrl,
         fileName: fileInfo.name || file?.name,
         fileSize: fileInfo.size || file?.size,
         fileType: fileInfo.type || file?.type,
@@ -123,6 +126,8 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
         fileMetadata: extractedData.extractionMetadata ? 
           JSON.stringify(extractedData.extractionMetadata) : undefined
       };
+      
+      console.log('Processed data being sent to parent:', processedData);
 
       onDataExtracted(processedData);
       setFile(null); // Reset file after successful upload
