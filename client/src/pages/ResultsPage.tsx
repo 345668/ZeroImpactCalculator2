@@ -5,10 +5,38 @@ import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
 import { NavigationBar } from "@/components/navigation-bar";
 import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 
 export function ResultsPage() {
   const [, setLocation] = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
+  // Force re-render when language changes to refresh translations
+  useEffect(() => {
+    // Get current language from localStorage or use default
+    const savedLanguage = localStorage.getItem('i18nextLng');
+    if (savedLanguage && ['en', 'de'].includes(savedLanguage) && i18n.language !== savedLanguage) {
+      i18n.changeLanguage(savedLanguage);
+    }
+    
+    // Make sure all translations are loaded for current page
+    if (i18n.language) {
+      i18n.loadNamespaces('translation');
+    }
+    
+    // Listen for language changes
+    const handleLanguageChanged = (lng: string) => {
+      console.log('Language changed to:', lng);
+      // Force component update
+      i18n.loadNamespaces('translation');
+    };
+
+    i18n.on('languageChanged', handleLanguageChanged);
+    
+    return () => {
+      i18n.off('languageChanged', handleLanguageChanged);
+    };
+  }, [i18n]);
 
   return (
     <Layout>

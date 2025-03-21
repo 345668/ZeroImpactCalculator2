@@ -27,7 +27,7 @@ i18n
       order: ['localStorage', 'querystring', 'navigator'],
       lookupLocalStorage: 'i18nextLng',
       caches: ['localStorage'],
-      cookieExpirationDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      // Cookie settings removed to fix type error
     },
     
     // Ensure resources are loaded properly
@@ -52,17 +52,17 @@ i18n
 const originalChangeLanguage = i18n.changeLanguage;
 i18n.changeLanguage = async function(lng: string | undefined, callback?: ((error: any, t: any) => void) | undefined) {
   try {
+    // First apply language change
     const result = await originalChangeLanguage.call(i18n, lng, callback);
     
-    // Force reload all namespaces
-    if (i18n.services && i18n.services.resourceStore) {
-      Object.keys(i18n.services.resourceStore.data).forEach(language => {
-        if (language === lng) {
-          Object.keys(i18n.services.resourceStore.data[language]).forEach(namespace => {
-            i18n.reloadResources(lng, namespace);
-          });
-        }
-      });
+    // Store the language preference for future use
+    if (lng) {
+      localStorage.setItem('i18nextLng', lng);
+    }
+    
+    // Force reload resources to ensure all translations are fresh
+    if (lng) {
+      i18n.reloadResources(lng, 'translation');
     }
     
     return result;
@@ -91,7 +91,6 @@ export const fetchUserLanguage = async (): Promise<void> => {
       const { language } = await response.json();
       if (language && language !== i18n.language) {
         await i18n.changeLanguage(language);
-        localStorage.setItem('i18nextLng', language);
       }
     }
   } catch (error) {
