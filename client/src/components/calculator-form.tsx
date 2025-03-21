@@ -43,22 +43,21 @@ const energySourceIcons = {
   "pv self-consumption": PanelTop
 };
 
-// Energy source options
-const energySourceOptions = [
-  { value: "heating oil", label: "Heating Oil" },
-  { value: "natural gas", label: "Natural Gas" },
-  { value: "liquefied petroleum gas", label: "Liquefied Petroleum Gas (LPG)" },
-  { value: "district heating", label: "District Heating" },
-  { value: "electricity mix", label: "Electricity Mix" },
-  { value: "coal heating", label: "Coal Heating" },
-  { value: "wood pellets", label: "Wood Pellets" },
-  { value: "firewood", label: "Firewood" },
-  { value: "biogas", label: "Biogas" },
-  { value: "heat pump (electricity mix)", label: "Heat Pump (Electricity Mix)" },
-  { value: "heat pump (green electricity)", label: "Heat Pump (Green Electricity)" },
-  { value: "green electricity", label: "Green Electricity" },
-  { value: "solar thermal", label: "Solar Thermal" },
-  { value: "pv self-consumption", label: "PV Self-Consumption" }
+// Energy source options - these will be translated in the component
+const getEnergySourceOptions = (t: any) => [
+  { value: "heating oil", label: t('calculator.energySource.options.heatingOil', "Heating Oil") },
+  { value: "natural gas", label: t('calculator.energySource.options.naturalGas', "Natural Gas") },
+  { value: "liquefied petroleum gas", label: t('calculator.energySource.options.propane', "Propane/LPG") },
+  { value: "district heating", label: t('calculator.energySource.options.district', "District Heating") },
+  { value: "electricity mix", label: t('calculator.energySource.options.electricity', "Electricity") },
+  { value: "coal heating", label: t('calculator.energySource.options.coal', "Coal") },
+  { value: "wood pellets", label: t('calculator.energySource.options.wood', "Wood/Pellets") },
+  { value: "biogas", label: t('calculator.energySource.options.biogas', "Biogas") },
+  { value: "heat pump (electricity mix)", label: t('calculator.energySource.options.heatPump', "Heat Pump") },
+  { value: "heat pump (green electricity)", label: t('calculator.energySource.options.heatPump', "Heat Pump") },
+  { value: "green electricity", label: t('calculator.energySource.options.electricity', "Electricity") },
+  { value: "solar thermal", label: t('calculator.energySource.options.solar', "Solar Thermal") },
+  { value: "pv self-consumption", label: t('calculator.energySource.options.pvSelf', "PV Self-Consumption") }
 ];
 
 // Update the form state type
