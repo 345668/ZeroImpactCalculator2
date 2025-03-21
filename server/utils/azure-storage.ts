@@ -82,17 +82,11 @@ export async function uploadFileToBlobStorage(
     });
     console.log('Upload completed:', uploadResult);
 
-    // Get blob URL and validate
-    const blobUrl = blockBlobClient.url;
-    console.log('File uploaded successfully. Blob URL:', blobUrl);
+    // Store the blobName for later reference via API endpoints
+    console.log('File uploaded successfully. Blob name:', blobName);
     
-    if (!blobUrl) {
-      console.error('Failed to generate URL for uploaded blob');
-      throw new Error('File uploaded but URL was not generated');
-    }
-    
-    // Return the validated URL
-    return blobUrl;
+    // Return the blob name/path instead of direct URL to ensure proper access control
+    return blobName;
   } catch (error: any) {
     console.error('Detailed error uploading to blob storage:', {
       error: error?.message,

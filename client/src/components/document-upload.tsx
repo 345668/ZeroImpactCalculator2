@@ -91,15 +91,16 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
       const fileInfo = data.fileInfo || {};
       const extractedData = data.extractedData || {};
       
-      // Store uploaded file info for display
-      const fileUrl = fileInfo.url || extractedData.fileUrl;
-      console.log('File URL received:', fileUrl);
+      // Store uploaded file path for display
+      const filePath = fileInfo.url || extractedData.fileUrl;
+      console.log('File path received:', filePath);
       
+      // Set in local state for display purposes - we'll get the actual URL via API
       setUploadedFileInfo({
         name: fileInfo.name || file?.name,
         size: fileInfo.size || file?.size,
         type: fileInfo.type || file?.type,
-        url: fileUrl,
+        url: filePath, // This is now a path/identifier, not a direct URL
         uploadedAt: fileInfo.uploadedAt || new Date().toISOString()
       });
       
@@ -119,8 +120,8 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
         energyConsultantCompany: extractedData.energy_consultant_company,
         energyConsultantId: extractedData.energy_consultant_id,
         energyConsultantBafaNumber: extractedData.energy_consultant_bafa_number,
-        // Enhanced file details - use the previously validated fileUrl
-        fileUrl,
+        // Enhanced file details - use the previously validated filePath
+        fileUrl: filePath,
         fileName: fileInfo.name || file?.name,
         fileSize: fileInfo.size || file?.size,
         fileType: fileInfo.type || file?.type,
