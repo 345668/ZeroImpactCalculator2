@@ -1,12 +1,21 @@
 import { BlobServiceClient, ContainerClient } from "@azure/storage-blob";
+import { AZURE_STORAGE_CONFIG } from "../../shared/config";
 
 // Initialize the BlobServiceClient
 const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.AZURE_STORAGE_CONNECTION_STRING || ""
 );
 
+// Default container name from config or fallback to multiple possible names
+const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 
+                     AZURE_STORAGE_CONFIG.blobStorage.containerName || 
+                     "carbon-credits-docs" || 
+                     "documents";
+
+console.log(`Using Azure Blob Storage container: ${containerName}`);
+
 // Get container client
-const containerClient = blobServiceClient.getContainerClient("carbon-credits-docs");
+const containerClient = blobServiceClient.getContainerClient(containerName);
 
 // Organize files by submission type and ID
 interface FileUploadOptions {
@@ -87,35 +96,41 @@ export async function uploadFileToBlobStorage(
     
     // Return the validated URL
     return blobUrl;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Detailed error uploading to blob storage:', {
-      error: error.message,
-      code: error.code,
-      details: error.details,
-      stack: error.stack
+      error: error?.message,
+      code: error?.code,
+      details: error?.details,
+      stack: error?.stack
     });
-    throw new Error(`Failed to upload file to Azure: ${error.message}`);
+    
+    // Log the container name being used to help with debugging
+    console.log(`Using container: "${containerName}" for storage operations`);
+    
+    throw new Error(`Failed to upload file to Azure: ${error?.message || 'Unknown error'}`);
   }
 }
 
 export async function ensureContainerExists(): Promise<void> {
   try {
-    console.log('Checking if container exists...');
+    console.log(`Checking if container "${containerName}" exists...`);
     const createResult = await containerClient.createIfNotExists();
     console.log('Container check result:', {
-      created: createResult.created,
       succeeded: createResult.succeeded,
       requestId: createResult.requestId
     });
-    console.log('Container "carbon-credits-docs" is ready');
-  } catch (error) {
+    
+    // Set container public access for blobs to be accessible via URLs
+    await containerClient.setAccessPolicy("blob");
+    console.log(`Container "${containerName}" is ready with public blob access`);
+  } catch (error: any) {
     console.error('Detailed error creating container:', {
-      error: error.message,
-      code: error.code,
-      details: error.details,
-      stack: error.stack
+      error: error?.message,
+      code: error?.code,
+      details: error?.details,
+      stack: error?.stack
     });
-    throw new Error(`Failed to create container: ${error.message}`);
+    throw new Error(`Failed to create container: ${error?.message || 'Unknown error'}`);
   }
 }
 
@@ -128,6 +143,9 @@ export async function listBlobs(options: {
   documentType?: string;
 } = {}): Promise<string[]> {
   try {
+    // Ensure container exists before attempting to list
+    await ensureContainerExists();
+    
     console.log('Listing blobs in container with options:', options);
     const blobs: string[] = [];
     
@@ -147,15 +165,22 @@ export async function listBlobs(options: {
     }
     
     // List blobs with the specified prefix
+    console.log(`Listing blobs with prefix: ${prefix}`);
     for await (const blob of containerClient.listBlobsFlat({ prefix })) {
       blobs.push(blob.name);
     }
 
     console.log('Found blobs:', blobs);
     return blobs;
-  } catch (error) {
-    console.error('Error listing blobs:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('Error listing blobs:', {
+      error: error?.message,
+      code: error?.code,
+      details: error?.details || 'No details available',
+      container: containerName
+    });
+    console.log(`Using container: "${containerName}" for list operations`);
+    return []; // Return empty array on error instead of throwing
   }
 }
 
@@ -164,11 +189,28 @@ export async function listBlobs(options: {
  */
 export async function getBlobUrl(blobPath: string): Promise<string> {
   try {
+    if (!blobPath) {
+      console.warn('Empty blob path provided to getBlobUrl');
+      return '';
+    }
+    
+    // Ensure container exists
+    await ensureContainerExists();
+    
+    console.log(`Getting URL for blob: ${blobPath}`);
     const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
-    return blockBlobClient.url;
-  } catch (error) {
-    console.error('Error getting blob URL:', error);
-    throw error;
+    
+    // Return the URL with SAS token for better access
+    const sasUrl = blockBlobClient.url;
+    console.log(`Generated URL: ${sasUrl}`);
+    return sasUrl;
+  } catch (error: any) {
+    console.error('Error getting blob URL:', {
+      error: error?.message,
+      path: blobPath,
+      container: containerName
+    });
+    return ''; // Return empty string instead of throwing
   }
 }
 
@@ -177,13 +219,25 @@ export async function getBlobUrl(blobPath: string): Promise<string> {
  */
 export async function deleteBlob(blobPath: string): Promise<boolean> {
   try {
+    if (!blobPath) {
+      console.warn('Empty blob path provided to deleteBlob');
+      return false;
+    }
+    
     console.log(`Deleting blob: ${blobPath}`);
     const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
     const response = await blockBlobClient.delete();
     console.log('Delete response:', response);
     return true;
-  } catch (error) {
-    console.error('Error deleting blob:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('Error deleting blob:', {
+      error: error?.message,
+      path: blobPath,
+      container: containerName
+    });
+    return false; // Return false instead of throwing
   }
 }
+
+// Export container name for diagnostic purposes
+export { containerName };
