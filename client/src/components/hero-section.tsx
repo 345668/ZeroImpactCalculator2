@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button.tsx";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
 import { Coin } from "@/components/ui/coin.tsx";
 
@@ -29,14 +29,14 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
             >
-              Transform Your Energy Savings into{" "}
+              We transform the energy efficiency of your home in{" "}
               <motion.span 
                 className="text-radicalBlue-200"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.8, delay: 0.3 }}
               >
-                Carbon Credits
+                earnings
               </motion.span>
             </motion.h1>
 
@@ -46,7 +46,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Calculate your potential carbon savings and convert them into valuable carbon credits with our simple calculator.
+              Get an estimate of the earnings with our calculator:
             </motion.p>
 
             <motion.div
@@ -91,6 +91,27 @@ export function HeroSection() {
             </motion.div>
           </motion.div>
         </div>
+
+        {/* Down arrow indicator for calculator section */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ 
+            duration: 0.5, 
+            delay: 1,
+            repeat: Infinity,
+            repeatType: "reverse",
+            repeatDelay: 0.5
+          }}
+          onClick={() => {
+            document.getElementById('calculator')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+        >
+          <div className="cursor-pointer p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all">
+            <ArrowDown className="h-8 w-8 text-white" />
+          </div>
+        </motion.div>
       </div>
     </div>
   );
