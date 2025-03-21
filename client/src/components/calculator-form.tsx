@@ -417,8 +417,8 @@ export function CalculatorForm() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.2 }}
                     >
-                      <FormLabel className="text-2xl font-bold block mb-2">What is your current heating system?</FormLabel>
-                      <p className="text-muted-foreground mb-6">Select your primary energy source for heating</p>
+                      <FormLabel className="text-2xl font-bold block mb-2">{t('calculator.energySource.question')}</FormLabel>
+                      <p className="text-muted-foreground mb-6">{t('calculator.energySource.subheading')}</p>
                     </motion.div>
                     <FormControl>
                       <RadioGroup
@@ -472,7 +472,7 @@ export function CalculatorForm() {
                                         animate={{ opacity: 1 }}
                                         className="text-sm text-primary"
                                       >
-                                        Selected energy source
+                                        {t('calculator.energySource.selected')}
                                       </motion.div>
                                     )}
                                   </label>
@@ -498,12 +498,12 @@ export function CalculatorForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base mb-4">
-                      What is your current annual energy consumption (excluding solar PV)?
+                      {t('calculator.currentConsumption.question')}
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Current Consumption (kWh/year)"
+                        placeholder={t('calculator.currentConsumption.placeholder')}
                         {...field}
                         value={field.value || ''}
                         className="text-lg p-6"
@@ -524,8 +524,8 @@ export function CalculatorForm() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <h2 className="text-2xl font-bold mb-2">Final Energy Consumption</h2>
-                <p className="text-muted-foreground mb-8">Enter your expected energy usage after improvements (Endenergieverbrauch)</p>
+                <h2 className="text-2xl font-bold mb-2">{t('calculator.projectedConsumption.title')}</h2>
+                <p className="text-muted-foreground mb-8">{t('calculator.projectedConsumption.description')}</p>
               </motion.div>
               
               <FormField
@@ -534,12 +534,12 @@ export function CalculatorForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-base mb-4">
-                      What is your projected annual energy consumption after improvements?
+                      {t('calculator.projectedConsumption.question')}
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
-                        placeholder="Projected Consumption (kWh/year)"
+                        placeholder={t('calculator.projectedConsumption.placeholder')}
                         {...field}
                         value={field.value || ''}
                         className="text-lg p-6"
@@ -561,8 +561,8 @@ export function CalculatorForm() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
               >
-                <h2 className="text-2xl font-bold mb-2">Your Carbon Savings Results</h2>
-                <p className="text-muted-foreground mb-8">Here's the potential impact of your energy efficiency improvements</p>
+                <h2 className="text-2xl font-bold mb-2">{t('calculator.results.title')}</h2>
+                <p className="text-muted-foreground mb-8">{t('calculator.results.description')}</p>
               </motion.div>
 
               <div className="grid gap-4 md:grid-cols-3">
@@ -778,7 +778,7 @@ export function CalculatorForm() {
                     name="firstName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>First Name</FormLabel>
+                        <FormLabel>{t('calculator.contactDetails.firstName')}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -792,7 +792,7 @@ export function CalculatorForm() {
                     name="lastName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Last Name</FormLabel>
+                        <FormLabel>{t('calculator.contactDetails.lastName')}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -806,7 +806,7 @@ export function CalculatorForm() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>{t('calculator.contactDetails.email')}</FormLabel>
                         <FormControl>
                           <Input type="email" {...field} />
                         </FormControl>
@@ -820,7 +820,7 @@ export function CalculatorForm() {
                     name="address"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Address</FormLabel>
+                        <FormLabel>{t('calculator.contactDetails.address')}</FormLabel>
                         <FormControl>
                           <Input {...field} />
                         </FormControl>
@@ -842,15 +842,15 @@ export function CalculatorForm() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I accept the{" "}
+                            {t('calculator.consent.terms.beforeLink')}{" "}
                             <button
                               type="button"
                               onClick={() => setShowTermsModal(true)}
                               className="text-calmBlue-600 hover:text-calmBlue-700 underline"
                             >
-                              terms and conditions
+                              {t('calculator.consent.terms.link')}
                             </button>{" "}
-                            and agree that Radical Zero can contact me via email
+                            {t('calculator.consent.terms.afterLink')}
                           </FormLabel>
                           <FormMessage />
                         </div>
@@ -871,13 +871,13 @@ export function CalculatorForm() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            I consent to the processing of my personal data in accordance with the{" "}
+                            {t('calculator.consent.gdpr.beforeLink')}{" "}
                             <button
                               type="button"
                               onClick={() => setShowGDPRModal(true)}
                               className="text-calmBlue-600 hover:text-calmBlue-700 underline"
                             >
-                              GDPR regulations
+                              {t('calculator.consent.gdpr.link')}
                             </button>
                           </FormLabel>
                           <FormMessage />
@@ -885,7 +885,7 @@ export function CalculatorForm() {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full">Submit</Button>
+                  <Button type="submit" className="w-full">{t('calculator.submit')}</Button>
                 </>
               ) : (
                 <div className="text-center space-y-6">
@@ -893,11 +893,10 @@ export function CalculatorForm() {
                     <Check className="w-8 h-8 text-calmBlue-500" />
                   </div>
 
-                  <h2 className="text-2xl font-bold mb-2">Submission Successful!</h2>
+                  <h2 className="text-2xl font-bold mb-2">{t('calculator.success.title')}</h2>
 
                   <p className="text-gray-600 max-w-md mx-auto">
-                    Thank you for your interest in carbon credits. A detailed report has been sent to your email.
-                    A Radical-Zero representative will contact you soon with more information about your potential carbon savings.
+                    {t('calculator.success.message')}
                   </p>
 
                   <div className="flex justify-center gap-4 mt-8">
