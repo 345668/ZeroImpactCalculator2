@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes.js";
 import { setupVite, log } from "./vite.js";
 import { db, testDatabaseConnection } from "./db.js";
 import { performBackup } from "./utils/backup.js";
+import { initializeTableStorage } from "./utils/azure-table-storage.js";
 import { createServer } from "http";
 
 const app = express();
@@ -97,6 +98,19 @@ app.use((req, res, next) => {
       throw new Error('Failed to connect to database');
     }
     console.log('✓ Database connection successful');
+
+    // Initialize Azure Table Storage
+    console.log('Initializing Azure Table Storage...');
+    try {
+      const tableStorageInitialized = await initializeTableStorage();
+      if (tableStorageInitialized) {
+        console.log('✓ Azure Table Storage initialized successfully');
+      } else {
+        console.warn('Azure Table Storage initialization skipped (connection string not provided)');
+      }
+    } catch (error) {
+      console.error('Azure Table Storage initialization failed:', error);
+    }
 
     // Initial backup on startup
     if (process.env.NODE_ENV === 'production') {

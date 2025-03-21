@@ -1,5 +1,8 @@
-import { TableClient, TableServiceClient, odata } from "@azure/data-tables";
+import { TableClient, TableServiceClient, odata, TableEntityResult } from "@azure/data-tables";
 import { AZURE_STORAGE_CONFIG } from "../../shared/config";
+
+// Define types for Table Storage entities
+type TableEntityType = Record<string, unknown>;
 
 // Define the main entity structure for the submissions table
 interface SubmissionEntity {
@@ -209,12 +212,12 @@ export async function getSubmissionByEmail(email: string): Promise<any | null> {
       }
     });
     
-    const results = [];
+    const results: Record<string, any>[] = [];
     for await (const entity of entities) {
-      results.push(entity);
+      results.push(entity as Record<string, any>);
     }
     
-    return results.length > 0 ? mapEntityToSubmission(results[0] as SubmissionEntity) : null;
+    return results.length > 0 ? mapEntityToSubmission(results[0]) : null;
   } catch (error) {
     console.error(`Error fetching submission by email: ${email}`, error);
     return null;
@@ -238,12 +241,12 @@ export async function getSubmissionById(id: number): Promise<any | null> {
       }
     });
     
-    const results = [];
+    const results: Record<string, any>[] = [];
     for await (const entity of entities) {
-      results.push(entity);
+      results.push(entity as Record<string, any>);
     }
     
-    return results.length > 0 ? mapEntityToSubmission(results[0] as SubmissionEntity) : null;
+    return results.length > 0 ? mapEntityToSubmission(results[0]) : null;
   } catch (error) {
     console.error(`Error fetching submission by ID: ${id}`, error);
     return null;
@@ -262,23 +265,24 @@ export async function updateSubmission(submission: any): Promise<boolean> {
     const tableClient = TableClient.fromConnectionString(CONNECTION_STRING, TABLE_NAME);
     
     // First, get the existing entity to preserve the ETag
-    const existingEntity = await tableClient.getEntity(submission.email, submission.id.toString());
+    const existingEntity = await tableClient.getEntity(submission.email, submission.id.toString()) as Record<string, any>;
     
     // Prepare the updated entity
-    const updatedEntity: SubmissionEntity = {
-      ...existingEntity as SubmissionEntity,
+    const updatedEntity = {
+      partitionKey: submission.email,
+      rowKey: submission.id.toString(),
       
       // Update fields with new values
       fileUrl: submission.fileUrl || existingEntity.fileUrl,
       fileName: submission.fileName || existingEntity.fileName,
-      fileSize: submission.fileSize ? Number(submission.fileSize) : existingEntity.fileSize,
+      fileSize: submission.fileSize ? Number(submission.fileSize) : (existingEntity.fileSize ? Number(existingEntity.fileSize) : 0),
       fileType: submission.fileType || existingEntity.fileType,
-      fileUploadedAt: submission.fileUploadedAt ? new Date(submission.fileUploadedAt) : existingEntity.fileUploadedAt,
+      fileUploadedAt: submission.fileUploadedAt ? new Date(submission.fileUploadedAt) : (existingEntity.fileUploadedAt ? new Date(existingEntity.fileUploadedAt) : new Date()),
       fileMetadata: submission.fileMetadata || existingEntity.fileMetadata,
       
       // Email status
       emailSent: submission.emailSent || existingEntity.emailSent,
-      emailSentAt: submission.emailSentAt ? new Date(submission.emailSentAt) : existingEntity.emailSentAt,
+      emailSentAt: submission.emailSentAt ? new Date(submission.emailSentAt) : (existingEntity.emailSentAt ? new Date(existingEntity.emailSentAt) : new Date(0)),
     };
     
     await tableClient.updateEntity(updatedEntity, "Merge");
@@ -314,37 +318,37 @@ export async function syncSubmissionToTable(submission: any): Promise<boolean> {
 /**
  * Map an Azure Table entity to a submission object
  */
-function mapEntityToSubmission(entity: SubmissionEntity): any {
+function mapEntityToSubmission(entity: Record<string, any>): any {
   return {
-    id: parseInt(entity.rowKey),
-    firstName: entity.firstName,
-    lastName: entity.lastName,
-    email: entity.email,
-    address: entity.address,
-    buildingOwnership: entity.buildingOwnership,
-    buildingSize: entity.buildingSize,
-    heatingSystem: entity.heatingSystem,
-    currentEnergySource: entity.currentEnergySource,
-    currentConsumption: entity.currentConsumption,
-    projectedConsumption: entity.projectedConsumption,
-    co2Savings: entity.co2Savings,
-    carbonCredits: entity.carbonCredits,
-    financialValue: entity.financialValue,
-    calculationDetails: entity.calculationDetails,
-    acceptedTerms: entity.acceptedTerms,
-    gdprConsent: entity.gdprConsent,
-    energyConsultantName: entity.energyConsultantName,
-    energyConsultantCompany: entity.energyConsultantCompany,
-    energyConsultantId: entity.energyConsultantId,
-    energyConsultantBafaNumber: entity.energyConsultantBafaNumber,
-    fileUrl: entity.fileUrl,
-    fileName: entity.fileName,
-    fileSize: entity.fileSize,
-    fileType: entity.fileType,
-    fileUploadedAt: entity.fileUploadedAt,
-    fileMetadata: entity.fileMetadata,
-    emailSent: entity.emailSent,
-    emailSentAt: entity.emailSentAt,
-    submittedAt: entity.submittedAt,
+    id: parseInt(entity.rowKey || '0'),
+    firstName: entity.firstName || '',
+    lastName: entity.lastName || '',
+    email: entity.email || '',
+    address: entity.address || '',
+    buildingOwnership: entity.buildingOwnership || '',
+    buildingSize: entity.buildingSize ? Number(entity.buildingSize) : 0,
+    heatingSystem: entity.heatingSystem || '',
+    currentEnergySource: entity.currentEnergySource || '',
+    currentConsumption: entity.currentConsumption ? Number(entity.currentConsumption) : 0,
+    projectedConsumption: entity.projectedConsumption ? Number(entity.projectedConsumption) : 0,
+    co2Savings: entity.co2Savings ? Number(entity.co2Savings) : 0,
+    carbonCredits: entity.carbonCredits ? Number(entity.carbonCredits) : 0,
+    financialValue: entity.financialValue ? Number(entity.financialValue) : 0,
+    calculationDetails: entity.calculationDetails || '',
+    acceptedTerms: entity.acceptedTerms || '',
+    gdprConsent: entity.gdprConsent || '',
+    energyConsultantName: entity.energyConsultantName || '',
+    energyConsultantCompany: entity.energyConsultantCompany || '',
+    energyConsultantId: entity.energyConsultantId || '',
+    energyConsultantBafaNumber: entity.energyConsultantBafaNumber || '',
+    fileUrl: entity.fileUrl || '',
+    fileName: entity.fileName || '',
+    fileSize: entity.fileSize ? Number(entity.fileSize) : 0,
+    fileType: entity.fileType || '',
+    fileUploadedAt: entity.fileUploadedAt ? new Date(entity.fileUploadedAt) : new Date(),
+    fileMetadata: entity.fileMetadata || '',
+    emailSent: entity.emailSent || '',
+    emailSentAt: entity.emailSentAt ? new Date(entity.emailSentAt) : new Date(0),
+    submittedAt: entity.submittedAt ? new Date(entity.submittedAt) : new Date(),
   };
 }
