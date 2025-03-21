@@ -35,7 +35,13 @@ export const submissions = pgTable("submissions", {
   calculationDetails: text("calculation_details"),
   acceptedTerms: text("accepted_terms").notNull(),
   gdprConsent: text("gdpr_consent").notNull(),
+  // Enhanced file storage fields
   fileUrl: text("file_url"),
+  fileName: text("file_name"),
+  fileSize: numeric("file_size"),
+  fileType: text("file_type"),
+  fileUploadedAt: timestamp("file_uploaded_at"),
+  fileMetadata: text("file_metadata"), // Store JSON with additional metadata
   emailSent: text("email_sent").notNull().default("no"),
   emailSentAt: timestamp("email_sent_at"),
   submittedAt: timestamp("submitted_at").defaultNow(),
@@ -46,7 +52,8 @@ export const submissions = pgTable("submissions", {
     table.energyConsultantId,
     table.energyConsultantBafaNumber
   ),
-  emailSentIdx: index("email_sent_idx").on(table.emailSent)
+  emailSentIdx: index("email_sent_idx").on(table.emailSent),
+  fileUrlIdx: index("file_url_idx").on(table.fileUrl)
 }));
 
 // Define calculation result schema

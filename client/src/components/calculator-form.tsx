@@ -323,7 +323,10 @@ export function CalculatorForm() {
                 <p className="text-sm text-muted-foreground mb-4">
                   For faster results, upload your energy certificate or renovation plan to automatically fill the form
                 </p>
-                <DocumentUpload onDataExtracted={handleExtractedData} />
+                <DocumentUpload 
+                  onDataExtracted={handleExtractedData} 
+                  email={form.getValues("email")} 
+                />
                 {isDocumentUploaded && (
                   <p className="mt-2 text-sm text-primary">✓ Document processed successfully</p>
                 )}

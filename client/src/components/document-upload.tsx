@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, AlertCircle } from "lucide-react";
+import { Loader2, Upload, AlertCircle, FileText, Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DocumentUploadProps {
@@ -17,17 +17,32 @@ interface DocumentUploadProps {
     energyConsultantCompany?: string;
     energyConsultantId?: string;
     energyConsultantBafaNumber?: string;
+    // Enhanced file properties
     fileUrl?: string;
+    fileName?: string;
+    fileSize?: number;
+    fileType?: string;
+    fileUploadedAt?: string;
+    fileMetadata?: string;
   }) => void;
+  email?: string; // Optional email to associate with upload
+  submissionId?: number; // Optional submission ID to associate with upload
 }
 
 // Add file size constants
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg'];
 
-export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
+export function DocumentUpload({ onDataExtracted, email, submissionId }: DocumentUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [uploadedFileInfo, setUploadedFileInfo] = useState<{
+    name?: string;
+    size?: number;
+    type?: string;
+    url?: string;
+    uploadedAt?: string;
+  } | null>(null);
   const { toast } = useToast();
 
   const validateFile = useCallback((file: File): boolean => {
@@ -48,6 +63,15 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (formData: FormData) => {
+      // Add contextual data to the upload if available
+      if (email) {
+        formData.append('email', email);
+      }
+      
+      if (submissionId) {
+        formData.append('submissionId', submissionId.toString());
+      }
+
       const res = await fetch('/api/upload-document', {
         method: 'POST',
         body: formData
@@ -61,25 +85,46 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
       return res.json();
     },
     onSuccess: (data) => {
+      // Handle success with enhanced file information
+      const fileInfo = data.fileInfo || {};
+      const extractedData = data.extractedData || {};
+      
+      // Store uploaded file info for display
+      setUploadedFileInfo({
+        name: fileInfo.name || file?.name,
+        size: fileInfo.size || file?.size,
+        type: fileInfo.type || file?.type,
+        url: fileInfo.url || extractedData.fileUrl,
+        uploadedAt: fileInfo.uploadedAt || new Date().toISOString()
+      });
+      
       toast({
         title: "Success",
-        description: `Document processed successfully in ${data.language}`,
+        description: `Document processed successfully in ${extractedData.language || 'unknown language'}`,
       });
 
-      const extractedData = {
-        language: data.language,
-        buildingSize: data.extractedData?.building_size,
-        currentConsumption: data.extractedData?.current_consumption,
-        projectedConsumption: data.extractedData?.projected_consumption,
-        heatingSystem: data.extractedData?.heating_system_type,
-        energyConsultantName: data.extractedData?.energy_consultant_name,
-        energyConsultantCompany: data.extractedData?.energy_consultant_company,
-        energyConsultantId: data.extractedData?.energy_consultant_id,
-        energyConsultantBafaNumber: data.extractedData?.energy_consultant_bafa_number,
-        fileUrl: data.fileUrl,
+      // Prepare data for parent component with enhanced file information
+      const processedData = {
+        language: extractedData.language,
+        buildingSize: extractedData.building_size,
+        currentConsumption: extractedData.current_consumption,
+        projectedConsumption: extractedData.projected_consumption,
+        heatingSystem: extractedData.heating_system_type,
+        energyConsultantName: extractedData.energy_consultant_name,
+        energyConsultantCompany: extractedData.energy_consultant_company,
+        energyConsultantId: extractedData.energy_consultant_id,
+        energyConsultantBafaNumber: extractedData.energy_consultant_bafa_number,
+        // Enhanced file details
+        fileUrl: fileInfo.url || extractedData.fileUrl,
+        fileName: fileInfo.name || file?.name,
+        fileSize: fileInfo.size || file?.size,
+        fileType: fileInfo.type || file?.type,
+        fileUploadedAt: fileInfo.uploadedAt || new Date().toISOString(),
+        fileMetadata: extractedData.extractionMetadata ? 
+          JSON.stringify(extractedData.extractionMetadata) : undefined
       };
 
-      onDataExtracted(extractedData);
+      onDataExtracted(processedData);
       setFile(null); // Reset file after successful upload
     },
     onError: (error: Error) => {
@@ -112,6 +157,14 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
     const formData = new FormData();
     formData.append("document", file);
     mutate(formData);
+  };
+
+  // Format file size for display
+  const formatFileSize = (bytes?: number): string => {
+    if (!bytes) return 'Unknown size';
+    if (bytes < 1024) return bytes + ' bytes';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
   return (
@@ -150,10 +203,52 @@ export function DocumentUpload({ onDataExtracted }: DocumentUploadProps) {
         </Button>
       </div>
 
-      {file && !error && (
+      {file && !error && !uploadedFileInfo && (
         <p className="text-sm text-muted-foreground">
           Selected file: {file.name}
         </p>
+      )}
+
+      {/* Display uploaded file information if available */}
+      {uploadedFileInfo && uploadedFileInfo.url && (
+        <div className="mt-4 p-4 border rounded-lg border-border bg-muted/30">
+          <div className="flex items-start space-x-3">
+            <FileText className="h-5 w-5 text-primary mt-0.5" />
+            <div className="space-y-1 flex-1">
+              <h4 className="font-medium text-sm">Uploaded Document</h4>
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>
+                  <span className="font-semibold">Name:</span> {uploadedFileInfo.name}
+                </p>
+                {uploadedFileInfo.size && (
+                  <p>
+                    <span className="font-semibold">Size:</span> {formatFileSize(uploadedFileInfo.size)}
+                  </p>
+                )}
+                {uploadedFileInfo.type && (
+                  <p>
+                    <span className="font-semibold">Type:</span> {uploadedFileInfo.type}
+                  </p>
+                )}
+                {uploadedFileInfo.uploadedAt && (
+                  <p>
+                    <span className="font-semibold">Uploaded:</span> {new Date(uploadedFileInfo.uploadedAt).toLocaleString()}
+                  </p>
+                )}
+              </div>
+              {uploadedFileInfo.url && (
+                <a 
+                  href={uploadedFileInfo.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-xs text-primary hover:underline inline-flex items-center mt-1"
+                >
+                  View Document <Info className="h-3 w-3 ml-1" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
