@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import multer from "multer";
 import { storage } from "./storage.js";
-import { insertSubmissionSchema, calculationResultSchema } from "@shared/schema";
+import { insertSubmissionSchema, calculationResultSchema, submissions } from "@shared/schema";
 import { fromZodError } from "zod-validation-error";
 import { extractTextFromDocument, processWithMistral } from "./utils/document-processor.js";
 import { EmailService } from "./services/email.js";
@@ -16,6 +16,10 @@ import { testDatabaseConnection } from "./database.js";
 import { performBackup } from "./utils/backup.js";
 import { calculateCarbonCredits } from "./calculators/carbon-credits.js";
 import * as z from 'zod';
+import { eq } from "drizzle-orm";
+import { db } from "./db.js";
+import { syncSubmissionToTable } from "./utils/azure-table-storage.js";
+import { AZURE_STORAGE_CONFIG } from "@shared/config";
 
 // Configure multer with stricter limits for production
 const upload = multer({
