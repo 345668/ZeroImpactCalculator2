@@ -407,6 +407,9 @@ async function processDocument(file: Express.Multer.File, options?: { email?: st
   try {
     console.log('Starting document processing...');
 
+    // Make sure the Azure Storage Container exists
+    await ensureContainerExists();
+
     // Set document type based on file mime type
     const documentType = file.mimetype.startsWith('image/') 
       ? 'energy-certificates-images' 
@@ -414,12 +417,20 @@ async function processDocument(file: Express.Multer.File, options?: { email?: st
 
     // Upload to Azure Blob Storage with organized structure
     console.log('Uploading to Azure Blob Storage with organization...');
-    const fileUrl = await uploadFileToBlobStorage(file, {
-      documentType,
-      email: options?.email,
-      submissionId: options?.submissionId
-    });
-    console.log('File uploaded successfully, URL:', fileUrl);
+    
+    // Attempt upload
+    let fileUrl = '';
+    try {
+      fileUrl = await uploadFileToBlobStorage(file, {
+        documentType,
+        email: options?.email,
+        submissionId: options?.submissionId
+      });
+      console.log('File uploaded successfully, URL:', fileUrl);
+    } catch (uploadError) {
+      console.error('Error uploading file to Azure:', uploadError);
+      // Continue with processing even if the upload failed
+    }
 
     // Extract and process text
     const extractedText = await extractTextFromDocument(file);
@@ -436,7 +447,8 @@ async function processDocument(file: Express.Multer.File, options?: { email?: st
       fileName: file.originalname,
       mimeType: file.mimetype,
       languageDetected: processedData.language || 'unknown',
-      extractedFields: Object.keys(processedData).join(',')
+      extractedFields: Object.keys(processedData).join(','),
+      fileUrl // Include file URL in metadata
     };
 
     console.log('Document processing metadata:', extractionMetadata);
@@ -444,6 +456,10 @@ async function processDocument(file: Express.Multer.File, options?: { email?: st
     return {
       ...processedData,
       fileUrl,
+      fileName: file.originalname,
+      fileSize: file.size,
+      fileType: file.mimetype,
+      fileUploadedAt: new Date().toISOString(),
       extractionMetadata
     };
   } catch (error) {
