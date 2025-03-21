@@ -78,7 +78,7 @@ export function HeroSection() {
 
         {/* Down arrow indicator for calculator section */}
         <motion.div
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
+          className="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 z-10"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.6 }}
@@ -115,7 +115,7 @@ export function HeroSection() {
           }}
         >
           <motion.div 
-            className="cursor-pointer p-3 rounded-full bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-all shadow-lg"
+            className="cursor-pointer p-2 sm:p-3 rounded-full bg-white/15 backdrop-blur-sm hover:bg-white/25 transition-all shadow-lg"
             animate={{ y: [0, 8, 0] }}
             transition={{
               duration: 1.5,
@@ -125,7 +125,7 @@ export function HeroSection() {
             }}
             whileHover={{ scale: 1.1 }}
           >
-            <ArrowDown className="h-8 w-8 text-white" />
+            <ArrowDown className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
           </motion.div>
         </motion.div>
       </div>
