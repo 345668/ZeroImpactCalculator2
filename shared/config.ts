@@ -16,6 +16,22 @@ export const AI_CONFIG = {
   }
 } as const;
 
+// Azure Storage Configuration
+export const AZURE_STORAGE_CONFIG = {
+  blobStorage: {
+    enabled: process.env.AZURE_BLOB_STORAGE_ENABLED === "true",
+    connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+    containerName: process.env.AZURE_STORAGE_CONTAINER_NAME || "documents",
+    useEmulator: process.env.AZURE_STORAGE_USE_EMULATOR === "true",
+  },
+  tableStorage: {
+    enabled: process.env.AZURE_TABLE_STORAGE_ENABLED === "true",
+    connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING,
+    tableName: process.env.AZURE_TABLE_NAME || "submissions",
+    useEmulator: process.env.AZURE_STORAGE_USE_EMULATOR === "true",
+  }
+} as const;
+
 // Enhanced validation with Azure fallback
 if (!AI_CONFIG.openai.apiKey && !AI_CONFIG.azure.enabled) {
   throw new Error("Either OpenAI API key or Azure configuration is required");
