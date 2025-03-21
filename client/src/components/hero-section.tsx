@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button.tsx";
 import { ArrowRight, ArrowDown } from "lucide-react";
 import { motion } from "framer-motion";
-import { Coin } from "@/components/ui/coin.tsx";
+import { RadicalZeroLogo } from "@/components/ui/radical-zero-logo.tsx";
 
 export function HeroSection() {
   return (
@@ -70,7 +70,7 @@ export function HeroSection() {
                   animate={{ opacity: 1 }}
                   transition={{ duration: 0.5 }}
                 />
-                <Coin size={160} className="relative z-10" />
+                <RadicalZeroLogo size={160} className="relative z-10" />
               </div>
             </motion.div>
           </motion.div>
