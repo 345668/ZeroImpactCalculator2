@@ -6,11 +6,8 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.AZURE_STORAGE_CONNECTION_STRING || ""
 );
 
-// Default container name from config or fallback to multiple possible names
-const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME || 
-                     AZURE_STORAGE_CONFIG.blobStorage.containerName || 
-                     "carbon-credits-docs" || 
-                     "documents";
+// Use the specified container name 'carbon-credits-docs'
+const containerName = "carbon-credits-docs";
 
 console.log(`Using Azure Blob Storage container: ${containerName}`);
 
@@ -114,23 +111,59 @@ export async function uploadFileToBlobStorage(
 export async function ensureContainerExists(): Promise<void> {
   try {
     console.log(`Checking if container "${containerName}" exists...`);
-    const createResult = await containerClient.createIfNotExists();
-    console.log('Container check result:', {
-      succeeded: createResult.succeeded,
-      requestId: createResult.requestId
-    });
     
-    // Set container public access for blobs to be accessible via URLs
-    await containerClient.setAccessPolicy("blob");
-    console.log(`Container "${containerName}" is ready with public blob access`);
+    // Attempt to create the container if it doesn't exist
+    try {
+      const createResult = await containerClient.createIfNotExists();
+      console.log('Container check result:', {
+        succeeded: createResult.succeeded,
+        requestId: createResult.requestId
+      });
+      
+      // Set container public access for blobs to be accessible via URLs
+      await containerClient.setAccessPolicy("blob");
+      console.log(`Container "${containerName}" is ready with public blob access`);
+    } catch (containerError: any) {
+      // If we get a 409 conflict, the container already exists (which is fine)
+      if (containerError?.details?.errorCode === 'ContainerAlreadyExists') {
+        console.log(`Container "${containerName}" already exists, proceeding`);
+      } else {
+        // For other errors, throw them to be caught by the outer try-catch
+        throw containerError;
+      }
+    }
+    
+    // Verify the container exists by trying to get its properties
+    try {
+      const properties = await containerClient.getProperties();
+      console.log(`Container "${containerName}" exists and is accessible. Properties:`, {
+        lastModified: properties.lastModified,
+        leaseDuration: properties.leaseDuration,
+        leaseState: properties.leaseState,
+        leaseStatus: properties.leaseStatus,
+        publicAccess: properties.publicAccess
+      });
+      
+      // If container doesn't have public access, try to set it
+      if (properties.publicAccess !== 'blob') {
+        console.log(`Setting public access for container "${containerName}"`);
+        await containerClient.setAccessPolicy('blob');
+      }
+    } catch (propertiesError: any) {
+      console.error(`Error getting container properties:`, {
+        error: propertiesError?.message,
+        code: propertiesError?.code
+      });
+      throw propertiesError;
+    }
   } catch (error: any) {
-    console.error('Detailed error creating container:', {
+    console.error('Detailed error creating or accessing container:', {
       error: error?.message,
       code: error?.code,
       details: error?.details,
       stack: error?.stack
     });
-    throw new Error(`Failed to create container: ${error?.message || 'Unknown error'}`);
+    throw new Error(`Failed to create or access container: ${error?.message || 'Unknown error'}`);
   }
 }
 
