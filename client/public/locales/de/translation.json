@@ -99,6 +99,27 @@
       "address": "Adresse",
       "acceptTerms": "Ich akzeptiere die Nutzungsbedingungen",
       "acceptGDPR": "Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu"
-    }
+    },
+    "consent": {
+      "terms": {
+        "beforeLink": "Ich akzeptiere die",
+        "link": "Allgemeinen Geschäftsbedingungen",
+        "afterLink": "und bin damit einverstanden, dass Radical Zero mich per E-Mail kontaktieren kann"
+      },
+      "gdpr": {
+        "beforeLink": "Ich stimme der Verarbeitung meiner personenbezogenen Daten gemäß",
+        "link": "DSGVO-Bestimmungen"
+      }
+    },
+    "emailReport": {
+      "sending": "Bericht wird gesendet...",
+      "sent": "Bericht gesendet",
+      "send": "Bericht per E-Mail senden"
+    },
+    "success": {
+      "title": "Übermittlung erfolgreich!",
+      "message": "Vielen Dank für Ihr Interesse an CO₂-Gutschriften. Ein detaillierter Bericht wurde an Ihre E-Mail gesendet. Ein Radical-Zero-Vertreter wird sich in Kürze mit weiteren Informationen zu Ihren potenziellen CO₂-Einsparungen bei Ihnen melden."
+    },
+    "submit": "Absenden"
   }
 }

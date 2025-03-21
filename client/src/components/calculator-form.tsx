@@ -919,7 +919,7 @@ export function CalculatorForm() {
                             className="flex items-center"
                           >
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Sending Report...
+                            {t('calculator.emailReport.sending')}
                           </motion.div>
                         ) : isEmailSent ? (
                           <motion.div
@@ -930,7 +930,7 @@ export function CalculatorForm() {
                             className="flex items-center"
                           >
                             <Check className="mr-2 h-4 w-4" />
-                            Report Sent
+                            {t('calculator.emailReport.sent')}
                           </motion.div>
                         ) : (
                           <motion.div
@@ -941,7 +941,7 @@ export function CalculatorForm() {
                             className="flex items-center"
                           >
                             <Mail className="mr-2 h-4 w-4" />
-                            Send Report to Email
+                            {t('calculator.emailReport.send')}
                           </motion.div>
                         )}
                       </AnimatePresence>
