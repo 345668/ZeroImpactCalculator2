@@ -901,6 +901,15 @@ export function CalculatorForm() {
                             { value: 'munich', label: 'Munich' },
                             { value: 'cologne', label: 'Cologne' },
                             { value: 'frankfurt', label: 'Frankfurt' },
+                            { value: 'stuttgart', label: 'Stuttgart' },
+                            { value: 'dusseldorf', label: 'Düsseldorf' },
+                            { value: 'dortmund', label: 'Dortmund' },
+                            { value: 'essen', label: 'Essen' },
+                            { value: 'leipzig', label: 'Leipzig' },
+                            { value: 'bremen', label: 'Bremen' },
+                            { value: 'dresden', label: 'Dresden' },
+                            { value: 'hannover', label: 'Hannover' },
+                            { value: 'nuremberg', label: 'Nuremberg' },
                             { value: 'other_de', label: 'Other city in Germany' }
                           ];
                           break;
@@ -910,6 +919,8 @@ export function CalculatorForm() {
                             { value: 'salzburg', label: 'Salzburg' },
                             { value: 'graz', label: 'Graz' },
                             { value: 'innsbruck', label: 'Innsbruck' },
+                            { value: 'linz', label: 'Linz' },
+                            { value: 'klagenfurt', label: 'Klagenfurt' },
                             { value: 'other_at', label: 'Other city in Austria' }
                           ];
                           break;
@@ -919,10 +930,87 @@ export function CalculatorForm() {
                             { value: 'geneva', label: 'Geneva' },
                             { value: 'bern', label: 'Bern' },
                             { value: 'basel', label: 'Basel' },
+                            { value: 'lausanne', label: 'Lausanne' },
+                            { value: 'winterthur', label: 'Winterthur' },
+                            { value: 'lucerne', label: 'Lucerne' },
+                            { value: 'st_gallen', label: 'St. Gallen' },
                             { value: 'other_ch', label: 'Other city in Switzerland' }
                           ];
                           break;
-                        // Add cases for other countries as needed
+                        case 'france':
+                          cityOptions = [
+                            { value: 'paris', label: 'Paris' },
+                            { value: 'marseille', label: 'Marseille' },
+                            { value: 'lyon', label: 'Lyon' },
+                            { value: 'toulouse', label: 'Toulouse' },
+                            { value: 'nice', label: 'Nice' },
+                            { value: 'nantes', label: 'Nantes' },
+                            { value: 'strasbourg', label: 'Strasbourg' },
+                            { value: 'other_fr', label: 'Other city in France' }
+                          ];
+                          break;
+                        case 'netherlands':
+                          cityOptions = [
+                            { value: 'amsterdam', label: 'Amsterdam' },
+                            { value: 'rotterdam', label: 'Rotterdam' },
+                            { value: 'the_hague', label: 'The Hague' },
+                            { value: 'utrecht', label: 'Utrecht' },
+                            { value: 'eindhoven', label: 'Eindhoven' },
+                            { value: 'other_nl', label: 'Other city in Netherlands' }
+                          ];
+                          break;
+                        case 'belgium':
+                          cityOptions = [
+                            { value: 'brussels', label: 'Brussels' },
+                            { value: 'antwerp', label: 'Antwerp' },
+                            { value: 'ghent', label: 'Ghent' },
+                            { value: 'charleroi', label: 'Charleroi' },
+                            { value: 'liege', label: 'Liège' },
+                            { value: 'other_be', label: 'Other city in Belgium' }
+                          ];
+                          break;
+                        case 'luxembourg':
+                          cityOptions = [
+                            { value: 'luxembourg_city', label: 'Luxembourg City' },
+                            { value: 'esch_sur_alzette', label: 'Esch-sur-Alzette' },
+                            { value: 'differdange', label: 'Differdange' },
+                            { value: 'other_lu', label: 'Other city in Luxembourg' }
+                          ];
+                          break;
+                        case 'uk':
+                          cityOptions = [
+                            { value: 'london', label: 'London' },
+                            { value: 'manchester', label: 'Manchester' },
+                            { value: 'birmingham', label: 'Birmingham' },
+                            { value: 'glasgow', label: 'Glasgow' },
+                            { value: 'liverpool', label: 'Liverpool' },
+                            { value: 'edinburgh', label: 'Edinburgh' },
+                            { value: 'other_uk', label: 'Other city in UK' }
+                          ];
+                          break;
+                        case 'italy':
+                          cityOptions = [
+                            { value: 'rome', label: 'Rome' },
+                            { value: 'milan', label: 'Milan' },
+                            { value: 'naples', label: 'Naples' },
+                            { value: 'turin', label: 'Turin' },
+                            { value: 'palermo', label: 'Palermo' },
+                            { value: 'florence', label: 'Florence' },
+                            { value: 'other_it', label: 'Other city in Italy' }
+                          ];
+                          break;
+                        case 'spain':
+                          cityOptions = [
+                            { value: 'madrid', label: 'Madrid' },
+                            { value: 'barcelona', label: 'Barcelona' },
+                            { value: 'valencia', label: 'Valencia' },
+                            { value: 'seville', label: 'Seville' },
+                            { value: 'zaragoza', label: 'Zaragoza' },
+                            { value: 'malaga', label: 'Málaga' },
+                            { value: 'other_es', label: 'Other city in Spain' }
+                          ];
+                          break;
+                        // For other countries, allow text entry
                         default:
                           cityOptions = [
                             { value: 'other_city', label: 'Type your city' }

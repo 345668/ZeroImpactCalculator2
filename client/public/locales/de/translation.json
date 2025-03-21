@@ -149,6 +149,8 @@
       "postalCode": "Postleitzahl",
       "city": "Stadt",
       "country": "Land",
+      "selectCountry": "Land auswählen",
+      "selectCity": "Stadt auswählen",
       "acceptTerms": "Ich akzeptiere die Nutzungsbedingungen",
       "acceptGDPR": "Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu"
     },
