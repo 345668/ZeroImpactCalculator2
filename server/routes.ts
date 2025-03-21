@@ -218,7 +218,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Document upload endpoint with improved data handling
+  // Document upload endpoint with improved data handling and submission updates
   app.post("/api/upload-document", upload.single('document'), async (req, res) => {
     const startTime = Date.now();
     console.log('Upload request received:', req.file ? 'File present' : 'No file');
@@ -248,6 +248,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Log processing time in production
       if (process.env.NODE_ENV === 'production') {
         console.log(`Document processing completed in ${Date.now() - startTime}ms`);
+      }
+      
+      // If we have a submissionId, update the submission with the new file information
+      if (submissionId) {
+        try {
+          console.log(`Updating submission ${submissionId} with file information`);
+          
+          // Get the submission to update
+          const submission = await storage.getSubmissionById(submissionId);
+          
+          if (submission) {
+            // Update the submission with the new file details
+            await db.update(submissions)
+              .set({
+                fileUrl: processedData.fileUrl,
+                fileName: req.file.originalname,
+                fileSize: String(req.file.size),
+                fileType: req.file.mimetype,
+                fileUploadedAt: new Date(),
+                fileMetadata: JSON.stringify(processedData.extractionMetadata || {})
+              })
+              .where(eq(submissions.id, submissionId));
+              
+            console.log(`Submission ${submissionId} updated with file information`);
+            
+            // If Azure Table Storage is enabled, sync the updated submission
+            if (AZURE_STORAGE_CONFIG.tableStorage.enabled) {
+              const updatedSubmission = await storage.getSubmissionById(submissionId);
+              if (updatedSubmission) {
+                await syncSubmissionToTable(updatedSubmission);
+                console.log(`Submission ${submissionId} synced to Azure Table Storage`);
+              }
+            }
+          } else {
+            console.log(`Submission with ID ${submissionId} not found for update`);
+          }
+        } catch (updateError) {
+          console.error('Error updating submission with file information:', updateError);
+          // Continue with the response even if update fails
+        }
       }
 
       // Return enhanced response with extracted data and file information
