@@ -675,7 +675,7 @@ export function CalculatorForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <p className="text-sm text-muted-foreground">{t('common.ownershipType')}</p>
-                        <p className="font-medium capitalize">{form.getValues("buildingOwnership")}</p>
+                        <p className="font-medium capitalize blur-md">{form.getValues("buildingOwnership")}</p>
                       </div>
                       <div>
                         <p className="text-sm text-muted-foreground">{t('calculator.buildingInfo.size')}</p>
