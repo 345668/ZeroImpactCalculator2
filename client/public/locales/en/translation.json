@@ -147,7 +147,7 @@
       "email": "Email Address",
       "street": "Street",
       "postalCode": "Postal Code",
-      "city": "City",
+      "city": "State/Region",
       "country": "Country",
       "selectCountry": "Select country",
       "selectCity": "Select city",

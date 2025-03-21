@@ -147,10 +147,10 @@
       "email": "E-Mail-Adresse",
       "street": "Straße",
       "postalCode": "Postleitzahl",
-      "city": "Stadt",
+      "city": "Bundesland/Region",
       "country": "Land",
       "selectCountry": "Land auswählen",
-      "selectCity": "Stadt auswählen",
+      "selectCity": "Bundesland/Region auswählen",
       "acceptTerms": "Ich akzeptiere die Nutzungsbedingungen",
       "acceptGDPR": "Ich stimme der Verarbeitung meiner Daten gemäß der Datenschutzerklärung zu"
     },

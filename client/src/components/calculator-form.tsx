@@ -866,7 +866,7 @@ export function CalculatorForm() {
                               <SelectValue placeholder={t('calculator.contactDetails.selectCountry')} />
                             </SelectTrigger>
                           </FormControl>
-                          <SelectContent>
+                          <SelectContent className="bg-white dark:bg-gray-950">
                             <SelectItem value="germany">Germany</SelectItem>
                             <SelectItem value="austria">Austria</SelectItem>
                             <SelectItem value="switzerland">Switzerland</SelectItem>
@@ -896,118 +896,167 @@ export function CalculatorForm() {
                       switch (country) {
                         case 'germany':
                           cityOptions = [
+                            { value: 'baden-wuerttemberg', label: 'Baden-Württemberg' },
+                            { value: 'bayern', label: 'Bayern' },
                             { value: 'berlin', label: 'Berlin' },
-                            { value: 'hamburg', label: 'Hamburg' },
-                            { value: 'munich', label: 'Munich' },
-                            { value: 'cologne', label: 'Cologne' },
-                            { value: 'frankfurt', label: 'Frankfurt' },
-                            { value: 'stuttgart', label: 'Stuttgart' },
-                            { value: 'dusseldorf', label: 'Düsseldorf' },
-                            { value: 'dortmund', label: 'Dortmund' },
-                            { value: 'essen', label: 'Essen' },
-                            { value: 'leipzig', label: 'Leipzig' },
+                            { value: 'brandenburg', label: 'Brandenburg' },
                             { value: 'bremen', label: 'Bremen' },
-                            { value: 'dresden', label: 'Dresden' },
-                            { value: 'hannover', label: 'Hannover' },
-                            { value: 'nuremberg', label: 'Nuremberg' },
-                            { value: 'other_de', label: 'Other city in Germany' }
+                            { value: 'hamburg', label: 'Hamburg' },
+                            { value: 'hessen', label: 'Hessen' },
+                            { value: 'mecklenburg-vorpommern', label: 'Mecklenburg-Vorpommern' },
+                            { value: 'niedersachsen', label: 'Niedersachsen' },
+                            { value: 'nordrhein-westfalen', label: 'Nordrhein-Westfalen' },
+                            { value: 'rheinland-pfalz', label: 'Rheinland-Pfalz' },
+                            { value: 'saarland', label: 'Saarland' },
+                            { value: 'sachsen', label: 'Sachsen' },
+                            { value: 'sachsen-anhalt', label: 'Sachsen-Anhalt' },
+                            { value: 'schleswig-holstein', label: 'Schleswig-Holstein' },
+                            { value: 'thueringen', label: 'Thüringen' }
                           ];
                           break;
                         case 'austria':
                           cityOptions = [
                             { value: 'vienna', label: 'Vienna' },
+                            { value: 'lower-austria', label: 'Lower Austria' },
+                            { value: 'upper-austria', label: 'Upper Austria' },
+                            { value: 'styria', label: 'Styria' },
+                            { value: 'tyrol', label: 'Tyrol' },
+                            { value: 'carinthia', label: 'Carinthia' },
                             { value: 'salzburg', label: 'Salzburg' },
-                            { value: 'graz', label: 'Graz' },
-                            { value: 'innsbruck', label: 'Innsbruck' },
-                            { value: 'linz', label: 'Linz' },
-                            { value: 'klagenfurt', label: 'Klagenfurt' },
-                            { value: 'other_at', label: 'Other city in Austria' }
+                            { value: 'vorarlberg', label: 'Vorarlberg' },
+                            { value: 'burgenland', label: 'Burgenland' }
                           ];
                           break;
                         case 'switzerland':
                           cityOptions = [
                             { value: 'zurich', label: 'Zurich' },
-                            { value: 'geneva', label: 'Geneva' },
                             { value: 'bern', label: 'Bern' },
-                            { value: 'basel', label: 'Basel' },
-                            { value: 'lausanne', label: 'Lausanne' },
-                            { value: 'winterthur', label: 'Winterthur' },
+                            { value: 'vaud', label: 'Vaud' },
+                            { value: 'geneva', label: 'Geneva' },
+                            { value: 'ticino', label: 'Ticino' },
+                            { value: 'st-gallen', label: 'St. Gallen' },
+                            { value: 'basel-stadt', label: 'Basel-Stadt' },
+                            { value: 'basel-landschaft', label: 'Basel-Landschaft' },
                             { value: 'lucerne', label: 'Lucerne' },
-                            { value: 'st_gallen', label: 'St. Gallen' },
-                            { value: 'other_ch', label: 'Other city in Switzerland' }
+                            { value: 'valais', label: 'Valais' },
+                            { value: 'aargau', label: 'Aargau' },
+                            { value: 'graubunden', label: 'Graubünden' },
+                            { value: 'thurgau', label: 'Thurgau' },
+                            { value: 'fribourg', label: 'Fribourg' },
+                            { value: 'solothurn', label: 'Solothurn' },
+                            { value: 'neuchatel', label: 'Neuchâtel' },
+                            { value: 'schwyz', label: 'Schwyz' },
+                            { value: 'zug', label: 'Zug' },
+                            { value: 'schaffhausen', label: 'Schaffhausen' },
+                            { value: 'jura', label: 'Jura' },
+                            { value: 'appenzell-ausserrhoden', label: 'Appenzell Ausserrhoden' },
+                            { value: 'nidwalden', label: 'Nidwalden' },
+                            { value: 'glarus', label: 'Glarus' },
+                            { value: 'obwalden', label: 'Obwalden' },
+                            { value: 'uri', label: 'Uri' },
+                            { value: 'appenzell-innerrhoden', label: 'Appenzell Innerrhoden' }
                           ];
                           break;
                         case 'france':
                           cityOptions = [
-                            { value: 'paris', label: 'Paris' },
-                            { value: 'marseille', label: 'Marseille' },
-                            { value: 'lyon', label: 'Lyon' },
-                            { value: 'toulouse', label: 'Toulouse' },
-                            { value: 'nice', label: 'Nice' },
-                            { value: 'nantes', label: 'Nantes' },
-                            { value: 'strasbourg', label: 'Strasbourg' },
-                            { value: 'other_fr', label: 'Other city in France' }
+                            { value: 'ile-de-france', label: 'Île-de-France' },
+                            { value: 'auvergne-rhone-alpes', label: 'Auvergne-Rhône-Alpes' },
+                            { value: 'nouvelle-aquitaine', label: 'Nouvelle-Aquitaine' },
+                            { value: 'occitanie', label: 'Occitanie' },
+                            { value: 'hauts-de-france', label: 'Hauts-de-France' },
+                            { value: 'grand-est', label: 'Grand Est' },
+                            { value: 'provence-alpes-cote-dazur', label: 'Provence-Alpes-Côte d\'Azur' },
+                            { value: 'pays-de-la-loire', label: 'Pays de la Loire' },
+                            { value: 'normandy', label: 'Normandy' },
+                            { value: 'brittany', label: 'Brittany' },
+                            { value: 'bourgogne-franche-comte', label: 'Bourgogne-Franche-Comté' },
+                            { value: 'centre-val-de-loire', label: 'Centre-Val de Loire' },
+                            { value: 'corsica', label: 'Corsica' }
                           ];
                           break;
                         case 'netherlands':
                           cityOptions = [
-                            { value: 'amsterdam', label: 'Amsterdam' },
-                            { value: 'rotterdam', label: 'Rotterdam' },
-                            { value: 'the_hague', label: 'The Hague' },
+                            { value: 'north-holland', label: 'North Holland' },
+                            { value: 'south-holland', label: 'South Holland' },
+                            { value: 'north-brabant', label: 'North Brabant' },
+                            { value: 'gelderland', label: 'Gelderland' },
                             { value: 'utrecht', label: 'Utrecht' },
-                            { value: 'eindhoven', label: 'Eindhoven' },
-                            { value: 'other_nl', label: 'Other city in Netherlands' }
+                            { value: 'limburg', label: 'Limburg' },
+                            { value: 'overijssel', label: 'Overijssel' },
+                            { value: 'friesland', label: 'Friesland' },
+                            { value: 'groningen', label: 'Groningen' },
+                            { value: 'drenthe', label: 'Drenthe' },
+                            { value: 'flevoland', label: 'Flevoland' },
+                            { value: 'zeeland', label: 'Zeeland' }
                           ];
                           break;
                         case 'belgium':
                           cityOptions = [
-                            { value: 'brussels', label: 'Brussels' },
-                            { value: 'antwerp', label: 'Antwerp' },
-                            { value: 'ghent', label: 'Ghent' },
-                            { value: 'charleroi', label: 'Charleroi' },
-                            { value: 'liege', label: 'Liège' },
-                            { value: 'other_be', label: 'Other city in Belgium' }
+                            { value: 'brussels-capital', label: 'Brussels-Capital Region' },
+                            { value: 'flanders', label: 'Flanders' },
+                            { value: 'wallonia', label: 'Wallonia' }
                           ];
                           break;
                         case 'luxembourg':
                           cityOptions = [
-                            { value: 'luxembourg_city', label: 'Luxembourg City' },
-                            { value: 'esch_sur_alzette', label: 'Esch-sur-Alzette' },
-                            { value: 'differdange', label: 'Differdange' },
-                            { value: 'other_lu', label: 'Other city in Luxembourg' }
+                            { value: 'luxembourg-district', label: 'Luxembourg District' },
+                            { value: 'diekirch-district', label: 'Diekirch District' },
+                            { value: 'grevenmacher-district', label: 'Grevenmacher District' }
                           ];
                           break;
                         case 'uk':
                           cityOptions = [
-                            { value: 'london', label: 'London' },
-                            { value: 'manchester', label: 'Manchester' },
-                            { value: 'birmingham', label: 'Birmingham' },
-                            { value: 'glasgow', label: 'Glasgow' },
-                            { value: 'liverpool', label: 'Liverpool' },
-                            { value: 'edinburgh', label: 'Edinburgh' },
-                            { value: 'other_uk', label: 'Other city in UK' }
+                            { value: 'england', label: 'England' },
+                            { value: 'scotland', label: 'Scotland' },
+                            { value: 'wales', label: 'Wales' },
+                            { value: 'northern-ireland', label: 'Northern Ireland' }
                           ];
                           break;
                         case 'italy':
                           cityOptions = [
-                            { value: 'rome', label: 'Rome' },
-                            { value: 'milan', label: 'Milan' },
-                            { value: 'naples', label: 'Naples' },
-                            { value: 'turin', label: 'Turin' },
-                            { value: 'palermo', label: 'Palermo' },
-                            { value: 'florence', label: 'Florence' },
-                            { value: 'other_it', label: 'Other city in Italy' }
+                            { value: 'lombardy', label: 'Lombardy' },
+                            { value: 'lazio', label: 'Lazio' },
+                            { value: 'campania', label: 'Campania' },
+                            { value: 'sicily', label: 'Sicily' },
+                            { value: 'veneto', label: 'Veneto' },
+                            { value: 'emilia-romagna', label: 'Emilia-Romagna' },
+                            { value: 'piedmont', label: 'Piedmont' },
+                            { value: 'apulia', label: 'Apulia' },
+                            { value: 'tuscany', label: 'Tuscany' },
+                            { value: 'calabria', label: 'Calabria' },
+                            { value: 'sardinia', label: 'Sardinia' },
+                            { value: 'liguria', label: 'Liguria' },
+                            { value: 'marche', label: 'Marche' },
+                            { value: 'abruzzo', label: 'Abruzzo' },
+                            { value: 'friuli-venezia-giulia', label: 'Friuli-Venezia Giulia' },
+                            { value: 'trentino-alto-adige', label: 'Trentino-Alto Adige' },
+                            { value: 'umbria', label: 'Umbria' },
+                            { value: 'basilicata', label: 'Basilicata' },
+                            { value: 'molise', label: 'Molise' },
+                            { value: 'valle-daosta', label: 'Valle d\'Aosta' }
                           ];
                           break;
                         case 'spain':
                           cityOptions = [
-                            { value: 'madrid', label: 'Madrid' },
-                            { value: 'barcelona', label: 'Barcelona' },
-                            { value: 'valencia', label: 'Valencia' },
-                            { value: 'seville', label: 'Seville' },
-                            { value: 'zaragoza', label: 'Zaragoza' },
-                            { value: 'malaga', label: 'Málaga' },
-                            { value: 'other_es', label: 'Other city in Spain' }
+                            { value: 'andalusia', label: 'Andalusia' },
+                            { value: 'catalonia', label: 'Catalonia' },
+                            { value: 'madrid', label: 'Community of Madrid' },
+                            { value: 'valencia', label: 'Valencian Community' },
+                            { value: 'galicia', label: 'Galicia' },
+                            { value: 'castile-and-leon', label: 'Castile and León' },
+                            { value: 'basque-country', label: 'Basque Country' },
+                            { value: 'castilla-la-mancha', label: 'Castilla-La Mancha' },
+                            { value: 'canary-islands', label: 'Canary Islands' },
+                            { value: 'murcia', label: 'Region of Murcia' },
+                            { value: 'aragon', label: 'Aragon' },
+                            { value: 'balearic-islands', label: 'Balearic Islands' },
+                            { value: 'extremadura', label: 'Extremadura' },
+                            { value: 'asturias', label: 'Principality of Asturias' },
+                            { value: 'navarre', label: 'Navarre' },
+                            { value: 'cantabria', label: 'Cantabria' },
+                            { value: 'la-rioja', label: 'La Rioja' },
+                            { value: 'ceuta', label: 'Ceuta' },
+                            { value: 'melilla', label: 'Melilla' }
                           ];
                           break;
                         // For other countries, allow text entry
@@ -1030,7 +1079,7 @@ export function CalculatorForm() {
                                   <SelectValue placeholder={t('calculator.contactDetails.selectCity')} />
                                 </SelectTrigger>
                               </FormControl>
-                              <SelectContent>
+                              <SelectContent className="bg-white dark:bg-gray-950">
                                 {cityOptions.map(option => (
                                   <SelectItem key={option.value} value={option.value}>
                                     {option.label}
