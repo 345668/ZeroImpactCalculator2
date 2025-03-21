@@ -20,6 +20,7 @@ import { eq } from "drizzle-orm";
 import { db } from "./db.js";
 import { syncSubmissionToTable } from "./utils/azure-table-storage.js";
 import { AZURE_STORAGE_CONFIG } from "@shared/config";
+import { detectLanguageFromIP } from "./utils/language-detector.js";
 
 // Configure multer with stricter limits for production
 const upload = multer({
@@ -312,6 +313,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         error: process.env.NODE_ENV === 'production' 
           ? "Error processing document" 
           : error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Language detection endpoint
+  app.get("/api/detect-language", (req, res) => {
+    try {
+      console.log('Language detection request received');
+      const detectedLanguage = detectLanguageFromIP(req);
+      console.log(`Detected language: ${detectedLanguage}`);
+      res.json({ language: detectedLanguage });
+    } catch (error) {
+      console.error('Language detection error:', error);
+      res.status(500).json({
+        error: "Error detecting language",
+        message: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });
