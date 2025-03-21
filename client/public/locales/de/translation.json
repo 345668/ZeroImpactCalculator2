@@ -28,6 +28,8 @@
     "subtitle": "Schätzen Sie Ihre möglichen Einnahmen mit unserem Rechner:"
   },
   "calculator": {
+    "heading": "Berechnen Sie Ihre CO₂-Gutschriften",
+    "intro": "Geben Sie die Energiedaten Ihres Gebäudes ein, um Ihre potenziellen CO₂-Einsparungen und finanziellen Erträge zu ermitteln.",
     "title": "CO₂-Gutschriften-Rechner",
     "description": "Berechnen Sie Ihre potenziellen CO₂-Einsparungen und den Wert Ihrer Gutschriften",
     "uploadTitle": "Laden Sie Ihr iSFP-Dokument hoch",

@@ -28,6 +28,8 @@
     "subtitle": "Get an estimate of the earnings with our calculator:"
   },
   "calculator": {
+    "heading": "Calculate Your Carbon Credits",
+    "intro": "Enter your building's energy details to discover your potential carbon savings and financial returns.",
     "title": "Carbon Credit Calculator",
     "description": "Calculate your potential carbon savings and credit value",
     "uploadTitle": "Upload Your iSFP Document",
