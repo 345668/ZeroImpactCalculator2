@@ -38,7 +38,8 @@ interface GlobeMapProps {
 interface PointData {
   lat: number;
   lng: number;
-  size: number;
+  baseSize: number; // Original size used for calculations
+  size: number;     // Current size after scaling
   color: string;
   label: string;
   value: number;
@@ -49,6 +50,7 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
   const globeRef = useRef<any>();
   const [globeReady, setGlobeReady] = useState(false);
   const [dimensions, setDimensions] = useState({ width: 600, height: 400 });
+  const [scaleFactor, setScaleFactor] = useState(1);
 
   // Process data for globe visualization
   const pointsData = useMemo(() => {
@@ -59,7 +61,8 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
       {
         lat: 51.1657, 
         lng: 10.4515, 
-        size: 3,
+        baseSize: 3, // Store the original size
+        size: 3, // Will be dynamically updated with scaleFactor
         color: 'rgba(0, 128, 0, 0.8)',
         label: 'Germany',
         value: 15,
@@ -108,7 +111,7 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
       const coordinates = COUNTRY_COORDINATES[country] || { lat: 0, lng: 0 };
       
       // Calculate marker size based on number of submissions (clamped)
-      const size = Math.max(Math.min(data.count * 0.5, 5), 1.5);
+      const baseSize = Math.max(Math.min(data.count * 0.5, 5), 1.5);
       
       // Color based on CO2 savings intensity (green with varying opacity)
       const averageCO2 = data.totalCO2 / data.count;
@@ -117,7 +120,8 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
       return {
         lat: coordinates.lat,
         lng: coordinates.lng,
-        size,
+        baseSize, // Store the original size to scale later
+        size: baseSize, // Initial size, will be updated when zoom changes
         color: `rgba(0, 128, 0, ${colorIntensity})`,
         label: country,
         value: Math.round(data.totalCO2 * 10) / 10,
@@ -158,16 +162,58 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
 
-  // Initialize globe rotation
+  // Initialize globe rotation and handle zoom events
   useEffect(() => {
     if (globeRef.current && globeReady) {
-      globeRef.current.controls().autoRotate = true;
-      globeRef.current.controls().autoRotateSpeed = 0.5;
+      const controls = globeRef.current.controls();
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.5;
       
       // Set initial position to Europe
       globeRef.current.pointOfView({ lat: 48.8566, lng: 2.3522, altitude: 2.5 }, 1000);
+      
+      // Add zoom event listener to adjust point size
+      const handleZoom = () => {
+        // Get current camera position
+        const distance = controls.getDistance();
+        
+        // Calculate scale factor based on distance (zoom level)
+        // The lower the distance, the larger the scale factor
+        const baseDistance = 300; // This can be adjusted
+        const newScaleFactor = Math.max(0.5, Math.min(2.5, baseDistance / distance));
+        
+        // Update scale factor state
+        setScaleFactor(newScaleFactor);
+      };
+      
+      // Add zoom listener
+      controls.addEventListener('change', handleZoom);
+      
+      // Initial call to set starting scale
+      handleZoom();
     }
+    
+    // Clean up event listeners
+    return () => {
+      if (globeRef.current && globeReady) {
+        const controls = globeRef.current.controls();
+        controls.removeEventListener('change');
+      }
+    };
   }, [globeReady]);
+
+  // Update point sizes when scale factor changes
+  const scaledPointsData = useMemo(() => {
+    return pointsData.map(point => ({
+      ...point,
+      size: point.baseSize * scaleFactor, // Apply scale factor to the base size
+    }));
+  }, [pointsData, scaleFactor]);
+  
+  // Calculate dynamic point altitude based on scale factor
+  const pointAltitude = useMemo(() => {
+    return 0.01 * scaleFactor;
+  }, [scaleFactor]);
 
   return (
     <div id="globe-container" className="relative w-full overflow-hidden">
@@ -181,7 +227,7 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
           globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
           bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
           backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-          pointsData={pointsData}
+          pointsData={scaledPointsData} // Use the scaled points data
           pointLabel={d => `
             <div style="text-align:center; color:white; background:rgba(0,0,0,0.75); padding:10px; border-radius:5px;">
               <div style="font-weight:bold; margin-bottom:5px;">${(d as PointData).label}</div>
@@ -191,7 +237,7 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
           `}
           pointRadius="size"
           pointColor="color" 
-          pointAltitude={0.01}
+          pointAltitude={pointAltitude} // Dynamic altitude based on zoom
           pointsMerge={true}
           atmosphereColor="rgba(120, 160, 240, 0.3)"
           atmosphereAltitude={0.25}
