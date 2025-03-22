@@ -916,7 +916,7 @@ export function CalculatorForm() {
                           ];
                           break;
                         case 'austria':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'vienna', label: 'Vienna' },
                             { value: 'lower-austria', label: 'Lower Austria' },
                             { value: 'upper-austria', label: 'Upper Austria' },
@@ -929,7 +929,7 @@ export function CalculatorForm() {
                           ];
                           break;
                         case 'switzerland':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'zurich', label: 'Zurich' },
                             { value: 'bern', label: 'Bern' },
                             { value: 'vaud', label: 'Vaud' },
@@ -959,7 +959,7 @@ export function CalculatorForm() {
                           ];
                           break;
                         case 'france':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'ile-de-france', label: 'Île-de-France' },
                             { value: 'auvergne-rhone-alpes', label: 'Auvergne-Rhône-Alpes' },
                             { value: 'nouvelle-aquitaine', label: 'Nouvelle-Aquitaine' },
@@ -976,7 +976,7 @@ export function CalculatorForm() {
                           ];
                           break;
                         case 'netherlands':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'north-holland', label: 'North Holland' },
                             { value: 'south-holland', label: 'South Holland' },
                             { value: 'north-brabant', label: 'North Brabant' },
@@ -992,21 +992,21 @@ export function CalculatorForm() {
                           ];
                           break;
                         case 'belgium':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'brussels-capital', label: 'Brussels-Capital Region' },
                             { value: 'flanders', label: 'Flanders' },
                             { value: 'wallonia', label: 'Wallonia' }
                           ];
                           break;
                         case 'luxembourg':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'luxembourg-district', label: 'Luxembourg District' },
                             { value: 'diekirch-district', label: 'Diekirch District' },
                             { value: 'grevenmacher-district', label: 'Grevenmacher District' }
                           ];
                           break;
                         case 'uk':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'england', label: 'England' },
                             { value: 'scotland', label: 'Scotland' },
                             { value: 'wales', label: 'Wales' },
@@ -1014,7 +1014,7 @@ export function CalculatorForm() {
                           ];
                           break;
                         case 'italy':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'lombardy', label: 'Lombardy' },
                             { value: 'lazio', label: 'Lazio' },
                             { value: 'campania', label: 'Campania' },
@@ -1038,7 +1038,7 @@ export function CalculatorForm() {
                           ];
                           break;
                         case 'spain':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'andalusia', label: 'Andalusia' },
                             { value: 'catalonia', label: 'Catalonia' },
                             { value: 'madrid', label: 'Community of Madrid' },
@@ -1062,7 +1062,7 @@ export function CalculatorForm() {
                           break;
                         // For other countries, allow text entry
                         default:
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'other_city', label: 'Type your city' }
                           ];
                       }
