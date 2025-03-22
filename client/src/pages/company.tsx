@@ -2,9 +2,28 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { Layout } from "@/components/layout";
-import { Building2, BarChart2, Users, Mail, Home } from "lucide-react";
+import { Building2, BarChart2, Users, Mail, Home, Globe, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { GlobeMap } from "@/components/globe-map";
+import { motion } from "framer-motion";
+import type { Submission } from "@shared/schema";
 
 export default function CompanyPage() {
+  // Fetch submissions data for the globe map
+  const { data: submissions = [], isLoading } = useQuery({
+    queryKey: ['/api/submissions'],
+    queryFn: async () => {
+      console.log("Fetching submissions for company page");
+      const response = await fetch('/api/submissions');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch submissions');
+      }
+      
+      return response.json();
+    }
+  });
+  
   return (
     <Layout>
       <div className="container max-w-7xl mx-auto py-8 px-4">
@@ -17,6 +36,37 @@ export default function CompanyPage() {
             </Button>
           </Link>
         </div>
+        
+        {/* Global Impact Map - Full width card at the top */}
+        <motion.div
+          className="mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Card className="transition-all duration-200 hover:shadow-lg">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Globe className="h-5 w-5 text-primary" />
+                Global Carbon Impact
+              </CardTitle>
+              <CardDescription>
+                Worldwide view of carbon reduction impact
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[400px] w-full">
+                {isLoading ? (
+                  <div className="flex h-full items-center justify-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : (
+                  <GlobeMap submissions={submissions as Submission[]} isLoading={isLoading} />
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Dashboard Card */}

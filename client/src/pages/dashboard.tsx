@@ -763,14 +763,9 @@ export default function Dashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  {/* Two-column layout for Globe Map and Table */}
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <div className="lg:col-span-1">
-                      <GlobeMap submissions={filteredSubmissions} isLoading={isLoading} />
-                    </div>
-                    <div className="lg:col-span-2">
-                      <DashboardTable submissions={filteredSubmissions} />
-                    </div>
+                  {/* Full-width table of submissions */}
+                  <div className="w-full">
+                    <DashboardTable submissions={filteredSubmissions} />
                   </div>
                 </CardContent>
               </Card>
