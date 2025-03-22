@@ -92,13 +92,19 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
     "solar thermal",
     "pv self-consumption"
   ]).default("natural gas"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email address"),
-  acceptedTerms: z.boolean().or(z.string()).transform(val => 
-    String(val === true || val === "true")
-  ),
-  gdprConsent: z.boolean().or(z.string()).transform(val => 
-    String(val === true || val === "true")
-  ),
+  streetName: z.string().min(1, "Street name is required"),
+  postalCode: z.string().min(1, "Postal code is required"),
+  country: z.string().min(1, "Country is required"),
+  region: z.string().optional().default(""),
+  acceptedTerms: z.enum(["true", "false"]).refine(val => val === "true", {
+    message: "You must accept the terms and conditions"
+  }),
+  gdprConsent: z.enum(["true", "false"]).refine(val => val === "true", {
+    message: "You must accept the GDPR consent"
+  }),
   // Optional calculation results
   co2Savings: z.number().optional(),
   carbonCredits: z.number().optional(),
