@@ -99,10 +99,10 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
   postalCode: z.string().min(1, "Postal code is required"),
   country: z.string().min(1, "Country is required"),
   region: z.string().optional().default(""),
-  acceptedTerms: z.enum(["true", "false"]).refine(val => val === "true", {
+  acceptedTerms: z.boolean().or(z.enum(["true", "false"]).transform(val => val === "true")).refine(val => val === true, {
     message: "You must accept the terms and conditions"
   }),
-  gdprConsent: z.enum(["true", "false"]).refine(val => val === "true", {
+  gdprConsent: z.boolean().or(z.enum(["true", "false"]).transform(val => val === "true")).refine(val => val === true, {
     message: "You must accept the GDPR consent"
   }),
   // Optional calculation results

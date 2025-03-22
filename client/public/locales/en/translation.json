@@ -76,6 +76,13 @@
     "uploadDescription": "For faster results, upload your iSFP document or renovation plan to automatically fill the form",
     "uploadSuccess": "Document processed successfully",
     "orFillManually": "Or fill manually",
+    "errors": {
+      "validationFailed": "Form Validation Failed", 
+      "checkFields": "Please check all required fields and try again",
+      "requiredFields": "Please fill in all required fields",
+      "acceptTerms": "You must accept the terms and conditions",
+      "acceptGDPR": "You must accept the GDPR consent"
+    },
     "buildingInfo": {
       "title": "Building Information",
       "description": "Tell us about your building",

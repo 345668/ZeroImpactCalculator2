@@ -76,6 +76,13 @@
     "uploadDescription": "Für schnellere Ergebnisse laden Sie Ihr iSFP-Dokument oder Ihren Sanierungsplan hoch, um das Formular automatisch auszufüllen",
     "uploadSuccess": "Dokument erfolgreich verarbeitet",
     "orFillManually": "Oder manuell ausfüllen",
+    "errors": {
+      "validationFailed": "Formularvalidierung fehlgeschlagen", 
+      "checkFields": "Bitte überprüfen Sie alle erforderlichen Felder und versuchen Sie es erneut",
+      "requiredFields": "Bitte füllen Sie alle erforderlichen Felder aus",
+      "acceptTerms": "Sie müssen die Allgemeinen Geschäftsbedingungen akzeptieren",
+      "acceptGDPR": "Sie müssen der DSGVO-Einwilligung zustimmen"
+    },
     "buildingInfo": {
       "title": "Gebäudeinformationen",
       "description": "Informationen zu Ihrem Gebäude",

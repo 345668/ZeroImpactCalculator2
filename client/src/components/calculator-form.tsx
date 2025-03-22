@@ -245,6 +245,21 @@ export function CalculatorForm() {
     if (step === 4) {
       // Trigger calculation before showing results
       form.handleSubmit(onSubmit)();
+    } else if (step === 5) {
+      // Validate personal information before submission
+      form.trigger(["firstName", "lastName", "email", "streetName", "postalCode", "country", "region", "acceptedTerms", "gdprConsent"]);
+      
+      // Only proceed if there are no errors in the personal information fields
+      const hasErrors = Object.keys(form.formState.errors).length > 0;
+      if (hasErrors) {
+        console.log("Form validation errors:", form.formState.errors);
+        toast({
+          title: t('calculator.errors.validationFailed'),
+          description: t('calculator.errors.checkFields'),
+          variant: "destructive",
+        });
+        return; // Don't proceed to next step
+      }
     }
     setStep(step + 1);
   };
