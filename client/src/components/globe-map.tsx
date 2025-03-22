@@ -140,7 +140,8 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
       const container = document.getElementById('globe-container');
       if (container) {
         const width = container.clientWidth;
-        const height = Math.min(width * 0.6, 500); // Aspect ratio control
+        // Adjust height to fit parent container better
+        const height = Math.min(width * 0.6, 450); // Reduced max height to prevent overflow
         setDimensions({ width, height });
       }
     };
@@ -150,6 +151,9 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
     
     // Add resize listener
     window.addEventListener('resize', updateSize);
+    
+    // Also update when the component is fully loaded
+    setTimeout(updateSize, 100);
     
     return () => window.removeEventListener('resize', updateSize);
   }, []);
@@ -166,43 +170,36 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
   }, [globeReady]);
 
   return (
-    <Card className="transition-all duration-200">
-      <CardHeader>
-        <CardTitle>Global Impact Map</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div id="globe-container" className="relative w-full overflow-hidden">
-          {isLoading ? (
-            <Skeleton className="w-full h-[400px] rounded-md" />
-          ) : (
-            <Globe
-              ref={globeRef}
-              width={dimensions.width}
-              height={dimensions.height}
-              globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-              bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
-              backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-              pointsData={pointsData}
-              pointLabel={d => `
-                <div style="text-align:center; color:white; background:rgba(0,0,0,0.75); padding:10px; border-radius:5px;">
-                  <div style="font-weight:bold; margin-bottom:5px;">${(d as PointData).label}</div>
-                  <div>CO₂ Savings: ${(d as PointData).value} tons</div>
-                  <div>Submissions: ${(d as PointData).submissions}</div>
-                </div>
-              `}
-              pointRadius="size"
-              pointColor="color"
-              pointAltitude={0.01}
-              pointsMerge={true}
-              atmosphereColor="rgba(120, 160, 240, 0.3)"
-              atmosphereAltitude={0.25}
-              onGlobeReady={() => setGlobeReady(true)}
-              backgroundColor="rgba(0,0,0,0)"
-              waitForGlobeReady={true}
-            />
-          )}
-        </div>
-      </CardContent>
-    </Card>
+    <div id="globe-container" className="relative w-full overflow-hidden">
+      {isLoading ? (
+        <Skeleton className="w-full h-[400px] rounded-md" />
+      ) : (
+        <Globe
+          ref={globeRef}
+          width={dimensions.width}
+          height={dimensions.height}
+          globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
+          bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
+          backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
+          pointsData={pointsData}
+          pointLabel={d => `
+            <div style="text-align:center; color:white; background:rgba(0,0,0,0.75); padding:10px; border-radius:5px;">
+              <div style="font-weight:bold; margin-bottom:5px;">${(d as PointData).label}</div>
+              <div>CO₂ Savings: ${(d as PointData).value} tons</div>
+              <div>Submissions: ${(d as PointData).submissions}</div>
+            </div>
+          `}
+          pointRadius="size"
+          pointColor="color" 
+          pointAltitude={0.01}
+          pointsMerge={true}
+          atmosphereColor="rgba(120, 160, 240, 0.3)"
+          atmosphereAltitude={0.25}
+          onGlobeReady={() => setGlobeReady(true)}
+          backgroundColor="rgba(0,0,0,0)"
+          waitForGlobeReady={true}
+        />
+      )}
+    </div>
   );
 }

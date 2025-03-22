@@ -54,10 +54,10 @@ export default function CompanyPage() {
                 Worldwide view of carbon reduction impact
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="h-[400px] w-full">
+            <CardContent className="pb-6">
+              <div className="w-full" style={{ height: 'auto', minHeight: '400px', maxHeight: '500px', position: 'relative' }}>
                 {isLoading ? (
-                  <div className="flex h-full items-center justify-center">
+                  <div className="flex h-[400px] items-center justify-center">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   </div>
                 ) : (
