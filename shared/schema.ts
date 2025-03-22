@@ -22,6 +22,7 @@ export const submissions = pgTable("submissions", {
   postalCode: text("postal_code").notNull(),
   city: text("city").notNull(),
   country: text("country").notNull(),
+  region: text("region"),
   energyConsultantName: text("energy_consultant_name"),
   energyConsultantCompany: text("energy_consultant_company"),
   energyConsultantId: text("energy_consultant_id"),

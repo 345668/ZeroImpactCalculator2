@@ -146,6 +146,7 @@ export function CalculatorForm() {
       postalCode: "",
       city: "",
       country: "germany",
+      region: "",
       acceptedTerms: false,
       gdprConsent: false,
       energyConsultantName: "",
@@ -895,7 +896,7 @@ export function CalculatorForm() {
                       // Populate regions based on selected country
                       switch (country) {
                         case 'germany':
-                          cityOptions = [
+                          regionOptions = [
                             { value: 'baden-wuerttemberg', label: 'Baden-Württemberg' },
                             { value: 'bayern', label: 'Bayern' },
                             { value: 'berlin', label: 'Berlin' },
