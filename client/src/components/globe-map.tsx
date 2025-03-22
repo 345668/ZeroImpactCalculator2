@@ -179,8 +179,9 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
         
         // Calculate scale factor based on distance (zoom level)
         // The lower the distance, the larger the scale factor
-        const baseDistance = 300; // This can be adjusted
-        const newScaleFactor = Math.max(0.5, Math.min(2.5, baseDistance / distance));
+        const baseDistance = 280; // Adjusted for better visibility
+        // More dramatic scaling for closer views, with smooth curve
+        const newScaleFactor = Math.max(0.5, Math.min(3.0, Math.pow(baseDistance / distance, 1.2)));
         
         // Update scale factor state
         setScaleFactor(newScaleFactor);
@@ -204,15 +205,24 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
 
   // Update point sizes when scale factor changes
   const scaledPointsData = useMemo(() => {
-    return pointsData.map(point => ({
-      ...point,
-      size: point.baseSize * scaleFactor, // Apply scale factor to the base size
-    }));
+    return pointsData.map(point => {
+      // Enhanced scaling formula that provides more dramatic size changes
+      // while preserving proportions between different markers
+      const sizeMultiplier = 1 + Math.pow(scaleFactor - 1, 1.8);
+      const newSize = point.baseSize * sizeMultiplier;
+      
+      return {
+        ...point,
+        size: newSize,
+      };
+    });
   }, [pointsData, scaleFactor]);
   
   // Calculate dynamic point altitude based on scale factor
+  // Points raise higher when zoomed in for better 3D effect
   const pointAltitude = useMemo(() => {
-    return 0.01 * scaleFactor;
+    // Exponential growth for altitude as we zoom in
+    return 0.01 * Math.pow(scaleFactor, 1.5);
   }, [scaleFactor]);
 
   return (
