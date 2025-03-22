@@ -821,7 +821,7 @@ export function CalculatorForm() {
 
                   <FormField
                     control={form.control}
-                    name="street"
+                    name="streetName"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t('calculator.contactDetails.street')}</FormLabel>
@@ -856,8 +856,8 @@ export function CalculatorForm() {
                         <Select
                           onValueChange={(value) => {
                             field.onChange(value);
-                            // Reset city when country changes
-                            form.setValue('city', '');
+                            // Reset region when country changes
+                            form.setValue('region', '');
                           }}
                           defaultValue={field.value}
                         >
