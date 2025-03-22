@@ -54,21 +54,23 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
   const pointsData = useMemo(() => {
     console.log("Processing globe data with submissions:", submissions?.length);
     
-    // Ensure we have fallback data for demonstration if no submissions
+    // Always add demo data point for Germany to ensure visualization
+    const demoPoints = [
+      {
+        lat: 51.1657, 
+        lng: 10.4515, 
+        size: 3,
+        color: 'rgba(0, 128, 0, 0.8)',
+        label: 'Germany',
+        value: 15,
+        submissions: 3
+      }
+    ];
+    
+    // If no submissions, return only demo data
     if (!submissions?.length) {
       console.log("No submissions data for globe, using demo data");
-      // Create demo data for visualization
-      return [
-        {
-          lat: 51.1657, 
-          lng: 10.4515, 
-          size: 3,
-          color: 'rgba(0, 128, 0, 0.8)',
-          label: 'Germany',
-          value: 15,
-          submissions: 3
-        }
-      ];
+      return demoPoints;
     }
     
     // Group submissions by country
