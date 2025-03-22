@@ -1069,19 +1069,19 @@ export function CalculatorForm() {
                       
                       return (
                         <FormItem>
-                          <FormLabel>{t('calculator.contactDetails.city')}</FormLabel>
-                          {cityOptions.length > 1 ? (
+                          <FormLabel>{t('calculator.contactDetails.region')}</FormLabel>
+                          {regionOptions.length > 1 ? (
                             <Select
                               onValueChange={field.onChange}
                               defaultValue={field.value}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder={t('calculator.contactDetails.selectCity')} />
+                                  <SelectValue placeholder={t('calculator.contactDetails.selectRegion')} />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent className="bg-white dark:bg-gray-950">
-                                {cityOptions.map(option => (
+                                {regionOptions.map(option => (
                                   <SelectItem key={option.value} value={option.value}>
                                     {option.label}
                                   </SelectItem>
@@ -1090,7 +1090,7 @@ export function CalculatorForm() {
                             </Select>
                           ) : (
                             <FormControl>
-                              <Input placeholder="Enter your city" {...field} />
+                              <Input placeholder="Enter your region" {...field} />
                             </FormControl>
                           )}
                           <FormMessage />
