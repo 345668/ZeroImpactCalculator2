@@ -1,0 +1,51 @@
+Error creating submission: error: duplicate key value violates unique constraint "submissions_new_pkey"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DbStorage.createSubmission (/home/runner/workspace/server/storage.ts:69:28)
+    at async calculateEndpoint (/home/runner/workspace/server/routes.ts:115:24) {
+  length: 206,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (id)=(5) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'submissions',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'submissions_new_pkey',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
+Calculation error: error: duplicate key value violates unique constraint "submissions_new_pkey"
+    at file:///home/runner/workspace/node_modules/@neondatabase/serverless/index.mjs:1345:74
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async NeonPreparedQuery.execute (/home/runner/workspace/node_modules/src/neon-serverless/session.ts:102:18)
+    at async DbStorage.createSubmission (/home/runner/workspace/server/storage.ts:69:28)
+    at async calculateEndpoint (/home/runner/workspace/server/routes.ts:115:24) {
+  length: 206,
+  severity: 'ERROR',
+  code: '23505',
+  detail: 'Key (id)=(5) already exists.',
+  hint: undefined,
+  position: undefined,
+  internalPosition: undefined,
+  internalQuery: undefined,
+  where: undefined,
+  schema: 'public',
+  table: 'submissions',
+  column: undefined,
+  dataType: undefined,
+  constraint: 'submissions_new_pkey',
+  file: 'nbtinsert.c',
+  line: '666',
+  routine: '_bt_check_unique'
+}
+10:19:44 PM [express] POST /api/calculate 500 in 332ms
+Database connection test result: { test: 1 }
+Database connection test result: { test: 1 }
