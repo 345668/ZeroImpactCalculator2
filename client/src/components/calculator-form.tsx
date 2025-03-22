@@ -146,8 +146,8 @@ export function CalculatorForm() {
       postalCode: "",
       country: "germany",
       region: "",
-      acceptedTerms: "false",
-      gdprConsent: "false",
+      acceptedTerms: false,
+      gdprConsent: false,
       energyConsultantName: "",
       energyConsultantCompany: "",
       energyConsultantId: "",
@@ -1120,8 +1120,8 @@ export function CalculatorForm() {
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                         <FormControl>
                           <Checkbox
-                            checked={field.value === "true"}
-                            onCheckedChange={(checked) => field.onChange(checked ? "true" : "false")}
+                            checked={Boolean(field.value)}
+                            onCheckedChange={(checked) => field.onChange(checked)}
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
@@ -1149,8 +1149,8 @@ export function CalculatorForm() {
                       <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                         <FormControl>
                           <Checkbox
-                            checked={field.value === "true"}
-                            onCheckedChange={(checked) => field.onChange(checked ? "true" : "false")}
+                            checked={Boolean(field.value)}
+                            onCheckedChange={(checked) => field.onChange(checked)}
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">
