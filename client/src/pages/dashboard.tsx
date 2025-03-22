@@ -4,7 +4,7 @@ import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, LineChart, Line, Tooltip } from "recharts";
-import { BarChart2, Building2, Coins, Factory, FileDown, Calendar, RefreshCw, Loader2, Home } from "lucide-react";
+import { BarChart2, Building2, Coins, Factory, FileDown, Calendar, RefreshCw, Loader2, Home, Globe } from "lucide-react";
 import { Link } from "wouter";
 import type { Submission } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Component, ErrorInfo, ReactNode } from "react";
+import { GlobeMap } from "@/components/globe-map";
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
@@ -649,6 +650,14 @@ export default function Dashboard() {
                   </SafeChart>
                 </CardContent>
               </Card>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.55 }}
+            >
+              <GlobeMap submissions={filteredSubmissions} isLoading={isLoading} />
             </motion.div>
 
             <motion.div
