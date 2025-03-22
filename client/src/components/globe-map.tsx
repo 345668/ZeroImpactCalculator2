@@ -104,7 +104,7 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
     }>);
     
     // Convert to points data
-    return Object.entries(countryGroups).map(([country, data]) => {
+    const dataPoints = Object.entries(countryGroups).map(([country, data]) => {
       const coordinates = COUNTRY_COORDINATES[country] || { lat: 0, lng: 0 };
       
       // Calculate marker size based on number of submissions (clamped)
@@ -124,6 +124,13 @@ export function GlobeMap({ submissions, isLoading }: GlobeMapProps) {
         submissions: data.count
       };
     }).filter(point => point.lat !== 0 && point.lng !== 0);
+    
+    // Always add Germany as a fallback if no valid points
+    if (dataPoints.length === 0) {
+      dataPoints.push(demoPoints[0]);
+    }
+    
+    return dataPoints;
   }, [submissions]);
 
   // Adjust globe size on component mount and window resize
