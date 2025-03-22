@@ -27,7 +27,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Card } from "@/components/ui/card.tsx";
 
 // Update energySourceIcons mapping with corrected icons
-const energySourceIcons = {
+const energySourceIcons: Record<string, React.ElementType> = {
   "heating oil": Droplet,
   "natural gas": Flame,
   "liquefied petroleum gas": Cylinder,
