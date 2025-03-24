@@ -380,7 +380,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log('Azure container setup complete');
   } catch (error) {
     console.error('Failed to setup Azure container:', error);
-    throw error;
+    console.warn('Continuing without Azure Blob Storage functionality');
+    // Don't throw the error - allow the application to start without Azure Blob Storage
   }
 
   // Error handling middleware
@@ -536,9 +537,6 @@ async function processDocument(file: Express.Multer.File, options?: { email?: st
   try {
     console.log('Starting document processing...');
 
-    // Make sure the Azure Storage Container exists
-    await ensureContainerExists();
-
     // Set document type based on file mime type
     const documentType = file.mimetype.startsWith('image/') 
       ? 'energy-certificates-images' 
@@ -550,6 +548,15 @@ async function processDocument(file: Express.Multer.File, options?: { email?: st
     // Attempt upload
     let fileUrl = '';
     try {
+      // Try to ensure container exists first
+      try {
+        await ensureContainerExists();
+      } catch (containerError) {
+        console.warn('Failed to ensure Azure container exists:', containerError);
+        // Continue processing even if container setup fails
+      }
+      
+      // Attempt to upload the file
       fileUrl = await uploadFileToBlobStorage(file, {
         documentType,
         email: options?.email,
