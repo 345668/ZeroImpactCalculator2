@@ -6,7 +6,9 @@
       "noFile": "Please select a file to upload",
       "failedFetchUrl": "Failed to fetch document URL",
       "urlNotRetrieved": "The document URL could not be retrieved",
-      "unableToAccess": "Unable to access document. Please try again later."
+      "unableToAccess": "Unable to access document. Please try again later.",
+      "documentNotFound": "The document could not be found in storage. It may have been moved or deleted.",
+      "storageUnavailable": "The document storage service is currently unavailable. Please try again later."
     },
     "fileInfo": {
       "unknownSize": "Unknown size",

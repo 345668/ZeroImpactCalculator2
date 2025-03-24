@@ -255,7 +255,14 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
                     fetch(`/api/documents/url?path=${encodeURIComponent(uploadedFileInfo.url || '')}`)
                       .then(response => {
                         if (!response.ok) {
-                          throw new Error(t('document.errors.failedFetchUrl'));
+                          // Check specific error status
+                          if (response.status === 404) {
+                            throw new Error('DOCUMENT_NOT_FOUND');
+                          } else if (response.status === 503) {
+                            throw new Error('STORAGE_UNAVAILABLE');
+                          } else {
+                            throw new Error(t('document.errors.failedFetchUrl'));
+                          }
                         }
                         return response.json();
                       })
@@ -266,16 +273,26 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
                         } else {
                           toast({
                             title: t('document.toast.documentNotFound'),
-                            description: t('document.errors.urlNotRetrieved'),
+                            description: data.details || t('document.errors.urlNotRetrieved'),
                             variant: "destructive",
                           });
                         }
                       })
                       .catch(error => {
                         console.error('Error fetching document URL:', error);
+                        
+                        // More descriptive error messages based on error type
+                        let errorMessage = t('document.errors.unableToAccess');
+                        
+                        if (error.message === 'DOCUMENT_NOT_FOUND') {
+                          errorMessage = "The document could not be found in storage. It may have been moved or deleted.";
+                        } else if (error.message === 'STORAGE_UNAVAILABLE') {
+                          errorMessage = "The document storage service is currently unavailable. Please try again later.";
+                        }
+                        
                         toast({
                           title: t('document.toast.error'),
-                          description: t('document.errors.unableToAccess'),
+                          description: errorMessage,
                           variant: "destructive",
                         });
                       });

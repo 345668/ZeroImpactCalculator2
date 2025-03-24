@@ -102,7 +102,14 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                           fetch(`/api/documents/url?path=${encodeURIComponent(submission.fileUrl)}`)
                             .then(response => {
                               if (!response.ok) {
-                                throw new Error('Failed to fetch document URL');
+                                // Check specific error status
+                                if (response.status === 404) {
+                                  throw new Error('Document not found');
+                                } else if (response.status === 503) {
+                                  throw new Error('Document storage service unavailable');
+                                } else {
+                                  throw new Error('Failed to fetch document URL');
+                                }
                               }
                               return response.json();
                             })
@@ -113,16 +120,26 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                               } else {
                                 toast({
                                   title: "Document not found",
-                                  description: "The document URL could not be retrieved",
+                                  description: data.details || "The document URL could not be retrieved",
                                   variant: "destructive",
                                 });
                               }
                             })
                             .catch(error => {
                               console.error('Error fetching document URL:', error);
+                              
+                              // More descriptive error messages based on error type
+                              let errorMessage = "Unable to access document. Please try again later.";
+                              
+                              if (error.message === 'Document not found') {
+                                errorMessage = "The document could not be found in storage. It may have been moved or deleted.";
+                              } else if (error.message === 'Document storage service unavailable') {
+                                errorMessage = "The document storage service is currently unavailable. Please try again later.";
+                              }
+                              
                               toast({
                                 title: "Error",
-                                description: "Unable to access document. Please try again later.",
+                                description: errorMessage,
                                 variant: "destructive",
                               });
                             });

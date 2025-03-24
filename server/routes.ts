@@ -446,6 +446,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Check if Azure Storage connection is available
+      if (!process.env.AZURE_STORAGE_CONNECTION_STRING) {
+        return res.status(503).json({
+          success: false,
+          message: "Document storage is currently unavailable",
+          details: "Azure Blob Storage is not properly configured"
+        });
+      }
+
       console.log(`Attempting to get secure URL for document path: ${path}`);
       
       // Extract the blob name from the URL if it's a full URL
@@ -484,7 +493,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!url) {
         return res.status(404).json({
           success: false,
-          message: "Document not found or inaccessible"
+          message: "Document not found or inaccessible",
+          details: "The document storage service could not retrieve this file. It may have been moved or deleted, or the storage service may be temporarily unavailable."
         });
       }
       
@@ -497,6 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({
         success: false,
         message: "Failed to retrieve document URL",
+        details: "There was a problem accessing the document storage service. This may be due to temporary connection issues.",
         error: error instanceof Error ? error.message : "Unknown error"
       });
     }
