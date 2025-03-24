@@ -285,9 +285,9 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
                         let errorMessage = t('document.errors.unableToAccess');
                         
                         if (error.message === 'DOCUMENT_NOT_FOUND') {
-                          errorMessage = "The document could not be found in storage. It may have been moved or deleted.";
+                          errorMessage = t('document.errors.documentNotFound');
                         } else if (error.message === 'STORAGE_UNAVAILABLE') {
-                          errorMessage = "The document storage service is currently unavailable. Please try again later.";
+                          errorMessage = t('document.errors.storageUnavailable');
                         }
                         
                         toast({

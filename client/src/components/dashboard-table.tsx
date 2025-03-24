@@ -4,6 +4,7 @@ import { FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Submission } from "@shared/schema";
+import { useTranslation } from "react-i18next";
 
 interface DashboardTableProps {
   submissions: Submission[];
@@ -24,6 +25,7 @@ const safeDiv = (a: number, b: number, decimals = 2): number => {
 export function DashboardTable({ submissions }: DashboardTableProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
   
   return (
     <div className="rounded-md border">
@@ -54,7 +56,9 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
               <TableCell>
                 {`${submission.firstName} ${submission.lastName}`}
                 <br />
-                <span className="text-xs text-muted-foreground">{submission.address}</span>
+                <span className="text-xs text-muted-foreground">
+                  {submission.streetName}, {submission.postalCode}, {submission.region}, {submission.country}
+                </span>
               </TableCell>
               <TableCell>
                 {submission.energyConsultantName ? (
@@ -128,17 +132,20 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                             .catch(error => {
                               console.error('Error fetching document URL:', error);
                               
+                              // Use i18next for translations
+                              const { t } = useTranslation();
+                              
                               // More descriptive error messages based on error type
-                              let errorMessage = "Unable to access document. Please try again later.";
+                              let errorMessage = t('document.errors.unableToAccess');
                               
                               if (error.message === 'Document not found') {
-                                errorMessage = "The document could not be found in storage. It may have been moved or deleted.";
+                                errorMessage = t('document.errors.documentNotFound');
                               } else if (error.message === 'Document storage service unavailable') {
-                                errorMessage = "The document storage service is currently unavailable. Please try again later.";
+                                errorMessage = t('document.errors.storageUnavailable');
                               }
                               
                               toast({
-                                title: "Error",
+                                title: t('document.toast.error'),
                                 description: errorMessage,
                                 variant: "destructive",
                               });

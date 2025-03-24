@@ -6,7 +6,9 @@
       "noFile": "Bitte wählen Sie eine Datei zum Hochladen aus",
       "failedFetchUrl": "Fehler beim Abrufen der Dokument-URL",
       "urlNotRetrieved": "Die Dokument-URL konnte nicht abgerufen werden",
-      "unableToAccess": "Auf das Dokument kann nicht zugegriffen werden. Bitte versuchen Sie es später erneut."
+      "unableToAccess": "Auf das Dokument kann nicht zugegriffen werden. Bitte versuchen Sie es später erneut.",
+      "documentNotFound": "Das Dokument konnte im Speicher nicht gefunden werden. Es wurde möglicherweise verschoben oder gelöscht.",
+      "storageUnavailable": "Der Dokumentspeicherdienst ist derzeit nicht verfügbar. Bitte versuchen Sie es später erneut."
     },
     "fileInfo": {
       "unknownSize": "Unbekannte Größe",
