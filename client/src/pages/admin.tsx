@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagementTable } from "@/components/user-management-table";
 import { UserIcon, ShieldAlert, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { fetchApi } from "@/lib/queryClient";
 import { Layout } from "@/components/layout";
 
 export default function AdminPage() {
@@ -20,8 +20,14 @@ export default function AdminPage() {
     const checkAdminStatus = async () => {
       try {
         setIsLoading(true);
-        const response = await apiRequest('/api/auth/me');
-        const isUserAdmin = response?.role === 'admin';
+        const userData = await apiRequest<{
+          id: number;
+          email: string;
+          username: string;
+          role: string;
+        }>('/api/auth/me', { method: 'GET' });
+        
+        const isUserAdmin = userData?.role === 'admin';
         setIsAdmin(isUserAdmin);
         
         if (!isUserAdmin) {

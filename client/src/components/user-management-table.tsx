@@ -74,7 +74,7 @@ export function UserManagementTable() {
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
 
   // Fetch users from the API
-  const { data: users = [], isLoading } = useQuery({
+  const { data: users = [], isLoading } = useQuery<User[]>({
     queryKey: ['/api/users'],
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
@@ -83,8 +83,11 @@ export function UserManagementTable() {
   // Create a new user
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormValues) => {
-      return apiRequest('/api/users', {
+      return apiRequest<User>('/api/users', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify(data),
       });
     },
@@ -108,8 +111,11 @@ export function UserManagementTable() {
   // Update user role
   const updateRoleMutation = useMutation({
     mutationFn: async ({ id, role }: { id: number; role: string }) => {
-      return apiRequest(`/api/users/${id}/role`, {
+      return apiRequest<User>(`/api/users/${id}/role`, {
         method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ role }),
       });
     },

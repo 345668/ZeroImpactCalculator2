@@ -6,6 +6,7 @@ import NotFound from "@/pages/not-found";
 import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import CompanyPage from "@/pages/company";
+import AdminPage from "@/pages/admin";
 import { ResultsPage } from "@/pages/ResultsPage";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/company" component={CompanyPage} />
+      <Route path="/admin" component={AdminPage} />
       <Route path="/results" component={ResultsPage} />
       <Route component={NotFound} />
     </Switch>

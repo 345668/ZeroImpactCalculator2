@@ -7,6 +7,7 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Original apiRequest function
 export async function apiRequest(
   method: string,
   url: string,
@@ -21,6 +22,20 @@ export async function apiRequest(
 
   await throwIfResNotOk(res);
   return res;
+}
+
+// New function for JSON API requests using object options
+export async function fetchApi<T = any>(
+  url: string,
+  options?: RequestInit
+): Promise<T> {
+  const res = await fetch(url, {
+    ...options,
+    credentials: "include",
+  });
+
+  await throwIfResNotOk(res);
+  return res.json();
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
