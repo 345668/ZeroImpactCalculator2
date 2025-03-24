@@ -214,15 +214,26 @@ export async function listBlobs(options: {
 /**
  * Get a blob by exact path
  */
-export async function getBlobUrl(blobPath: string): Promise<string> {
+export async function getBlobUrl(blobPath: string): Promise<string | null> {
   try {
     if (!blobPath) {
       console.warn('Empty blob path provided to getBlobUrl');
-      return '';
+      return null;
     }
     
-    // Ensure container exists
-    await ensureContainerExists();
+    // Try to ensure container exists, but don't fail if it doesn't
+    try {
+      await ensureContainerExists();
+    } catch (containerError) {
+      console.warn('Failed to ensure container exists for getBlobUrl:', containerError);
+      // Fall through - we'll still attempt to get the URL but it will likely fail
+    }
+    
+    // Check if we have a valid connection
+    if (!containerClient) {
+      console.warn('Container client is not available, Azure storage may be disconnected');
+      return null;
+    }
     
     console.log(`Getting URL for blob: ${blobPath}`);
     const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
@@ -237,7 +248,7 @@ export async function getBlobUrl(blobPath: string): Promise<string> {
       path: blobPath,
       container: containerName
     });
-    return ''; // Return empty string instead of throwing
+    return null; // Return null to indicate failure
   }
 }
 

@@ -1,0 +1,51 @@
+10:40:23 PM [express] GET /api/submissions 200 in 284ms
+Attempting to get secure URL for document path: energy-certificates-pdf/anonymous/1742682905382-Sanierungsfahrplan_Doletzki_KS12.pdf
+Resolved blob path: energy-certificates-pdf/anonymous/1742682905382-Sanierungsfahrplan_Doletzki_KS12.pdf
+Checking if container "carbon-credits-docs" exists...
+Detailed error creating or accessing container: {
+  error: 'The specified resource does not exist.\n' +
+    'RequestId:8aecca66-901e-006e-610d-9dabf8000000\n' +
+    'Time:2025-03-24T22:40:30.5295590Z',
+  code: 'ResourceNotFound',
+  details: {
+    errorCode: 'ResourceNotFound',
+    'content-length': '223',
+    'content-type': 'application/xml',
+    server: 'Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0',
+    'x-ms-request-id': '8aecca66-901e-006e-610d-9dabf8000000',
+    'x-ms-client-request-id': 'd2568f3a-924e-474b-89d5-25653bc203fb',
+    'x-ms-version': '2025-01-05',
+    date: 'Mon, 24 Mar 2025 22:40:29 GMT',
+    message: 'The specified resource does not exist.\n' +
+      'RequestId:8aecca66-901e-006e-610d-9dabf8000000\n' +
+      'Time:2025-03-24T22:40:30.5295590Z',
+    code: 'ResourceNotFound',
+    authenticationErrorDetail: undefined
+  },
+  stack: 'RestError: The specified resource does not exist.\n' +
+    'RequestId:8aecca66-901e-006e-610d-9dabf8000000\n' +
+    'Time:2025-03-24T22:40:30.5295590Z\n' +
+    '    at handleErrorResponse (/home/runner/workspace/node_modules/@azure/core-client/src/deserializationPolicy.ts:255:17)\n' +
+    '    at deserializeResponseBody (/home/runner/workspace/node_modules/@azure/core-client/src/deserializationPolicy.ts:159:43)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n' +
+    '    at async StorageContextClient.sendOperationRequest (/home/runner/workspace/node_modules/@azure/core-client/src/serviceClient.ts:206:27)\n' +
+    '    at async StorageContextClient.sendOperationRequest (/home/runner/workspace/node_modules/@azure/core-http-compat/src/extendedClient.ts:99:23)\n' +
+    '    at async <anonymous> (/home/runner/workspace/node_modules/@azure/storage-blob/src/ContainerClient.ts:755:9)\n' +
+    '    at async Object.withSpan (/home/runner/workspace/node_modules/@azure/core-tracing/src/tracingClient.ts:70:22)\n' +
+    '    at async <anonymous> (/home/runner/workspace/node_modules/@azure/storage-blob/src/ContainerClient.ts:776:23)\n' +
+    '    at async Object.withSpan (/home/runner/workspace/node_modules/@azure/core-tracing/src/tracingClient.ts:70:22)\n' +
+    '    at async ensureContainerExists (/home/runner/workspace/server/utils/azure-storage.ts:111:28)\n' +
+    '    at async getBlobUrl (/home/runner/workspace/server/utils/azure-storage.ts:225:5)\n' +
+    '    at async <anonymous> (/home/runner/workspace/server/routes.ts:482:19)'
+}
+Error getting blob URL: {
+  error: 'Failed to create or access container: The specified resource does not exist.\n' +
+    'RequestId:8aecca66-901e-006e-610d-9dabf8000000\n' +
+    'Time:2025-03-24T22:40:30.5295590Z',
+  path: 'energy-certificates-pdf/anonymous/1742682905382-Sanierungsfahrplan_Doletzki_KS12.pdf',
+  container: 'carbon-credits-docs'
+}
+10:40:30 PM [express] GET /api/documents/url 404 in 110ms
+Database connection test result: { test: 1 }
+Database connection test result: { test: 1 }
+Database connection test result: { test: 1 }
