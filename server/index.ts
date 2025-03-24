@@ -1,26 +1,90 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
 import { setupVite, log } from "./vite.js";
-import { db, testDatabaseConnection } from "./db.js";
+import { db, testDatabaseConnection, pool } from "./db.js";
 import { performBackup } from "./utils/backup.js";
 import { initializeTableStorage } from "./utils/azure-table-storage.js";
 import { createServer } from "http";
+import session from "express-session";
+import connectPgSimple from "connect-pg-simple";
+import cookieParser from "cookie-parser";
+import csrf from "csurf";
+import crypto from "crypto";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
+const PgSession = connectPgSimple(session);
 
 // Disable x-powered-by header
 app.disable('x-powered-by');
 
+// Use cookie parser middleware
+app.use(cookieParser());
+
 // Parse JSON and URL-encoded bodies with size limits
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+
+// Configure secure session
+app.use(session({
+  store: new PgSession({
+    pool,
+    tableName: 'user_sessions',
+    createTableIfMissing: true,
+    pruneSessionInterval: 60 * 15
+  }),
+  name: 'radical.sid',
+  secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: isProduction,
+    httpOnly: true,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: 'lax'
+  }
+}));
+
+// Setup CSRF protection
+const csrfProtection = csrf({
+  cookie: {
+    key: '_csrf',
+    path: '/',
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000
+  }
+});
+
+// Exclude some paths from CSRF (like initial document uploads and login)
+app.use((req, res, next) => {
+  // Paths that don't need CSRF protection (public endpoints)
+  const csrfExcludedPaths = [
+    '/api/upload-document',
+    '/api/auth/login',
+    '/api/auth/signup',
+    '/api/detect-language',
+    '/api/health'
+  ];
+  
+  if (csrfExcludedPaths.includes(req.path) || req.method === 'GET') {
+    next();
+  } else {
+    csrfProtection(req, res, next);
+  }
+});
 
 // API route handling middleware - must come before any static/frontend middleware
 app.use('/api', (req, res, next) => {
   // Force JSON content type for all API routes
   res.setHeader('Content-Type', 'application/json');
   next();
+});
+
+// CSRF token endpoint
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() });
 });
 
 // Enhanced security headers
