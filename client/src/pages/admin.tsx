@@ -20,7 +20,7 @@ export default function AdminPage() {
     const checkAdminStatus = async () => {
       try {
         setIsLoading(true);
-        const userData = await apiRequest<{
+        const userData = await fetchApi<{
           id: number;
           email: string;
           username: string;

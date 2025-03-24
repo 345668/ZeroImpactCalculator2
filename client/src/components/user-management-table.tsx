@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { fetchApi } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -83,7 +83,7 @@ export function UserManagementTable() {
   // Create a new user
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormValues) => {
-      return apiRequest<User>('/api/users', {
+      return fetchApi<User>('/api/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -111,7 +111,7 @@ export function UserManagementTable() {
   // Update user role
   const updateRoleMutation = useMutation({
     mutationFn: async ({ id, role }: { id: number; role: string }) => {
-      return apiRequest<User>(`/api/users/${id}/role`, {
+      return fetchApi<User>(`/api/users/${id}/role`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
