@@ -20,6 +20,9 @@ export interface IStorage {
   createUser(data: InsertUser & { password: string }): Promise<User>;
   getUserByEmail(email: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserById(id: number): Promise<User | undefined>;
+  getAllUsers(): Promise<User[]>;
+  updateUserRole(id: number, role: string): Promise<User>;
   verifyPassword(email: string, password: string): Promise<boolean>;
 }
 
@@ -264,6 +267,65 @@ export class DbStorage implements IStorage {
       return user;
     } catch (error) {
       console.error('Error getting user by username:', error);
+      throw error;
+    }
+  }
+
+  async getUserById(id: number): Promise<User | undefined> {
+    try {
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, id));
+
+      return user;
+    } catch (error) {
+      console.error('Error getting user by id:', error);
+      throw error;
+    }
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    try {
+      const results = await db
+        .select()
+        .from(users)
+        .orderBy(users.username);
+
+      console.log('Retrieved all users:', results.length);
+      return results;
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      throw error;
+    }
+  }
+
+  async updateUserRole(id: number, role: string): Promise<User> {
+    try {
+      console.log(`Updating user ${id} role to: ${role}`);
+      
+      // Validate role
+      if (!['user', 'admin', 'consultant'].includes(role)) {
+        throw new Error(`Invalid role: ${role}. Must be one of: user, admin, consultant`);
+      }
+
+      const [updatedUser] = await db
+        .update(users)
+        .set({
+          role,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, id))
+        .returning();
+
+      if (!updatedUser) {
+        throw new Error(`User with ID ${id} not found`);
+      }
+
+      console.log('User role updated successfully');
+      return updatedUser;
+    } catch (error) {
+      console.error('Error updating user role:', error);
       throw error;
     }
   }

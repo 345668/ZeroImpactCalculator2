@@ -10,6 +10,7 @@ import { uploadFileToBlobStorage, ensureContainerExists, getBlobUrl } from "./ut
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
 import authRouter from "./routes/auth.js";
+import usersRouter from "./routes/users.js";
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { testDatabaseConnection } from "./database.js";
