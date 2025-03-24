@@ -77,7 +77,7 @@
       "buildingSize": "Gebäudegröße",
       "energyReduction": "Energiereduktion",
       "co2Savings": "CO₂-Einsparungen",
-      "carbonCredits": "CO₂-Gutschriften",
+      "carbonCredits": "Carbon Credits",
       "financialValue": "Finanzieller Wert",
       "document": "Dokument",
       "actions": "Aktionen"
@@ -96,10 +96,10 @@
     "subtitle": "Schätzen Sie Ihre möglichen Einnahmen mit unserem Rechner:"
   },
   "calculator": {
-    "heading": "Berechnen Sie Ihre CO₂-Gutschriften",
+    "heading": "Berechnen Sie Ihre Carbon Credits",
     "intro": "Geben Sie die Energiedaten Ihres Gebäudes ein, um Ihre potenziellen CO₂-Einsparungen und finanziellen Erträge zu ermitteln.",
-    "title": "CO₂-Gutschriften-Rechner",
-    "description": "Berechnen Sie Ihre potenziellen CO₂-Einsparungen und den Wert Ihrer Gutschriften",
+    "title": "Carbon Credits Rechner",
+    "description": "Berechnen Sie Ihre potenziellen CO₂-Einsparungen und den Wert Ihrer Carbon Credits",
     "uploadTitle": "Laden Sie Ihr iSFP-Dokument hoch",
     "uploadDescription": "Für schnellere Ergebnisse laden Sie Ihr iSFP-Dokument oder Ihren Sanierungsplan hoch, um das Formular automatisch auszufüllen",
     "uploadSuccess": "Dokument erfolgreich verarbeitet",
@@ -161,17 +161,17 @@
       "title": "Ergebnisanalyse",
       "description": "Überprüfen Sie Ihre potenziellen Einsparungen",
       "co2Savings": "CO₂-Einsparungen",
-      "carbonCredits": "CO₂-Gutschriften",
+      "carbonCredits": "Carbon Credits",
       "financialValue": "Finanzieller Wert",
       "tonsCO2": "Tonnen CO₂",
-      "creditValue": "Wert der CO₂-Gutschriften",
+      "creditValue": "Wert der Carbon Credits",
       "tenYearProjection": "10-Jahres-Prognose",
       "emailDetails": "Die detaillierten Ergebnisse werden nach Abschluss des Formulars an Ihre E-Mail gesendet."
     },
     "tenYearProjection": {
       "title": "10-Jahres-Prognose",
       "totalCO2Savings": "Gesamte CO₂-Einsparungen",
-      "totalCarbonCredits": "Gesamte CO₂-Gutschriften",
+      "totalCarbonCredits": "Gesamte Carbon Credits",
       "totalFinancialValue": "Gesamter finanzieller Wert"
     },
     "contactDetails": {
@@ -209,7 +209,7 @@
     },
     "success": {
       "title": "Übermittlung erfolgreich!",
-      "message": "Vielen Dank für Ihr Interesse an CO₂-Gutschriften. Ein detaillierter Bericht wurde an Ihre E-Mail gesendet. Ein Radical-Zero-Vertreter wird sich in Kürze mit weiteren Informationen zu Ihren potenziellen CO₂-Einsparungen bei Ihnen melden."
+      "message": "Vielen Dank für Ihr Interesse an Carbon Credits. Ein detaillierter Bericht wurde an Ihre E-Mail gesendet. Ein Radical-Zero-Vertreter wird sich in Kürze mit weiteren Informationen zu Ihren potenziellen CO₂-Einsparungen bei Ihnen melden."
     },
     "submit": "Absenden"
   }
