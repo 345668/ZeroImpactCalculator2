@@ -32,16 +32,16 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-muted/5">
-            <TableHead className="font-semibold">Date</TableHead>
-            <TableHead className="font-semibold">Customer</TableHead>
-            <TableHead className="font-semibold">Energy Consultant</TableHead>
-            <TableHead className="font-semibold">Building Size</TableHead>
-            <TableHead className="font-semibold">Energy Reduction</TableHead>
-            <TableHead className="font-semibold">CO₂ Savings</TableHead>
-            <TableHead className="font-semibold">Carbon Credits</TableHead>
-            <TableHead className="font-semibold">Financial Value</TableHead>
-            <TableHead className="font-semibold">Document</TableHead>
-            <TableHead className="font-semibold">Actions</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.date')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.customer')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.consultant')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.buildingSize')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.energyReduction')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.co2Savings')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.carbonCredits')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.financialValue')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.document')}</TableHead>
+            <TableHead className="font-semibold">{t('dashboard.table.actions')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -68,13 +68,13 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                     <span className="text-xs text-muted-foreground">
                       {submission.energyConsultantCompany}
                       <br />
-                      ID: {submission.energyConsultantId}
+                      {t('consultant.id')}: {submission.energyConsultantId}
                       <br />
-                      BAFA: {submission.energyConsultantBafaNumber}
+                      {t('consultant.bafa')}: {submission.energyConsultantBafaNumber}
                     </span>
                   </>
                 ) : (
-                  <span className="text-xs text-muted-foreground">No consultant info</span>
+                  <span className="text-xs text-muted-foreground">{t('consultant.noInfo')}</span>
                 )}
               </TableCell>
               <TableCell>{safeNumber(submission.buildingSize)} m²</TableCell>
@@ -103,7 +103,7 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                           console.log('Accessing document via API endpoint');
                           
                           // Make a fetch request to get the document URL through our API endpoint
-                          fetch(`/api/documents/url?path=${encodeURIComponent(submission.fileUrl)}`)
+                          fetch(`/api/documents/url?path=${encodeURIComponent(submission.fileUrl || '')}`)
                             .then(response => {
                               if (!response.ok) {
                                 // Check specific error status
@@ -123,17 +123,14 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                                 window.open(data.url, '_blank');
                               } else {
                                 toast({
-                                  title: "Document not found",
-                                  description: data.details || "The document URL could not be retrieved",
+                                  title: t('document.toast.documentNotFound'),
+                                  description: data.details || t('document.errors.urlNotRetrieved'),
                                   variant: "destructive",
                                 });
                               }
                             })
                             .catch(error => {
                               console.error('Error fetching document URL:', error);
-                              
-                              // Use i18next for translations
-                              const { t } = useTranslation();
                               
                               // More descriptive error messages based on error type
                               let errorMessage = t('document.errors.unableToAccess');
@@ -159,7 +156,7 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                           <line x1="16" y1="17" x2="8" y2="17"></line>
                           <polyline points="10 9 9 9 8 9"></polyline>
                         </svg>
-                        View Document
+                        {t('document.actions.viewDocument')}
                       </a>
                     </Button>
                     {submission.fileName && (
@@ -174,7 +171,7 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                     )}
                   </div>
                 ) : (
-                  <span className="text-xs text-muted-foreground">No document</span>
+                  <span className="text-xs text-muted-foreground">{t('document.noDocument')}</span>
                 )}
               </TableCell>
               <TableCell>
@@ -200,14 +197,14 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                         await queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
 
                         toast({
-                          title: "Success",
-                          description: "Report has been sent to your email",
+                          title: t('document.toast.success'),
+                          description: t('document.report.sentSuccess'),
                         });
                       } catch (error) {
                         console.error('Error sending report:', error);
                         toast({
-                          title: "Error",
-                          description: "Failed to send report email",
+                          title: t('document.toast.error'),
+                          description: t('document.report.sentError'),
                           variant: "destructive",
                         });
                       }
@@ -216,7 +213,7 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                     disabled={submission.emailSent === "yes"}
                   >
                     <FileDown className="h-4 w-4 mr-1" />
-                    {submission.emailSent === "yes" ? "Report Sent" : "Send Report"}
+                    {submission.emailSent === "yes" ? t('document.report.sent') : t('document.report.send')}
                   </Button>
                 </div>
               </TableCell>
