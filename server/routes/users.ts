@@ -3,6 +3,18 @@ import { storage } from '../storage.js';
 import { z } from 'zod';
 import { insertUserSchema } from '../../shared/schema.js';
 
+// Define the session user structure
+declare module 'express-session' {
+  interface SessionData {
+    user?: {
+      id: number;
+      email: string;
+      username: string;
+      role: string;
+    };
+  }
+}
+
 const router = Router();
 
 // Only allow admin users to access these routes

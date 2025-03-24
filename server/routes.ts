@@ -154,6 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/ai', aiRouter);
   app.use('/api/email', emailRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/users', usersRouter);
 
   // Apply rate limiting
   if (process.env.NODE_ENV === 'production') {
