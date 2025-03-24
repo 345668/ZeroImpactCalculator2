@@ -33,6 +33,13 @@
       "documentNotFound": "Dokument nicht gefunden",
       "processedSuccessfully": "Dokument erfolgreich verarbeitet in {{language}}",
       "unknownLanguage": "unbekannte Sprache"
+    },
+    "noDocument": "Kein Dokument",
+    "report": {
+      "send": "Bericht senden",
+      "sent": "Bericht gesendet",
+      "sentSuccess": "Der Bericht wurde an Ihre E-Mail gesendet",
+      "sentError": "Fehler beim Senden des Berichts per E-Mail"
     }
   },
   "common": {
@@ -61,6 +68,25 @@
     "login": "Anmelden",
     "logout": "Abmelden",
     "company": "Unternehmen"
+  },
+  "dashboard": {
+    "table": {
+      "date": "Datum",
+      "customer": "Kunde",
+      "consultant": "Energieberater",
+      "buildingSize": "Gebäudegröße",
+      "energyReduction": "Energiereduktion",
+      "co2Savings": "CO₂-Einsparungen",
+      "carbonCredits": "CO₂-Gutschriften",
+      "financialValue": "Finanzieller Wert",
+      "document": "Dokument",
+      "actions": "Aktionen"
+    }
+  },
+  "consultant": {
+    "id": "ID",
+    "bafa": "BAFA",
+    "noInfo": "Keine Beraterinfo"
   },
   "hero": {
     "title": {

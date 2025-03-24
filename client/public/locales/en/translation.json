@@ -33,6 +33,13 @@
       "documentNotFound": "Document not found",
       "processedSuccessfully": "Document processed successfully in {{language}}",
       "unknownLanguage": "unknown language"
+    },
+    "noDocument": "No document",
+    "report": {
+      "send": "Send Report",
+      "sent": "Report Sent",
+      "sentSuccess": "Report has been sent to your email",
+      "sentError": "Failed to send report email"
     }
   },
   "common": {
@@ -61,6 +68,25 @@
     "login": "Log In",
     "logout": "Log Out",
     "company": "Company"
+  },
+  "dashboard": {
+    "table": {
+      "date": "Date",
+      "customer": "Customer",
+      "consultant": "Energy Consultant",
+      "buildingSize": "Building Size",
+      "energyReduction": "Energy Reduction",
+      "co2Savings": "CO₂ Savings",
+      "carbonCredits": "Carbon Credits",
+      "financialValue": "Financial Value",
+      "document": "Document",
+      "actions": "Actions"
+    }
+  },
+  "consultant": {
+    "id": "ID",
+    "bafa": "BAFA",
+    "noInfo": "No consultant info"
   },
   "hero": {
     "title": {
