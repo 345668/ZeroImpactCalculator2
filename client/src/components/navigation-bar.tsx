@@ -13,6 +13,11 @@ export function NavigationBar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useTranslation();
   
+  // Debug logging for the login state
+  useEffect(() => {
+    console.log("Navigation bar - Login modal state:", showLoginModal);
+  }, [showLoginModal]);
+  
   // Check if user is logged in on component mount
   useEffect(() => {
     const user = localStorage.getItem("user");
@@ -37,6 +42,7 @@ export function NavigationBar() {
   const handleCompanyClick = (e: React.MouseEvent) => {
     if (!isLoggedIn) {
       e.preventDefault();
+      console.log("Opening login modal from navigation bar");
       setShowLoginModal(true);
     }
   };
