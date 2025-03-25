@@ -501,8 +501,8 @@ export class SendGridAgent {
    */
   static async createContactList(name: string, description?: string): Promise<{ success: boolean; message?: string; listId?: string }> {
     try {
-      const request = {
-        method: 'POST',
+      const request: ClientRequest = {
+        method: 'POST' as HttpMethod,
         url: '/v3/marketing/lists',
         body: {
           name,
@@ -549,8 +549,8 @@ export class SendGridAgent {
    */
   static async addContactsToList(listId: string, contactIds: string[]): Promise<{ success: boolean; message?: string }> {
     try {
-      const request = {
-        method: 'POST',
+      const request: ClientRequest = {
+        method: 'POST' as HttpMethod,
         url: `/v3/marketing/lists/${listId}/contacts`,
         body: {
           contact_ids: contactIds
@@ -598,8 +598,8 @@ export class SendGridAgent {
     generatePlainContent?: boolean;
   }): Promise<{ success: boolean; message?: string; templateId?: string }> {
     try {
-      const request = {
-        method: 'POST',
+      const request: ClientRequest = {
+        method: 'POST' as HttpMethod,
         url: '/v3/templates',
         body: {
           name,
@@ -621,8 +621,8 @@ export class SendGridAgent {
         const templateId = body.id;
         
         // Create a blank version of the template
-        const versionRequest = {
-          method: 'POST',
+        const versionRequest: ClientRequest = {
+          method: 'POST' as HttpMethod,
           url: `/v3/templates/${templateId}/versions`,
           body: {
             name: 'Initial Version',
@@ -686,8 +686,8 @@ export class SendGridAgent {
       if (updates.generatePlainContent !== undefined) updateBody.generate_plain_content = updates.generatePlainContent;
       if (updates.active !== undefined) updateBody.active = updates.active ? 1 : 0;
       
-      const request = {
-        method: 'PATCH',
+      const request: ClientRequest = {
+        method: 'PATCH' as HttpMethod,
         url: `/v3/templates/${templateId}/versions/${versionId}`,
         body: updateBody
       };
@@ -727,8 +727,8 @@ export class SendGridAgent {
    */
   static async getDynamicTemplates(): Promise<{ success: boolean; templates?: SendGridTemplateData[]; message?: string }> {
     try {
-      const request = {
-        method: 'GET',
+      const request: ClientRequest = {
+        method: 'GET' as HttpMethod,
         url: '/v3/templates?generations=dynamic'
       };
       
@@ -797,8 +797,8 @@ export class SendGridAgent {
         });
       }
       
-      const request = {
-        method: 'GET',
+      const request: ClientRequest = {
+        method: 'GET' as HttpMethod,
         url: `/v3/messages${queryParams}`
       };
       
@@ -858,8 +858,8 @@ export class SendGridAgent {
         });
       }
       
-      const request = {
-        method: 'GET',
+      const request: ClientRequest = {
+        method: 'GET' as HttpMethod,
         url: `/v3/stats${queryParams}`
       };
       
@@ -931,8 +931,8 @@ export class SendGridAgent {
       };
       
       // Check if webhook exists first
-      const getRequest = {
-        method: 'GET',
+      const getRequest: ClientRequest = {
+        method: 'GET' as HttpMethod,
         url: '/v3/user/webhooks/event/settings'
       };
       
