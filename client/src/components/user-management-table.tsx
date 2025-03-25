@@ -97,6 +97,63 @@ export function UserManagementTable() {
     }
   }, []);
 
+  // Add state for session verification
+  const [isSessionVerified, setIsSessionVerified] = useState(false);
+  
+  // Verify session status on component mount
+  useEffect(() => {
+    const verifySession = async () => {
+      try {
+        // First ensure we have a CSRF token
+        await fetchCsrfToken();
+        
+        // Then check the session status
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const sessionData = await response.json();
+          if (sessionData.authenticated && sessionData.user) {
+            console.log("Session verified, user is authenticated:", sessionData.user);
+            // Update current user from session data
+            setCurrentUser({
+              id: sessionData.user.id,
+              username: sessionData.user.username,
+              role: sessionData.user.role
+            });
+            setIsSessionVerified(true);
+          } else {
+            console.error("Session check returned no authenticated user");
+            toast({
+              title: "Authentication Error",
+              description: "Your session may have expired. Please log in again.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          console.error("Session verification failed with status:", response.status);
+          if (response.status === 401) {
+            toast({
+              title: "Authentication Required",
+              description: "Please log in to access user management features.",
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error verifying session:", error);
+        toast({
+          title: "Error",
+          description: "Could not verify your session. Please refresh and try again.",
+          variant: "destructive",
+        });
+      }
+    };
+    
+    verifySession();
+  }, [toast]);
+  
   // Fetch users from the API
   const { data: users = [], isLoading, refetch } = useQuery<User[]>({
     queryKey: ['/api/users'],
@@ -107,10 +164,14 @@ export function UserManagementTable() {
   // Create a new user
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormValues) => {
+      // Get CSRF token
+      const csrfToken = await fetchCsrfToken();
+      
       return fetchApi<User>('/api/users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'CSRF-Token': csrfToken || '',
         },
         body: JSON.stringify(data),
       });
@@ -135,10 +196,14 @@ export function UserManagementTable() {
   // Update user role
   const updateRoleMutation = useMutation({
     mutationFn: async ({ id, role }: { id: number; role: string }) => {
+      // Get CSRF token
+      const csrfToken = await fetchCsrfToken();
+      
       return fetchApi<User>(`/api/users/${id}/role`, {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'CSRF-Token': csrfToken || '',
         },
         body: JSON.stringify({ role }),
       });
@@ -172,12 +237,95 @@ export function UserManagementTable() {
   });
 
   // Handle form submission
-  const onSubmit = (values: CreateUserFormValues) => {
+  const onSubmit = async (values: CreateUserFormValues) => {
+    if (!isSessionVerified) {
+      // Verify session on-demand if needed
+      try {
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          toast({
+            title: "Authentication Error",
+            description: "Your session may have expired. Please log in again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        const sessionData = await response.json();
+        if (!sessionData.authenticated) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in to create users.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Session is verified, continue with mutation
+        setIsSessionVerified(true);
+      } catch (error) {
+        console.error("Error verifying session before submission:", error);
+        toast({
+          title: "Error",
+          description: "Authentication check failed. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
+    // Proceed with creating the user
     createUserMutation.mutate(values);
   };
 
   // Handle role change with confirmation for self-demotion
-  const handleRoleChange = (userId: number, newRole: string) => {
+  const handleRoleChange = async (userId: number, newRole: string) => {
+    // Verify session before role change
+    if (!isSessionVerified) {
+      try {
+        // Ensure CSRF token
+        await fetchCsrfToken();
+        
+        // Check session
+        const response = await fetch('/api/auth/session', {
+          credentials: 'include'
+        });
+        
+        if (!response.ok) {
+          toast({
+            title: "Authentication Error",
+            description: "Your session may have expired. Please log in again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        const sessionData = await response.json();
+        if (!sessionData.authenticated) {
+          toast({
+            title: "Authentication Required",
+            description: "Please log in to modify user roles.",
+            variant: "destructive",
+          });
+          return;
+        }
+        
+        // Session is verified
+        setIsSessionVerified(true);
+      } catch (error) {
+        console.error("Error verifying session before role change:", error);
+        toast({
+          title: "Error",
+          description: "Authentication check failed. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     // Check if trying to demote self from admin role
     if (currentUser?.id === userId && currentUser?.role === 'admin' && newRole !== 'admin') {
       if (confirm("WARNING: You are about to remove your own admin privileges. This may prevent you from accessing this section in the future. Are you sure you want to proceed?")) {
@@ -208,12 +356,72 @@ export function UserManagementTable() {
 
   return (
     <div className="space-y-4">
-      <Alert variant="destructive" className="mb-4">
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          User management operations are restricted to admins. Changes made here affect access to sensitive features.
-        </AlertDescription>
-      </Alert>
+      {!isSessionVerified ? (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription className="flex flex-col gap-2">
+            <div>Authentication required. Please log in to access user management.</div>
+            <Button 
+              size="sm" 
+              variant="outline" 
+              className="w-fit" 
+              onClick={async () => {
+                try {
+                  // Attempt to refresh the session
+                  await fetchCsrfToken();
+                  const response = await fetch('/api/auth/session', {
+                    credentials: 'include'
+                  });
+                  
+                  if (response.ok) {
+                    const sessionData = await response.json();
+                    if (sessionData.authenticated && sessionData.user) {
+                      setIsSessionVerified(true);
+                      setCurrentUser({
+                        id: sessionData.user.id,
+                        username: sessionData.user.username,
+                        role: sessionData.user.role
+                      });
+                      toast({
+                        title: "Success",
+                        description: "Session verified successfully",
+                      });
+                    } else {
+                      toast({
+                        title: "Authentication Required",
+                        description: "Please log in from the navigation bar to access this feature.",
+                        variant: "destructive",
+                      });
+                    }
+                  } else {
+                    toast({
+                      title: "Authentication Failed",
+                      description: "Please log in from the navigation bar to access this feature.",
+                      variant: "destructive",
+                    });
+                  }
+                } catch (error) {
+                  console.error("Error refreshing session:", error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to verify authentication. Please try logging in again.",
+                    variant: "destructive",
+                  });
+                }
+              }}
+            >
+              Verify Session
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            User management operations are restricted to admins. Changes made here affect access to sensitive features.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -226,6 +434,7 @@ export function UserManagementTable() {
             size="sm"
             onClick={handleRefresh}
             className="flex items-center gap-1"
+            disabled={!isSessionVerified}
           >
             <RefreshCw className="h-4 w-4" />
             Refresh
@@ -235,6 +444,7 @@ export function UserManagementTable() {
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2"
+                disabled={!isSessionVerified}
               >
                 <UserPlus className="h-4 w-4" />
                 Add User
@@ -455,7 +665,7 @@ export function UserManagementTable() {
                         <Select
                           value={user.role}
                           onValueChange={(value) => handleRoleChange(user.id, value)}
-                          disabled={updateRoleMutation.isPending}
+                          disabled={updateRoleMutation.isPending || !isSessionVerified}
                         >
                           <SelectTrigger className="h-8 w-[110px]">
                             <SelectValue />
