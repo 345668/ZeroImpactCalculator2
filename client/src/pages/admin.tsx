@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagementTable } from "@/components/user-management-table";
-import { UserIcon, ShieldAlert, ArrowLeft } from "lucide-react";
+import { DomainAlignmentChecker } from "@/components/domain-alignment-checker";
+import { UserIcon, ShieldAlert, ArrowLeft, MailCheck, EmailIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { fetchApi } from "@/lib/queryClient";
 import { Layout } from "@/components/layout";
@@ -93,10 +94,14 @@ export default function AdminPage() {
         </div>
 
         <Tabs defaultValue="users" className="space-y-4">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="users" className="flex items-center gap-2">
               <UserIcon className="h-4 w-4" />
               User Management
+            </TabsTrigger>
+            <TabsTrigger value="email" className="flex items-center gap-2">
+              <MailCheck className="h-4 w-4" />
+              Email Security
             </TabsTrigger>
           </TabsList>
           
@@ -107,6 +112,17 @@ export default function AdminPage() {
               </CardHeader>
               <CardContent>
                 <UserManagementTable />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="email" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Domain Alignment</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DomainAlignmentChecker />
               </CardContent>
             </Card>
           </TabsContent>
