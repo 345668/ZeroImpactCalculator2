@@ -5,6 +5,31 @@ import { storage } from "../storage";
 
 const router = express.Router();
 
+// GET /api/auth/session - Endpoint to check if user is authenticated
+router.get("/session", (req, res) => {
+  try {
+    if (req.session.user) {
+      // User is authenticated
+      return res.json({
+        authenticated: true,
+        user: req.session.user
+      });
+    } else {
+      // User is not authenticated
+      return res.status(401).json({
+        authenticated: false,
+        message: "Not authenticated"
+      });
+    }
+  } catch (error) {
+    console.error('Session check error:', error);
+    res.status(500).json({ 
+      message: "Error checking session",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
 // POST /api/auth/signup
 router.post("/signup", async (req, res) => {
   try {
@@ -80,8 +105,27 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    // Override user role to admin for all successful logins
-    user.role = "admin";
+    // Store user info in the session
+    req.session.user = {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      role: user.role
+    };
+
+    // Save the session
+    await new Promise<void>((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) {
+          console.error('Error saving session:', err);
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+
+    console.log('User authenticated and session saved:', req.session.user);
 
     // Return success response without sensitive data
     res.json({
@@ -97,6 +141,40 @@ router.post("/login", async (req, res) => {
     console.error('Login error:', error);
     res.status(500).json({ 
       message: "Error during login",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+});
+
+// POST /api/auth/logout - Endpoint to logout and clear session
+router.post("/logout", (req, res) => {
+  try {
+    // Log who is logging out
+    console.log('Logout request received from user:', req.session.user);
+    
+    // Destroy the session
+    req.session.destroy((err) => {
+      if (err) {
+        console.error('Error destroying session:', err);
+        return res.status(500).json({ 
+          success: false,
+          message: "Error logging out" 
+        });
+      }
+      
+      // Clear the session cookie
+      res.clearCookie('radical.sid');
+      
+      res.json({ 
+        success: true,
+        message: "Logged out successfully" 
+      });
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error during logout",
       error: error instanceof Error ? error.message : "Unknown error"
     });
   }
