@@ -10,6 +10,7 @@ import { motion } from "framer-motion";
 import type { Submission } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagementTable } from "@/components/user-management-table";
+import { EmailTemplatesList } from "@/components/email-template-editor";
 import { useToast } from "@/hooks/use-toast";
 import { LoginModal } from "@/components/login-modal";
 
@@ -106,10 +107,16 @@ function CompanyPage() {
               Overview
             </TabsTrigger>
             {isAdmin && (
-              <TabsTrigger value="users" className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                User Management
-              </TabsTrigger>
+              <>
+                <TabsTrigger value="users" className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  User Management
+                </TabsTrigger>
+                <TabsTrigger value="email-templates" className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Templates
+                </TabsTrigger>
+              </>
             )}
           </TabsList>
           
@@ -231,7 +238,18 @@ function CompanyPage() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Create and edit email templates for carbon credit reports and customer notifications.
                   </p>
-                  <Button className="w-full" variant="outline">Coming Soon</Button>
+                  {isAdmin ? (
+                    <Button 
+                      className="w-full" 
+                      onClick={() => setActiveTab("email-templates")}
+                    >
+                      Manage Templates
+                    </Button>
+                  ) : (
+                    <Button className="w-full" variant="outline" disabled>
+                      Admin Access Required
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -251,6 +269,24 @@ function CompanyPage() {
               </CardHeader>
               <CardContent>
                 <UserManagementTable />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Email Templates Tab Content */}
+          <TabsContent value="email-templates">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-primary" />
+                  Email Templates
+                </CardTitle>
+                <CardDescription>
+                  Create and manage email templates for customer notifications
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <EmailTemplatesList />
               </CardContent>
             </Card>
           </TabsContent>
