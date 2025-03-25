@@ -134,10 +134,38 @@ export const emailTemplates = pgTable("email_templates", {
   isDefault: boolean("is_default").default(false),
   language: text("language").default("en"),
   variables: text("variables"), // JSON string of available variables
+  templateType: text("template_type").default("standard"), // standard, dmarc-report, security-alert
+  sendgridTemplateId: text("sendgrid_template_id"), // For SendGrid dynamic templates
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
   createdBy: serial("created_by").references(() => users.id),
 });
+
+// DMARC Reports table for storing and analyzing DMARC reports
+export const dmarcReports = pgTable("dmarc_reports", {
+  id: serial("id").primaryKey(),
+  reportId: text("report_id").notNull().unique(),
+  domain: text("domain").notNull(),
+  sourceIp: text("source_ip").notNull(),
+  sourceOrg: text("source_org"),
+  reportingOrg: text("reporting_org").notNull(),
+  count: numeric("count").notNull(),
+  disposition: text("disposition").notNull(), // none, quarantine, reject
+  dkimResult: text("dkim_result"), // pass, fail, neutral
+  spfResult: text("spf_result"), // pass, fail, neutral
+  alignmentDkim: text("alignment_dkim"), // pass, fail
+  alignmentSpf: text("alignment_spf"), // pass, fail
+  policyEvaluated: text("policy_evaluated"), // pass, fail
+  reportDate: timestamp("report_date").notNull(),
+  receivedDate: timestamp("received_date").defaultNow(),
+  rawReport: text("raw_report"), // Store the original XML report
+  processed: boolean("processed").default(false),
+  emailNotificationSent: boolean("email_notification_sent").default(false),
+}, (table) => ({
+  domainIdx: index("domain_idx").on(table.domain),
+  reportDateIdx: index("report_date_idx").on(table.reportDate),
+  sourceIpIdx: index("source_ip_idx").on(table.sourceIp),
+}));
 
 // Email Template schema
 export const insertEmailTemplateSchema = createInsertSchema(emailTemplates)
@@ -145,12 +173,33 @@ export const insertEmailTemplateSchema = createInsertSchema(emailTemplates)
     body: z.string().min(10, "Template body must be at least 10 characters"),
     name: z.string().min(3, "Template name must be at least 3 characters"),
     subject: z.string().min(3, "Subject must be at least 3 characters"),
+    templateType: z.enum(["standard", "dmarc-report", "security-alert"]).default("standard"),
+    sendgridTemplateId: z.string().optional(),
   })
   .omit({
     id: true,
     createdAt: true,
     updatedAt: true,
   });
+
+// DMARC report schema
+export const insertDmarcReportSchema = createInsertSchema(dmarcReports)
+  .extend({
+    reportId: z.string().min(5, "Report ID is required"),
+    domain: z.string().min(3, "Domain is required"),
+    sourceIp: z.string().min(7, "Source IP is required"),
+    reportingOrg: z.string().min(2, "Reporting organization is required"),
+    count: z.coerce.number().min(0, "Count must be non-negative"),
+    disposition: z.enum(["none", "quarantine", "reject"]),
+    reportDate: z.coerce.date(),
+  })
+  .omit({
+    id: true,
+    receivedDate: true,
+  });
+
+export type DmarcReport = typeof dmarcReports.$inferSelect;
+export type InsertDmarcReport = z.infer<typeof insertDmarcReportSchema>;
 
 export type EmailTemplate = typeof emailTemplates.$inferSelect;
 export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
