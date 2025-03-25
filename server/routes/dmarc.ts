@@ -188,6 +188,12 @@ router.get('/:id', async (req, res) => {
 // Parse XML content directly without file upload
 router.post('/parse', async (req, res) => {
   try {
+    console.log('DMARC parse endpoint called', { 
+      contentType: req.headers['content-type'],
+      bodyKeys: Object.keys(req.body),
+      hasXml: 'xml' in req.body
+    });
+    
     const { xml } = req.body;
     
     if (!xml || typeof xml !== 'string') {
@@ -195,13 +201,25 @@ router.post('/parse', async (req, res) => {
     }
     
     // Process the DMARC report without saving to database
-    const parsedReports = await processDmarcReport(xml);
+    console.log('About to process DMARC report, XML length:', xml.length);
     
-    res.json({
-      success: true,
-      reports: parsedReports,
-      message: 'DMARC XML parsed successfully'
-    });
+    try {
+      const parsedReports = await processDmarcReport(xml);
+      console.log('Processed DMARC reports:', parsedReports);
+      
+      res.json({
+        success: true,
+        reports: parsedReports,
+        message: 'DMARC XML parsed successfully'
+      });
+    } catch (parseError) {
+      console.error('Error in processDmarcReport function:', parseError);
+      if (parseError instanceof Error) {
+        res.status(400).json({ error: `Error processing DMARC report: ${parseError.message}` });
+      } else {
+        res.status(500).json({ error: 'Internal error processing DMARC report' });
+      }
+    }
   } catch (error) {
     console.error('Error parsing DMARC XML:', error);
     
