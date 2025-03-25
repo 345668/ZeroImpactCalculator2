@@ -7,15 +7,20 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 import * as xml2js from 'xml2js';
+import { fileURLToPath } from 'url';
+
+// ES Module equivalent for __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const readFile = promisify(fs.readFile);
 const router = express.Router();
 const xmlParser = new xml2js.Parser({ explicitArray: false });
-const parseXmlString = promisify(xmlParser.parseString);
+const parseXmlString = promisify<string, any>(xmlParser.parseString.bind(xmlParser));
 
 // Configure multer for XML file uploads
 const upload = multer({
-  dest: path.join(__dirname, '../uploads/dmarc'),
+  dest: path.join(__dirname, '../../uploads/dmarc'),
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB max file size
   },
@@ -31,10 +36,61 @@ const upload = multer({
   }
 });
 
+// Define types for XML parsing
+interface DmarcReportXML {
+  feedback: {
+    report_metadata: {
+      report_id: string;
+      org_name: string;
+      date_range: {
+        begin: number;
+        end: number;
+      };
+    };
+    policy_published: {
+      domain: string;
+    };
+    record: Array<{
+      row: {
+        source_ip: string;
+        source_org?: string;
+        count: string;
+        policy_evaluated: {
+          disposition: string;
+          dkim?: string;
+          spf?: string;
+          result?: string;
+        };
+      };
+      auth_results: {
+        dkim?: { result: string };
+        spf?: { result: string };
+      };
+    }> | {
+      row: {
+        source_ip: string;
+        source_org?: string;
+        count: string;
+        policy_evaluated: {
+          disposition: string;
+          dkim?: string;
+          spf?: string;
+          result?: string;
+        };
+      };
+      auth_results: {
+        dkim?: { result: string };
+        spf?: { result: string };
+      };
+    };
+  };
+}
+
 // Function to process XML DMARC report
 async function processDmarcReport(xmlContent: string): Promise<InsertDmarcReport[]> {
   try {
-    const parsedXml = await parseXmlString(xmlContent);
+    // Parse XML with type assertion
+    const parsedXml = await parseXmlString(xmlContent) as DmarcReportXML;
     
     // DMARC report structure validation
     if (!parsedXml.feedback || !parsedXml.feedback.report_metadata || !parsedXml.feedback.policy_published || !parsedXml.feedback.record) {
@@ -50,7 +106,7 @@ async function processDmarcReport(xmlContent: string): Promise<InsertDmarcReport
       : [parsedXml.feedback.record];
     
     // Map XML records to DmarcReport objects
-    return records.map(record => {
+    return records.map((record) => {
       const row: Partial<InsertDmarcReport> = {
         reportId: metadata.report_id,
         domain: policy.domain,

@@ -12,7 +12,7 @@ import {
   type DmarcReport,
   type InsertDmarcReport
 } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, gte, lte } from "drizzle-orm";
 import { db } from "./db";
 import bcrypt from "bcryptjs";
 import { spawn } from "child_process";
