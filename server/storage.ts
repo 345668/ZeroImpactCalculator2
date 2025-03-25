@@ -1,5 +1,15 @@
-import { submissions, users, type Submission, type InsertSubmission, type User, type InsertUser } from "@shared/schema";
-import { eq, desc } from "drizzle-orm";
+import { 
+  submissions, 
+  users, 
+  emailTemplates,
+  type Submission, 
+  type InsertSubmission, 
+  type User, 
+  type InsertUser,
+  type EmailTemplate,
+  type InsertEmailTemplate
+} from "@shared/schema";
+import { eq, desc, and } from "drizzle-orm";
 import { db } from "./db";
 import bcrypt from "bcryptjs";
 import { spawn } from "child_process";
@@ -24,6 +34,14 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUserRole(id: number, role: string): Promise<User>;
   verifyPassword(email: string, password: string): Promise<boolean>;
+  
+  // Email template operations
+  createEmailTemplate(template: InsertEmailTemplate & { userId: number }): Promise<EmailTemplate>;
+  getEmailTemplateById(id: number): Promise<EmailTemplate | undefined>;
+  getAllEmailTemplates(): Promise<EmailTemplate[]>;
+  getDefaultEmailTemplate(language?: string): Promise<EmailTemplate | undefined>;
+  updateEmailTemplate(id: number, template: Partial<InsertEmailTemplate>): Promise<EmailTemplate>;
+  deleteEmailTemplate(id: number): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -139,6 +157,7 @@ export class DbStorage implements IStorage {
       throw error;
     }
   }
+  
   async syncSubmissions(): Promise<void> {
     try {
       console.log('Starting submissions sync to Azure Table Storage...');
@@ -177,6 +196,7 @@ export class DbStorage implements IStorage {
       throw error;
     }
   }
+  
   async updateEmailStatus(id: number): Promise<void> {
     try {
       console.log('Updating email status for submission:', id);
@@ -366,6 +386,157 @@ export class DbStorage implements IStorage {
 
       pgDump.on('error', reject);
     });
+  }
+
+  // Email template operations
+  async createEmailTemplate(template: InsertEmailTemplate & { userId: number }): Promise<EmailTemplate> {
+    try {
+      console.log('Creating new email template:', { name: template.name });
+
+      // Set only one default template per language
+      if (template.isDefault) {
+        await db.update(emailTemplates)
+          .set({ isDefault: false })
+          .where(eq(emailTemplates.language, template.language || 'en'));
+      }
+
+      // Insert new template
+      const [newTemplate] = await db.insert(emailTemplates)
+        .values([{
+          name: template.name,
+          subject: template.subject,
+          body: template.body,
+          description: template.description,
+          isDefault: template.isDefault || false,
+          language: template.language || 'en',
+          variables: template.variables,
+          createdBy: template.userId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }])
+        .returning();
+
+      console.log('Email template created successfully:', newTemplate.id);
+      return newTemplate;
+    } catch (error) {
+      console.error('Error creating email template:', error);
+      throw error;
+    }
+  }
+
+  async getEmailTemplateById(id: number): Promise<EmailTemplate | undefined> {
+    try {
+      const [template] = await db
+        .select()
+        .from(emailTemplates)
+        .where(eq(emailTemplates.id, id));
+
+      return template;
+    } catch (error) {
+      console.error('Error getting email template by id:', error);
+      throw error;
+    }
+  }
+
+  async getAllEmailTemplates(): Promise<EmailTemplate[]> {
+    try {
+      const results = await db
+        .select()
+        .from(emailTemplates)
+        .orderBy(emailTemplates.name);
+
+      console.log('Retrieved all email templates:', results.length);
+      return results;
+    } catch (error) {
+      console.error('Error getting all email templates:', error);
+      throw error;
+    }
+  }
+
+  async getDefaultEmailTemplate(language = 'en'): Promise<EmailTemplate | undefined> {
+    try {
+      // Try to find default template for the specified language
+      const [template] = await db
+        .select()
+        .from(emailTemplates)
+        .where(and(
+          eq(emailTemplates.isDefault, true),
+          eq(emailTemplates.language, language)
+        ));
+
+      // If no template found for the language, try to find default English template
+      if (!template && language !== 'en') {
+        const [englishTemplate] = await db
+          .select()
+          .from(emailTemplates)
+          .where(and(
+            eq(emailTemplates.isDefault, true),
+            eq(emailTemplates.language, 'en')
+          ));
+        
+        return englishTemplate;
+      }
+
+      return template;
+    } catch (error) {
+      console.error('Error getting default email template:', error);
+      throw error;
+    }
+  }
+
+  async updateEmailTemplate(id: number, template: Partial<InsertEmailTemplate>): Promise<EmailTemplate> {
+    try {
+      console.log(`Updating email template ${id}`);
+      
+      // If setting to default, clear other defaults for the same language
+      if (template.isDefault) {
+        // Get the current template to know its language
+        const currentTemplate = await this.getEmailTemplateById(id);
+        if (currentTemplate) {
+          await db.update(emailTemplates)
+            .set({ isDefault: false })
+            .where(and(
+              eq(emailTemplates.language, currentTemplate.language),
+              eq(emailTemplates.isDefault, true)
+            ));
+        }
+      }
+
+      const [updatedTemplate] = await db
+        .update(emailTemplates)
+        .set({
+          ...template,
+          updatedAt: new Date()
+        })
+        .where(eq(emailTemplates.id, id))
+        .returning();
+
+      if (!updatedTemplate) {
+        throw new Error(`Email template with ID ${id} not found`);
+      }
+
+      console.log('Email template updated successfully');
+      return updatedTemplate;
+    } catch (error) {
+      console.error('Error updating email template:', error);
+      throw error;
+    }
+  }
+
+  async deleteEmailTemplate(id: number): Promise<boolean> {
+    try {
+      console.log(`Deleting email template ${id}`);
+
+      const result = await db
+        .delete(emailTemplates)
+        .where(eq(emailTemplates.id, id))
+        .returning();
+
+      return result.length > 0;
+    } catch (error) {
+      console.error('Error deleting email template:', error);
+      throw error;
+    }
   }
 }
 
