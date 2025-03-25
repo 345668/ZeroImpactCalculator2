@@ -85,12 +85,28 @@ export class SendGridService {
    */
   static async sendDmarcAlert(report: DmarcReport, to: string | string[]): Promise<boolean> {
     try {
-      // Get DMARC alert template
-      const template = await storage.getDefaultEmailTemplate('en');
+      // Look for a DMARC-specific template first
+      const templates = await storage.getAllEmailTemplates();
+      let template: EmailTemplate | undefined;
+      
+      // Find a DMARC-specific template
+      template = templates.find(t => 
+        t.templateType === 'dmarc-report' && 
+        t.isDefault === true && 
+        t.language === 'en'
+      );
+      
+      // If no DMARC template found, fall back to any default template
       if (!template) {
-        console.error('No default email template found for DMARC alerts');
+        template = await storage.getDefaultEmailTemplate('en');
+      }
+      
+      if (!template) {
+        console.error('No suitable email template found for DMARC alerts');
         return false;
       }
+      
+      console.log(`Using email template: ${template.name} (ID: ${template.id}) for DMARC alert`);
       
       // Prepare DMARC alert data
       const dynamicData = {
@@ -107,6 +123,9 @@ export class SendGridService {
         policyEvaluated: report.policyEvaluated || 'N/A',
         reportDate: report.reportDate ? new Date(report.reportDate).toLocaleString() : 'N/A',
         receivedDate: report.receivedDate ? new Date(report.receivedDate).toLocaleString() : 'N/A',
+        // Add common security assessment
+        securityAssessment: SendGridService.getSecurityAssessment(report),
+        reportId: report.reportId
       };
       
       // Send the report notification
@@ -118,6 +137,23 @@ export class SendGridService {
     } catch (error) {
       console.error('Error sending DMARC alert:', error);
       return false;
+    }
+  }
+  
+  /**
+   * Generate a security assessment based on DMARC report data
+   */
+  private static getSecurityAssessment(report: DmarcReport): string {
+    // Determine security status
+    const dkimPass = report.dkimResult === 'pass';
+    const spfPass = report.spfResult === 'pass';
+    
+    if (dkimPass && spfPass) {
+      return "✅ All authentication checks passed. This email source appears legitimate.";
+    } else if (dkimPass || spfPass) {
+      return "⚠️ Partial authentication success. This source may be legitimate but requires review.";
+    } else {
+      return "❌ Authentication failure. This source is suspicious and might be attempting to spoof your domain.";
     }
   }
   
