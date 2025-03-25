@@ -35,10 +35,10 @@ async function getCsrfToken(): Promise<string | null> {
       return null;
     }
     
-    const data = await response.json();
+    const data = await response.json() as { csrfToken?: string };
     return data.csrfToken || null;
   } catch (error) {
-    console.error('Error fetching CSRF token:', error);
+    console.error('Error fetching CSRF token:', error instanceof Error ? error.message : String(error));
     return null;
   }
 }
