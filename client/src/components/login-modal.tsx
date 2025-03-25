@@ -39,10 +39,24 @@ export function LoginModal({ open, onOpenChange, onSuccess }: LoginModalProps) {
     setIsLoading(true);
     
     try {
+      // Fetch CSRF token first
+      let csrfToken = '';
+      try {
+        const tokenResponse = await fetch('/api/csrf-token');
+        if (tokenResponse.ok) {
+          const tokenData = await tokenResponse.json();
+          csrfToken = tokenData.csrfToken;
+        }
+      } catch (tokenError) {
+        console.error('Failed to fetch CSRF token:', tokenError);
+      }
+      
+      // Now make the login request with the CSRF token
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken
         },
         body: JSON.stringify(data),
       });

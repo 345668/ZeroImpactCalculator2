@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, Link } from "wouter";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -40,10 +40,15 @@ export function NavigationBar() {
   }, []);
   
   const handleCompanyClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Always prevent default to handle login check
+    console.log("Company button clicked, logged in:", isLoggedIn);
+    
     if (!isLoggedIn) {
-      e.preventDefault();
       console.log("Opening login modal from navigation bar");
       setShowLoginModal(true);
+    } else {
+      // If already logged in, navigate to company page
+      window.location.href = "/company";
     }
   };
   
@@ -74,26 +79,15 @@ export function NavigationBar() {
           </Button>
         </Link>
         
-        {isLoggedIn ? (
-          <Link href="/company">
-            <Button 
-              variant="link" 
-              size="sm" 
-              className="text-sm font-medium text-foreground/90 hover:text-foreground"
-            >
-              {t('navigation.company')}
-            </Button>
-          </Link>
-        ) : (
-          <Button 
-            variant="link" 
-            size="sm" 
-            className="text-sm font-medium text-foreground/90 hover:text-foreground"
-            onClick={handleCompanyClick}
-          >
-            {t('navigation.company')}
-          </Button>
-        )}
+        {/* Simplified Company button - same button for both states */}
+        <Button 
+          variant="link" 
+          size="sm" 
+          className="text-sm font-medium text-foreground/90 hover:text-foreground"
+          onClick={handleCompanyClick}
+        >
+          {t('navigation.company')}
+        </Button>
         
         {/* Admin access is now integrated in the company portal */}
         
