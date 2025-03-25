@@ -532,4 +532,106 @@ router.post('/notifications/test', async (req, res) => {
   }
 });
 
+// Process DMARC reports received via email
+router.post('/process-emails', async (req, res) => {
+  try {
+    // Get parameters for email processing
+    const { maxEmails = 10, notificationEmail } = req.body;
+    
+    // Process emails with DMARC reports
+    const processedCount = await SendGridService.processDmarcEmails({
+      maxEmails: Number(maxEmails),
+      processAttachments: true,
+      notificationEmail
+    });
+    
+    return res.status(200).json({
+      success: true,
+      message: `Processed ${processedCount} emails with DMARC reports`,
+      processedCount
+    });
+  } catch (error) {
+    console.error('Error processing DMARC emails:', error);
+    res.status(500).json({
+      error: 'Failed to process DMARC emails',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Process and send notifications for all unprocessed DMARC reports
+router.post('/notifications/send-all', async (req, res) => {
+  try {
+    // Get the notification recipient email
+    const { email, domain, limit = 10 } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({
+        error: 'Missing required parameter',
+        message: 'Email address is required to send notifications'
+      });
+    }
+    
+    // Get all reports that haven't had notifications sent yet
+    const allReports = await storage.getAllDmarcReports();
+    let unprocessedReports = allReports.filter(report => !report.emailNotificationSent);
+    
+    // Apply domain filter if provided
+    if (domain) {
+      unprocessedReports = unprocessedReports.filter(report => report.domain === domain);
+    }
+    
+    // Limit the number of reports to process
+    const reportsToProcess = unprocessedReports.slice(0, limit);
+    
+    if (reportsToProcess.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'No unprocessed DMARC reports found to send notifications for',
+        processedCount: 0
+      });
+    }
+    
+    console.log(`Processing ${reportsToProcess.length} DMARC reports for notifications`);
+    
+    // Process each report
+    const results = await Promise.all(
+      reportsToProcess.map(async (report) => {
+        try {
+          // Send notification for this report
+          const success = await SendGridService.sendDmarcAlert(report, email);
+          
+          if (success) {
+            // Update the report status if email was sent successfully
+            await storage.updateDmarcReportStatus(report.id, true, true);
+            return { id: report.id, success: true };
+          } else {
+            return { id: report.id, success: false, error: 'Failed to send notification' };
+          }
+        } catch (err) {
+          console.error(`Error processing report ${report.id}:`, err);
+          return { id: report.id, success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+        }
+      })
+    );
+    
+    // Count successful operations
+    const successCount = results.filter(r => r.success).length;
+    
+    return res.status(200).json({
+      success: true,
+      message: `Processed ${reportsToProcess.length} DMARC reports, successfully sent ${successCount} notifications`,
+      processedCount: reportsToProcess.length,
+      successCount,
+      results
+    });
+  } catch (error) {
+    console.error('Error sending batch DMARC notifications:', error);
+    res.status(500).json({
+      error: 'Failed to send batch DMARC notifications',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
 export default router;
