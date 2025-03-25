@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchApi, fetchCsrfToken } from "@/lib/queryClient";
+import { LoginModal } from "@/components/login-modal";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -69,6 +70,34 @@ const createUserSchema = z.object({
 });
 
 type CreateUserFormValues = z.infer<typeof createUserSchema>;
+
+// LoginComponent for direct login within user management
+function LoginComponent() {
+  const [isOpen, setIsOpen] = useState(false);
+  
+  const handleLoginSuccess = () => {
+    // When the login is successful, we'll refresh the page to update session state
+    window.location.reload();
+  };
+  
+  return (
+    <>
+      <Button 
+        size="sm" 
+        variant="default" 
+        className="w-fit" 
+        onClick={() => setIsOpen(true)}
+      >
+        Login
+      </Button>
+      <LoginModal 
+        open={isOpen} 
+        onOpenChange={setIsOpen} 
+        onSuccess={handleLoginSuccess} 
+      />
+    </>
+  );
+}
 
 export function UserManagementTable() {
   const { toast } = useToast();
@@ -361,57 +390,62 @@ export function UserManagementTable() {
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription className="flex flex-col gap-2">
             <div>Authentication required. Please log in to access user management.</div>
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="w-fit" 
-              onClick={async () => {
-                try {
-                  // Attempt to refresh the session
-                  await fetchCsrfToken();
-                  const response = await fetch('/api/auth/session', {
-                    credentials: 'include'
-                  });
-                  
-                  if (response.ok) {
-                    const sessionData = await response.json();
-                    if (sessionData.authenticated && sessionData.user) {
-                      setIsSessionVerified(true);
-                      setCurrentUser({
-                        id: sessionData.user.id,
-                        username: sessionData.user.username,
-                        role: sessionData.user.role
-                      });
-                      toast({
-                        title: "Success",
-                        description: "Session verified successfully",
-                      });
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-fit" 
+                onClick={async () => {
+                  try {
+                    // Attempt to refresh the session
+                    await fetchCsrfToken();
+                    const response = await fetch('/api/auth/session', {
+                      credentials: 'include'
+                    });
+                    
+                    if (response.ok) {
+                      const sessionData = await response.json();
+                      if (sessionData.authenticated && sessionData.user) {
+                        setIsSessionVerified(true);
+                        setCurrentUser({
+                          id: sessionData.user.id,
+                          username: sessionData.user.username,
+                          role: sessionData.user.role
+                        });
+                        toast({
+                          title: "Success",
+                          description: "Session verified successfully",
+                        });
+                      } else {
+                        toast({
+                          title: "Authentication Required",
+                          description: "Please log in to access this feature.",
+                          variant: "destructive",
+                        });
+                      }
                     } else {
                       toast({
-                        title: "Authentication Required",
-                        description: "Please log in from the navigation bar to access this feature.",
+                        title: "Authentication Failed", 
+                        description: "Please log in to access this feature.",
                         variant: "destructive",
                       });
                     }
-                  } else {
+                  } catch (error) {
+                    console.error("Error refreshing session:", error);
                     toast({
-                      title: "Authentication Failed",
-                      description: "Please log in from the navigation bar to access this feature.",
+                      title: "Error",
+                      description: "Failed to verify authentication. Please try logging in again.",
                       variant: "destructive",
                     });
                   }
-                } catch (error) {
-                  console.error("Error refreshing session:", error);
-                  toast({
-                    title: "Error",
-                    description: "Failed to verify authentication. Please try logging in again.",
-                    variant: "destructive",
-                  });
-                }
-              }}
-            >
-              Verify Session
-            </Button>
+                }}
+              >
+                Verify Session
+              </Button>
+              
+              {/* Adding a direct login button */}
+              <LoginComponent />
+            </div>
           </AlertDescription>
         </Alert>
       ) : (
