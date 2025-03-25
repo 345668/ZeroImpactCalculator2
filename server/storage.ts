@@ -551,6 +551,140 @@ export class DbStorage implements IStorage {
       throw error;
     }
   }
+  
+  // DMARC report operations
+  async createDmarcReport(report: InsertDmarcReport): Promise<DmarcReport> {
+    try {
+      console.log('Creating new DMARC report:', { reportId: report.reportId, domain: report.domain });
+
+      // Insert new DMARC report
+      const [newReport] = await db.insert(dmarcReports)
+        .values([{
+          reportId: report.reportId,
+          domain: report.domain,
+          sourceIp: report.sourceIp,
+          sourceOrg: report.sourceOrg,
+          reportingOrg: report.reportingOrg,
+          count: String(report.count),
+          disposition: report.disposition,
+          dkimResult: report.dkimResult,
+          spfResult: report.spfResult,
+          alignmentDkim: report.alignmentDkim,
+          alignmentSpf: report.alignmentSpf,
+          policyEvaluated: report.policyEvaluated,
+          reportDate: report.reportDate,
+          receivedDate: new Date(),
+          rawReport: report.rawReport,
+          processed: false,
+          emailNotificationSent: false
+        }])
+        .returning();
+
+      console.log('DMARC report created successfully:', newReport.id);
+      return newReport;
+    } catch (error) {
+      console.error('Error creating DMARC report:', error);
+      throw error;
+    }
+  }
+
+  async getDmarcReportById(id: number): Promise<DmarcReport | undefined> {
+    try {
+      const [report] = await db
+        .select()
+        .from(dmarcReports)
+        .where(eq(dmarcReports.id, id));
+
+      return report;
+    } catch (error) {
+      console.error('Error getting DMARC report by id:', error);
+      throw error;
+    }
+  }
+
+  async getAllDmarcReports(): Promise<DmarcReport[]> {
+    try {
+      const results = await db
+        .select()
+        .from(dmarcReports)
+        .orderBy(desc(dmarcReports.reportDate));
+
+      console.log('Retrieved all DMARC reports:', results.length);
+      return results;
+    } catch (error) {
+      console.error('Error getting all DMARC reports:', error);
+      throw error;
+    }
+  }
+
+  async getDmarcReportsByDomain(domain: string): Promise<DmarcReport[]> {
+    try {
+      const results = await db
+        .select()
+        .from(dmarcReports)
+        .where(eq(dmarcReports.domain, domain))
+        .orderBy(desc(dmarcReports.reportDate));
+
+      console.log(`Retrieved DMARC reports for domain ${domain}:`, results.length);
+      return results;
+    } catch (error) {
+      console.error('Error getting DMARC reports by domain:', error);
+      throw error;
+    }
+  }
+
+  async getDmarcReportsByDateRange(startDate: Date, endDate: Date): Promise<DmarcReport[]> {
+    try {
+      const results = await db
+        .select()
+        .from(dmarcReports)
+        .where(
+          and(
+            gte(dmarcReports.reportDate, startDate),
+            lte(dmarcReports.reportDate, endDate)
+          )
+        )
+        .orderBy(desc(dmarcReports.reportDate));
+
+      console.log(`Retrieved DMARC reports from ${startDate} to ${endDate}:`, results.length);
+      return results;
+    } catch (error) {
+      console.error('Error getting DMARC reports by date range:', error);
+      throw error;
+    }
+  }
+
+  async updateDmarcReportStatus(id: number, processed: boolean, emailSent: boolean): Promise<boolean> {
+    try {
+      const [updated] = await db
+        .update(dmarcReports)
+        .set({
+          processed,
+          emailNotificationSent: emailSent
+        })
+        .where(eq(dmarcReports.id, id))
+        .returning();
+
+      return !!updated;
+    } catch (error) {
+      console.error('Error updating DMARC report status:', error);
+      throw error;
+    }
+  }
+
+  async deleteDmarcReport(id: number): Promise<boolean> {
+    try {
+      const [deleted] = await db
+        .delete(dmarcReports)
+        .where(eq(dmarcReports.id, id))
+        .returning();
+
+      return !!deleted;
+    } catch (error) {
+      console.error('Error deleting DMARC report:', error);
+      throw error;
+    }
+  }
 }
 
 export const storage = new DbStorage();
