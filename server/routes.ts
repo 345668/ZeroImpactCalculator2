@@ -456,22 +456,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      console.log(`Attempting to get URL for document path: ${path}`);
+      
+      // Check if this is a local file path
+      if (path.startsWith('local://')) {
+        // Import dynamically to avoid issues with circular dependencies
+        const { getLocalFilePath } = await import('./utils/local-storage.js');
+        
+        // Get the local file path
+        const localFilePath = getLocalFilePath(path);
+        
+        if (!localFilePath) {
+          return res.status(404).json({
+            success: false,
+            message: "Local document not found",
+            details: "The document could not be found in local storage."
+          });
+        }
+        
+        // For local files, we'll serve them directly via a temporary endpoint
+        // Generate a temporary access token for security
+        const crypto = await import('crypto');
+        const tempToken = crypto.randomBytes(16).toString('hex');
+        
+        // Store the token and file path in memory for a short time (5 minutes)
+        const tempTokenKey = `temp_access_${tempToken}`;
+        app.locals[tempTokenKey] = {
+          filePath: localFilePath,
+          expires: Date.now() + (5 * 60 * 1000) // 5 minutes from now
+        };
+        
+        // Return a temporary URL that points to our endpoint for serving local files
+        const tempUrl = `/api/documents/local-serve/${tempToken}`;
+        
+        return res.json({
+          success: true,
+          url: tempUrl,
+          isLocal: true
+        });
+      }
+      
+      // If it's not a local file, try Azure Blob Storage
+      
       // Check if Azure Storage connection is available
       if (!process.env.AZURE_STORAGE_CONNECTION_STRING) {
         return res.status(503).json({
           success: false,
-          message: "Document storage is currently unavailable",
+          message: "Cloud document storage is currently unavailable",
           details: "Azure Blob Storage is not properly configured"
         });
       }
 
-      console.log(`Attempting to get secure URL for document path: ${path}`);
-      
       // Extract the blob name from the URL if it's a full URL
       let blobPath = path;
       
       // If this is a full URL, extract just the path part
-      if (path.includes('://')) {
+      if (path.includes('://') && !path.startsWith('local://')) {
         try {
           const url = new URL(path);
           const segments = url.pathname.split('/');
@@ -510,7 +550,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json({
         success: true,
-        url
+        url,
+        isCloud: true
       });
     } catch (error) {
       console.error('Error retrieving document URL:', error);
@@ -520,6 +561,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         details: "There was a problem accessing the document storage service. This may be due to temporary connection issues.",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+  
+  // Endpoint to serve locally stored files
+  app.get("/api/documents/local-serve/:token", (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      // Get the token data from app locals
+      const tempTokenKey = `temp_access_${token}`;
+      const tokenData = app.locals[tempTokenKey];
+      
+      // Check if the token exists and is not expired
+      if (!tokenData || tokenData.expires < Date.now()) {
+        // Token doesn't exist, is invalid, or has expired
+        delete app.locals[tempTokenKey]; // Clean up if expired
+        return res.status(404).send('Document access link has expired or is invalid');
+      }
+      
+      // Get the file path
+      const { filePath } = tokenData;
+      
+      // Check if the file exists
+      if (!fs.existsSync(filePath)) {
+        delete app.locals[tempTokenKey]; // Clean up
+        return res.status(404).send('Document not found');
+      }
+      
+      // Serve the file
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Error serving local file:', error);
+      res.status(500).send('Error accessing the document');
     }
   });
 
@@ -563,30 +637,58 @@ async function processDocument(file: Express.Multer.File, options?: { email?: st
       ? 'energy-certificates-images' 
       : 'energy-certificates-pdf';
 
-    // Upload to Azure Blob Storage with organized structure
-    console.log('Uploading to Azure Blob Storage with organization...');
+    // Upload the file to storage (Azure or local)
+    console.log('Uploading document to storage...');
     
     // Attempt upload
     let fileUrl = '';
-    try {
-      // Try to ensure container exists first
+    
+    // First try Azure Blob Storage if it's available
+    if (process.env.AZURE_STORAGE_CONNECTION_STRING) {
       try {
-        await ensureContainerExists();
-      } catch (containerError) {
-        console.warn('Failed to ensure Azure container exists:', containerError);
-        // Continue processing even if container setup fails
+        console.log('Attempting upload to Azure Blob Storage...');
+        
+        // Try to ensure container exists first
+        try {
+          await ensureContainerExists();
+        } catch (containerError) {
+          console.warn('Failed to ensure Azure container exists:', containerError);
+          // Continue processing even if container setup fails
+        }
+        
+        // Attempt to upload the file
+        fileUrl = await uploadFileToBlobStorage(file, {
+          documentType,
+          email: options?.email,
+          submissionId: options?.submissionId
+        });
+        console.log('File uploaded successfully to Azure, URL:', fileUrl);
+      } catch (azureError) {
+        console.error('Error uploading file to Azure:', azureError);
+        // Will fall back to local storage
       }
-      
-      // Attempt to upload the file
-      fileUrl = await uploadFileToBlobStorage(file, {
-        documentType,
-        email: options?.email,
-        submissionId: options?.submissionId
-      });
-      console.log('File uploaded successfully, URL:', fileUrl);
-    } catch (uploadError) {
-      console.error('Error uploading file to Azure:', uploadError);
-      // Continue with processing even if the upload failed
+    }
+    
+    // If Azure upload failed or isn't available, use local storage as fallback
+    if (!fileUrl) {
+      try {
+        console.log('Falling back to local storage...');
+        
+        // Import dynamically to avoid circular dependencies
+        const { storeFileLocally } = await import('./utils/local-storage.js');
+        
+        // Store the file locally
+        fileUrl = await storeFileLocally(file, {
+          documentType,
+          email: options?.email,
+          submissionId: options?.submissionId
+        });
+        
+        console.log('File saved locally, path:', fileUrl);
+      } catch (localError) {
+        console.error('Error saving file locally:', localError);
+        // Continue with processing even if the upload failed completely
+      }
     }
 
     // Extract and process text
