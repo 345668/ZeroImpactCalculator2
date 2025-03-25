@@ -12,6 +12,7 @@ import emailRouter from "./routes/email.js";
 import emailTemplatesRouter from "./routes/email-templates";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
+import dmarcRouter from "./routes/dmarc";
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { testDatabaseConnection } from "./database.js";
