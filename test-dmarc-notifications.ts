@@ -11,7 +11,7 @@ const API_BASE_URL = 'http://localhost:5000';
 const TEST_EMAIL = 'test@example.com';
 
 // For test scripts, we'll use the DMARC API routes directly to bypass CSRF protection
-const DMARC_API_BASE_URL = 'http://localhost:5000/api/dmarc';
+const DMARC_API_BASE_URL = 'http://localhost:5000/api/dmarc/reports';
 
 interface DmarcReport {
   id: number;
@@ -48,7 +48,7 @@ async function testSingleNotification() {
   
   try {
     // 1. Get available reports
-    const reportsResponse = await fetch(`${DMARC_API_BASE_URL}/reports`);
+    const reportsResponse = await fetch(`${DMARC_API_BASE_URL}`);
     const reportsData = await reportsResponse.json() as { reports?: DmarcReport[] };
     
     if (!reportsResponse.ok) {
