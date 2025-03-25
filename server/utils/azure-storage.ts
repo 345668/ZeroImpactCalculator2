@@ -6,8 +6,8 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
   process.env.AZURE_STORAGE_CONNECTION_STRING || ""
 );
 
-// Use the specified container name 'carbon-credits-docs'
-const containerName = "carbon-credits-docs";
+// Use the container name from shared config
+const containerName = AZURE_STORAGE_CONFIG.blobStorage.containerName || "carbon-credits-docs";
 
 console.log(`Using Azure Blob Storage container: ${containerName}`);
 
