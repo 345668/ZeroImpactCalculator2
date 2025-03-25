@@ -41,6 +41,20 @@ export function NavigationBar() {
     }
   };
   
+  const handleLoginSuccess = () => {
+    setIsLoggedIn(true);
+    // Check if user has admin role after successful login
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        setIsAdmin(userData.role === 'admin');
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+      }
+    }
+  };
+  
   return (
     <>
       <nav className="fixed top-0 right-0 px-6 py-4 z-50 flex items-center gap-3">
@@ -84,6 +98,7 @@ export function NavigationBar() {
       <LoginModal 
         open={showLoginModal} 
         onOpenChange={setShowLoginModal}
+        onSuccess={handleLoginSuccess}
       />
     </>
   );

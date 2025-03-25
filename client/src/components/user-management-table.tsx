@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchApi } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +29,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, UserPlus, Shield, Loader2 } from "lucide-react";
+import { User, UserPlus, Shield, Loader2, AlertTriangle, EyeIcon, EyeOffIcon, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import {
   Form,
@@ -42,6 +42,8 @@ import {
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 // Define the user type
 interface User {
@@ -72,9 +74,31 @@ export function UserManagementTable() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [currentUser, setCurrentUser] = useState<{ id: number, username: string, role: string } | null>(null);
+  const [passwordStrength, setPasswordStrength] = useState<'weak' | 'medium' | 'strong' | null>(null);
+
+  // Get current user from localStorage
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const userData = JSON.parse(userStr);
+        if (userData && userData.id) {
+          setCurrentUser({
+            id: userData.id,
+            username: userData.username,
+            role: userData.role
+          });
+        }
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+      }
+    }
+  }, []);
 
   // Fetch users from the API
-  const { data: users = [], isLoading } = useQuery<User[]>({
+  const { data: users = [], isLoading, refetch } = useQuery<User[]>({
     queryKey: ['/api/users'],
     retry: 1,
     staleTime: 1000 * 60 * 5, // 5 minutes
