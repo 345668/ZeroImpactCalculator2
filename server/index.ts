@@ -74,9 +74,9 @@ app.use((req, res, next) => {
     '/api/dmarc/reports/upload',
     '/api/dmarc/reports/process-email',
     '/api/dmarc/reports',
-    '/api/dmarc/notifications/test',
-    '/api/dmarc/notifications/send-all',
-    '/api/dmarc/process-emails'
+    '/api/dmarc/reports/notifications/test',
+    '/api/dmarc/reports/notifications/send-all',
+    '/api/dmarc/reports/process-emails'
   ];
   
   if (csrfExcludedPaths.includes(req.path) || 
