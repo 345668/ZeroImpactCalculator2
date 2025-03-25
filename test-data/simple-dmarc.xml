@@ -21,10 +21,10 @@
     </row>
     <auth_results>
       <dkim>
-        <result>pass</result>
+        <r>pass</r>
       </dkim>
       <spf>
-        <result>pass</result>
+        <r>pass</r>
       </spf>
     </auth_results>
   </record>

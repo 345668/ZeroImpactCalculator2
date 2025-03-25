@@ -68,7 +68,16 @@ app.use((req, res, next) => {
     '/api/health'
   ];
   
-  if (csrfExcludedPaths.includes(req.path) || req.method === 'GET') {
+  // Exclude DMARC API endpoints during testing
+  const dmarcExclusions = [
+    '/api/dmarc/reports/parse',
+    '/api/dmarc/reports/upload',
+    '/api/dmarc/reports/process-email'
+  ];
+  
+  if (csrfExcludedPaths.includes(req.path) || 
+      dmarcExclusions.includes(req.path) || 
+      req.method === 'GET') {
     next();
   } else {
     csrfProtection(req, res, next);
