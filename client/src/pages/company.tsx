@@ -11,9 +11,10 @@ import type { Submission } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserManagementTable } from "@/components/user-management-table";
 import { useToast } from "@/hooks/use-toast";
-import { fetchApi } from "@/lib/queryClient";
+import { LoginModal } from "@/components/login-modal";
 
-export default function CompanyPage() {
+// The main company page component
+function CompanyPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
@@ -22,43 +23,37 @@ export default function CompanyPage() {
   
   // Check if the current user is logged in and get their role
   useEffect(() => {
-    const checkUserStatus = async () => {
+    const checkUserStatus = () => {
       try {
         setIsLoading(true);
-        const userData = await fetchApi<{
-          id: number;
-          email: string;
-          username: string;
-          role: string;
-        }>('/api/auth/me', { method: 'GET' });
+        const userStr = localStorage.getItem("user");
         
-        if (!userData) {
-          toast({
-            title: "Authentication Error",
-            description: "Please log in to access this page",
-            variant: "destructive",
-          });
+        if (!userStr) {
+          // Redirect to home if no user data found
+          setLocation('/');
+          return;
+        }
+        
+        const userData = JSON.parse(userStr);
+        if (!userData || !userData.id) {
+          // Redirect to home if invalid user data
           setLocation('/');
           return;
         }
         
         // Set admin status based on user role
         setIsAdmin(userData.role === 'admin');
+        setIsLoading(false);
       } catch (error) {
         console.error('Error checking user status:', error);
-        toast({
-          title: "Authentication Error",
-          description: "Please log in to access this page",
-          variant: "destructive",
-        });
+        // Clear invalid user data
+        localStorage.removeItem("user");
         setLocation('/');
-      } finally {
-        setIsLoading(false);
       }
     };
     
     checkUserStatus();
-  }, [setLocation, toast]);
+  }, [setLocation]);
   
   // Fetch submissions data for the globe map
   const { data: submissions = [], isLoading: submissionsLoading } = useQuery({
@@ -262,5 +257,68 @@ export default function CompanyPage() {
         </Tabs>
       </div>
     </Layout>
+  );
+}
+
+// Authentication wrapper component
+export default function CompanyPageWithAuth() {
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  useEffect(() => {
+    // Check if user is already logged in
+    const user = localStorage.getItem("user");
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData && userData.id) {
+          setIsAuthenticated(true);
+          return;
+        }
+      } catch (e) {
+        console.error("Error parsing user data:", e);
+        localStorage.removeItem("user");
+      }
+    }
+    
+    // If not authenticated, show login modal
+    setShowLoginModal(true);
+  }, []);
+  
+  // When login is successful, hide modal and set authenticated
+  const handleLoginSuccess = () => {
+    setIsAuthenticated(true);
+    setShowLoginModal(false);
+  };
+  
+  return (
+    <>
+      {isAuthenticated ? (
+        <CompanyPage />
+      ) : (
+        <Layout>
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
+              <p className="text-muted-foreground mb-4">
+                Please log in to access the company portal.
+              </p>
+              <Button 
+                onClick={() => setShowLoginModal(true)}
+                className="px-6"
+              >
+                Log In
+              </Button>
+            </div>
+          </div>
+        </Layout>
+      )}
+      
+      <LoginModal 
+        open={showLoginModal} 
+        onOpenChange={setShowLoginModal}
+        onSuccess={handleLoginSuccess}
+      />
+    </>
   );
 }

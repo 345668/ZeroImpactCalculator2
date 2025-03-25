@@ -10,6 +10,7 @@ import { useLocation } from "wouter";
 interface LoginModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
 }
 
 interface LoginFormValues {
@@ -17,7 +18,7 @@ interface LoginFormValues {
   password: string;
 }
 
-export function LoginModal({ open, onOpenChange }: LoginModalProps) {
+export function LoginModal({ open, onOpenChange, onSuccess }: LoginModalProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
@@ -54,6 +55,11 @@ export function LoginModal({ open, onOpenChange }: LoginModalProps) {
         title: "Success",
         description: "You've successfully logged in!",
       });
+      
+      // Call onSuccess callback if provided
+      if (onSuccess) {
+        onSuccess();
+      }
       
       // Close the modal and navigate to the company page
       onOpenChange(false);
