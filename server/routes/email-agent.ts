@@ -39,7 +39,7 @@ interface TemplatedEmailRequest {
   replyTo?: string | { email: string; name?: string };
   categories?: string[];
   customArgs?: Record<string, string>;
-  sendAt?: string; // ISO date string
+  sendAt?: Date; // Converted from ISO date string
   trackingSettings?: {
     clickTracking?: boolean;
     openTracking?: boolean;
@@ -196,9 +196,10 @@ export function registerEmailAgentRoutes(app: express.Express): void {
         });
       }
 
-      // Convert date string to Date object if provided
-      if (emailRequest.sendAt) {
-        emailRequest.sendAt = new Date(emailRequest.sendAt);
+      // sendAt is already defined as Date type in the interface, 
+      // so we just need to ensure it's a valid Date object if provided
+      if (emailRequest.sendAt && typeof emailRequest.sendAt === 'string') {
+        emailRequest.sendAt = new Date(emailRequest.sendAt as unknown as string);
       }
 
       const result = await SendGridAgent.sendTemplatedEmail(emailRequest);
