@@ -7,24 +7,24 @@
 
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 
-// Get the directory path for storing local files
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const uploadsDir = path.join(process.cwd(), 'uploads');
-
-// Ensure the uploads directory exists
-if (!fs.existsSync(uploadsDir)) {
-  console.log(`Creating uploads directory at ${uploadsDir}`);
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+// Base directory for local storage
+const LOCAL_STORAGE_DIR = path.join(process.cwd(), 'uploads');
 
 interface LocalFileOptions {
   email?: string;
   submissionId?: number;
   documentType?: string;
+}
+
+/**
+ * Ensure the directory exists, creating it if necessary
+ */
+function ensureDirectoryExists(directory: string): void {
+  if (!fs.existsSync(directory)) {
+    fs.mkdirSync(directory, { recursive: true });
+  }
 }
 
 /**
@@ -34,54 +34,48 @@ export async function storeFileLocally(
   file: Express.Multer.File,
   options: LocalFileOptions = {}
 ): Promise<string> {
-  try {
-    console.log('Starting local file storage...');
-    
-    // Create a folder structure similar to Azure storage
-    const safeEmail = options.email ? options.email.replace(/[^a-zA-Z0-9._-]/g, "_") : "anonymous";
-    
-    // Build the folder path
-    let folderPath = uploadsDir;
-    
-    // Add document type folder if provided
-    if (options.documentType) {
-      folderPath = path.join(folderPath, options.documentType);
-    } else {
-      folderPath = path.join(folderPath, 'documents');
-    }
-    
-    // Add email folder
-    folderPath = path.join(folderPath, safeEmail);
-    
-    // Add submission ID if available
-    if (options.submissionId) {
-      folderPath = path.join(folderPath, `submission-${options.submissionId}`);
-    }
-    
-    // Create the folders if they don't exist
-    if (!fs.existsSync(folderPath)) {
-      fs.mkdirSync(folderPath, { recursive: true });
-    }
-    
-    // Create a unique filename with timestamp and original name
-    const timestamp = Date.now();
-    const filename = `${timestamp}-${file.originalname}`;
-    const filePath = path.join(folderPath, filename);
-    
-    // Write the file
-    fs.writeFileSync(filePath, file.buffer);
-    
-    console.log(`File saved locally to: ${filePath}`);
-    
-    // Return a local:// URL format to indicate this is a local file
-    // We'll use the relative path from the uploads directory for consistent references
-    const relativePath = path.relative(uploadsDir, filePath);
-    return `local://${relativePath}`;
-    
-  } catch (error) {
-    console.error('Error saving file locally:', error);
-    throw new Error(`Failed to save file locally: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  // Ensure the base upload directory exists
+  ensureDirectoryExists(LOCAL_STORAGE_DIR);
+  
+  // Create a structured path similar to Azure Blob Storage
+  const timestamp = new Date().toISOString().replace(/:/g, '-');
+  const randomId = crypto.randomBytes(8).toString('hex');
+  
+  // Create a safe filename
+  const originalName = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const safeFilename = `${timestamp}-${randomId}-${originalName}`;
+  
+  // Define the directory structure
+  let storageDirectory = LOCAL_STORAGE_DIR;
+  
+  // Add document type if provided
+  if (options.documentType) {
+    storageDirectory = path.join(storageDirectory, options.documentType);
+    ensureDirectoryExists(storageDirectory);
   }
+  
+  // Add email folder if provided
+  if (options.email) {
+    const emailDir = options.email.replace(/[^a-zA-Z0-9._@-]/g, '_');
+    storageDirectory = path.join(storageDirectory, emailDir);
+    ensureDirectoryExists(storageDirectory);
+  }
+  
+  // Add submission ID folder if provided
+  if (options.submissionId) {
+    storageDirectory = path.join(storageDirectory, `submission-${options.submissionId}`);
+    ensureDirectoryExists(storageDirectory);
+  }
+  
+  // Full path where the file will be stored
+  const filePath = path.join(storageDirectory, safeFilename);
+  
+  // Write the file to disk
+  await fs.promises.writeFile(filePath, file.buffer);
+  
+  // Return a URL-like path prefixed with local:// to indicate it's a local file
+  const relativePath = path.relative(LOCAL_STORAGE_DIR, filePath);
+  return `local://${relativePath}`;
 }
 
 /**
@@ -90,110 +84,83 @@ export async function storeFileLocally(
  * @returns The absolute file path
  */
 export function getLocalFilePath(localPath: string): string | null {
-  try {
-    if (!localPath.startsWith('local://')) {
-      console.warn('Invalid local path format:', localPath);
-      return null;
-    }
-    
-    // Extract the relative path part
-    const relativePath = localPath.replace('local://', '');
-    
-    // Create the absolute path
-    const filePath = path.join(uploadsDir, relativePath);
-    
-    // Check if the file exists
-    if (!fs.existsSync(filePath)) {
-      console.warn(`Local file not found: ${filePath}`);
-      return null;
-    }
-    
-    return filePath;
-  } catch (error) {
-    console.error('Error retrieving local file path:', error);
+  if (!localPath || !localPath.startsWith('local://')) {
     return null;
   }
+  
+  const relativePath = localPath.substring(8); // Remove 'local://' prefix
+  const fullPath = path.join(LOCAL_STORAGE_DIR, relativePath);
+  
+  if (!fs.existsSync(fullPath)) {
+    return null;
+  }
+  
+  return fullPath;
 }
 
 /**
  * Get all the files in a local directory structure
  */
 export function listLocalFiles(options: LocalFileOptions = {}): string[] {
-  try {
-    let searchDir = uploadsDir;
-    
-    // Add document type folder if provided
-    if (options.documentType) {
-      searchDir = path.join(searchDir, options.documentType);
-    }
-    
-    // Add email folder if provided
-    if (options.email) {
-      const safeEmail = options.email.replace(/[^a-zA-Z0-9._-]/g, "_");
-      searchDir = path.join(searchDir, safeEmail);
-    }
-    
-    // Add submission ID if provided
-    if (options.submissionId) {
-      searchDir = path.join(searchDir, `submission-${options.submissionId}`);
-    }
-    
-    // Check if the directory exists
-    if (!fs.existsSync(searchDir)) {
-      console.log(`Directory does not exist: ${searchDir}`);
-      return [];
-    }
-    
-    // Get all files in the directory (recursively)
-    const files: string[] = [];
-    
-    function scanDir(dir: string, baseDir: string) {
-      const entries = fs.readdirSync(dir, { withFileTypes: true });
-      
-      for (const entry of entries) {
-        const fullPath = path.join(dir, entry.name);
-        
-        if (entry.isDirectory()) {
-          scanDir(fullPath, baseDir);
-        } else {
-          // Get path relative to the uploads directory
-          const relativePath = path.relative(baseDir, fullPath);
-          files.push(`local://${relativePath}`);
-        }
-      }
-    }
-    
-    scanDir(searchDir, uploadsDir);
-    return files;
-    
-  } catch (error) {
-    console.error('Error listing local files:', error);
+  const results: string[] = [];
+  let basePath = LOCAL_STORAGE_DIR;
+  
+  // Build the path based on options
+  if (options.documentType) {
+    basePath = path.join(basePath, options.documentType);
+  }
+  
+  if (options.email) {
+    basePath = path.join(basePath, options.email.replace(/[^a-zA-Z0-9._@-]/g, '_'));
+  }
+  
+  if (options.submissionId) {
+    basePath = path.join(basePath, `submission-${options.submissionId}`);
+  }
+  
+  if (!fs.existsSync(basePath)) {
     return [];
   }
+  
+  // Scan directory recursively
+  function scanDir(dir: string, baseDir: string) {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      
+      if (entry.isDirectory()) {
+        scanDir(fullPath, baseDir);
+      } else {
+        // Convert to local:// format
+        const relativePath = path.relative(LOCAL_STORAGE_DIR, fullPath);
+        results.push(`local://${relativePath}`);
+      }
+    }
+  }
+  
+  scanDir(basePath, basePath);
+  return results;
 }
 
 /**
  * Delete a local file
  */
 export function deleteLocalFile(localPath: string): boolean {
+  if (!localPath || !localPath.startsWith('local://')) {
+    return false;
+  }
+  
+  const relativePath = localPath.substring(8); // Remove 'local://' prefix
+  const fullPath = path.join(LOCAL_STORAGE_DIR, relativePath);
+  
+  if (!fs.existsSync(fullPath)) {
+    return false;
+  }
+  
   try {
-    if (!localPath.startsWith('local://')) {
-      console.warn('Invalid local path format:', localPath);
-      return false;
-    }
-    
-    const relativePath = localPath.replace('local://', '');
-    const filePath = path.join(uploadsDir, relativePath);
-    
-    if (!fs.existsSync(filePath)) {
-      console.warn(`File not found for deletion: ${filePath}`);
-      return false;
-    }
-    
-    fs.unlinkSync(filePath);
-    console.log(`Deleted local file: ${filePath}`);
+    fs.unlinkSync(fullPath);
     return true;
-    
   } catch (error) {
     console.error('Error deleting local file:', error);
     return false;

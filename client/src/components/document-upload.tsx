@@ -269,7 +269,15 @@ export function DocumentUpload({ onDataExtracted, email, submissionId }: Documen
                       .then(data => {
                         if (data.url) {
                           console.log('Opening document with URL:', data.url);
-                          window.open(data.url, '_blank');
+                          
+                          // Handle differently based on whether it's a local or cloud URL
+                          if (data.isLocal) {
+                            // For local files, use our own endpoint
+                            window.open(data.url, '_blank');
+                          } else {
+                            // For cloud URLs (Azure), open directly
+                            window.open(data.url, '_blank');
+                          }
                         } else {
                           toast({
                             title: t('document.toast.documentNotFound'),
