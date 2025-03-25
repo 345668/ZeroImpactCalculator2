@@ -1000,8 +1000,8 @@ export class SendGridAgent {
       }
       
       // First, check if the pool already exists
-      const getRequest = {
-        method: 'GET',
+      const getRequest: ClientRequest = {
+        method: 'GET' as HttpMethod,
         url: `/v3/ips/pools/${name}`
       };
       
@@ -1013,8 +1013,8 @@ export class SendGridAgent {
           // Pool exists, update it if IPs provided
           if (ips.length > 0) {
             // Remove all IPs from pool first
-            const currentPoolRequest = {
-              method: 'GET',
+            const currentPoolRequest: ClientRequest = {
+              method: 'GET' as HttpMethod,
               url: `/v3/ips/pools/${name}`
             };
             
@@ -1022,8 +1022,8 @@ export class SendGridAgent {
             
             if (poolResponse.statusCode === 200 && poolBody.ips) {
               for (const ip of poolBody.ips) {
-                const removeIpRequest = {
-                  method: 'DELETE',
+                const removeIpRequest: ClientRequest = {
+                  method: 'DELETE' as HttpMethod,
                   url: `/v3/ips/pools/${name}/ips/${ip}`
                 };
                 await sgClient.request(removeIpRequest);
@@ -1032,8 +1032,8 @@ export class SendGridAgent {
             
             // Add new IPs to pool
             for (const ip of ips) {
-              const addIpRequest = {
-                method: 'POST',
+              const addIpRequest: ClientRequest = {
+                method: 'POST' as HttpMethod,
                 url: `/v3/ips/pools/${name}/ips`,
                 body: { ip }
               };
@@ -1048,8 +1048,8 @@ export class SendGridAgent {
         } catch (poolError: any) {
           // Pool doesn't exist, create it
           if (poolError.response && poolError.response.statusCode === 404) {
-            const createPoolRequest = {
-              method: 'POST',
+            const createPoolRequest: ClientRequest = {
+              method: 'POST' as HttpMethod,
               url: '/v3/ips/pools',
               body: { name }
             };
@@ -1066,8 +1066,8 @@ export class SendGridAgent {
             // Add IPs to pool if provided
             if (ips.length > 0) {
               for (const ip of ips) {
-                const addIpRequest = {
-                  method: 'POST',
+                const addIpRequest: ClientRequest = {
+                  method: 'POST' as HttpMethod,
                   url: `/v3/ips/pools/${name}/ips`,
                   body: { ip }
                 };
