@@ -1,146 +1,223 @@
-import express from 'express';
-import { storage } from '../storage';
-import { insertEmailTemplateSchema } from '../../shared/schema';
-import { z } from 'zod';
+import express from "express";
+import { insertEmailTemplateSchema } from "@shared/schema";
+import { storage } from "../storage";
+import { z } from "zod";
 
 const router = express.Router();
 
-// Create new email template
-router.post('/', async (req, res) => {
-  try {
-    if (!req.session?.user?.id) {
-      return res.status(401).json({ error: 'You must be logged in to create email templates' });
-    }
-
-    // Validate request body
-    const validation = insertEmailTemplateSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid email template data', details: validation.error.errors });
-    }
-
-    // Add the current user's ID to the template
-    const template = await storage.createEmailTemplate({
-      ...validation.data,
-      userId: req.session.user.id
+// Auth middleware to protect routes
+function requireAuth(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  if (!req.session.user) {
+    return res.status(401).json({ 
+      error: "Unauthorized", 
+      message: "Authentication required to access this resource" 
     });
-
-    res.status(201).json(template);
-  } catch (error) {
-    console.error('Error creating email template:', error);
-    res.status(500).json({ error: 'Failed to create email template' });
   }
-});
+  next();
+}
+
+// Admin-only middleware
+function requireAdmin(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) {
+  if (!req.session.user || req.session.user.role !== "admin") {
+    return res.status(403).json({ 
+      error: "Forbidden", 
+      message: "Administrator privileges required" 
+    });
+  }
+  next();
+}
 
 // Get all email templates
-router.get('/', async (req, res) => {
+router.get("/", requireAuth, async (req, res) => {
   try {
     const templates = await storage.getAllEmailTemplates();
     res.json(templates);
   } catch (error) {
-    console.error('Error fetching email templates:', error);
-    res.status(500).json({ error: 'Failed to fetch email templates' });
+    console.error("Error fetching email templates:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: "Failed to fetch email templates" 
+    });
   }
 });
 
-// Get default email template (optionally filtered by language)
-router.get('/default', async (req, res) => {
+// Get a specific email template by ID
+router.get("/:id", requireAuth, async (req, res) => {
   try {
-    const language = req.query.language as string || 'en';
-    const template = await storage.getDefaultEmailTemplate(language);
-    
-    if (!template) {
-      return res.status(404).json({ error: 'No default template found' });
-    }
-    
-    res.json(template);
-  } catch (error) {
-    console.error('Error fetching default template:', error);
-    res.status(500).json({ error: 'Failed to fetch default template' });
-  }
-});
-
-// Get email template by ID
-router.get('/:id', async (req, res) => {
-  try {
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid template ID' });
+      return res.status(400).json({ 
+        error: "Bad request", 
+        message: "Invalid template ID" 
+      });
     }
 
     const template = await storage.getEmailTemplateById(id);
     if (!template) {
-      return res.status(404).json({ error: 'Email template not found' });
+      return res.status(404).json({ 
+        error: "Not found", 
+        message: "Email template not found" 
+      });
     }
 
     res.json(template);
   } catch (error) {
-    console.error('Error fetching email template:', error);
-    res.status(500).json({ error: 'Failed to fetch email template' });
+    console.error("Error fetching email template:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: "Failed to fetch email template" 
+    });
   }
 });
 
-// Update email template
-router.patch('/:id', async (req, res) => {
+// Create a new email template
+router.post("/", requireAdmin, async (req, res) => {
   try {
-    if (!req.session?.user?.id) {
-      return res.status(401).json({ error: 'You must be logged in to update email templates' });
+    // Validate request body
+    const validatedData = insertEmailTemplateSchema.parse(req.body);
+    
+    // Add the creator's user ID
+    const userId = req.session.user!.id;
+    
+    // Create the template
+    const newTemplate = await storage.createEmailTemplate({
+      ...validatedData,
+      userId,
+    });
+    
+    res.status(201).json(newTemplate);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        error: "Validation error", 
+        message: "Invalid template data", 
+        details: error.errors 
+      });
     }
+    
+    console.error("Error creating email template:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: "Failed to create email template" 
+    });
+  }
+});
 
-    const id = parseInt(req.params.id, 10);
+// Update an existing email template
+router.patch("/:id", requireAdmin, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid template ID' });
+      return res.status(400).json({ 
+        error: "Bad request", 
+        message: "Invalid template ID" 
+      });
     }
-
-    // Validate request body (partial validation)
-    const updateSchema = insertEmailTemplateSchema.partial();
-    const validation = updateSchema.safeParse(req.body);
-    if (!validation.success) {
-      return res.status(400).json({ error: 'Invalid email template data', details: validation.error.errors });
-    }
-
-    // Check if template exists
+    
+    // Get the existing template
     const existingTemplate = await storage.getEmailTemplateById(id);
     if (!existingTemplate) {
-      return res.status(404).json({ error: 'Email template not found' });
+      return res.status(404).json({ 
+        error: "Not found", 
+        message: "Email template not found" 
+      });
     }
-
-    // Update template
-    const updatedTemplate = await storage.updateEmailTemplate(id, validation.data);
+    
+    // Validate request body (allow partial updates)
+    const partialSchema = insertEmailTemplateSchema.partial();
+    const validatedData = partialSchema.parse(req.body);
+    
+    // Update the template
+    const updatedTemplate = await storage.updateEmailTemplate(id, validatedData);
+    
     res.json(updatedTemplate);
   } catch (error) {
-    console.error('Error updating email template:', error);
-    res.status(500).json({ error: 'Failed to update email template' });
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ 
+        error: "Validation error", 
+        message: "Invalid template data", 
+        details: error.errors 
+      });
+    }
+    
+    console.error("Error updating email template:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: "Failed to update email template" 
+    });
   }
 });
 
-// Delete email template
-router.delete('/:id', async (req, res) => {
+// Delete an email template
+router.delete("/:id", requireAdmin, async (req, res) => {
   try {
-    if (!req.session?.user?.id) {
-      return res.status(401).json({ error: 'You must be logged in to delete email templates' });
-    }
-
-    const id = parseInt(req.params.id, 10);
+    const id = parseInt(req.params.id);
     if (isNaN(id)) {
-      return res.status(400).json({ error: 'Invalid template ID' });
+      return res.status(400).json({ 
+        error: "Bad request", 
+        message: "Invalid template ID" 
+      });
     }
-
-    // Check if template exists
+    
+    // Get the existing template
     const existingTemplate = await storage.getEmailTemplateById(id);
     if (!existingTemplate) {
-      return res.status(404).json({ error: 'Email template not found' });
+      return res.status(404).json({ 
+        error: "Not found", 
+        message: "Email template not found" 
+      });
     }
-
-    // Delete template
+    
+    // Delete the template
     const success = await storage.deleteEmailTemplate(id);
-    if (!success) {
-      return res.status(500).json({ error: 'Failed to delete email template' });
+    
+    if (success) {
+      res.status(204).send();
+    } else {
+      res.status(500).json({ 
+        error: "Internal server error", 
+        message: "Failed to delete email template" 
+      });
     }
-
-    res.json({ success: true, message: 'Email template deleted successfully' });
   } catch (error) {
-    console.error('Error deleting email template:', error);
-    res.status(500).json({ error: 'Failed to delete email template' });
+    console.error("Error deleting email template:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: "Failed to delete email template" 
+    });
+  }
+});
+
+// Get default email template for a language
+router.get("/default/:language", requireAuth, async (req, res) => {
+  try {
+    const language = req.params.language;
+    
+    // Get the default template for the specified language
+    const template = await storage.getDefaultEmailTemplate(language);
+    
+    if (!template) {
+      return res.status(404).json({ 
+        error: "Not found", 
+        message: `No default email template found for language: ${language}` 
+      });
+    }
+    
+    res.json(template);
+  } catch (error) {
+    console.error("Error fetching default email template:", error);
+    res.status(500).json({ 
+      error: "Internal server error", 
+      message: "Failed to fetch default email template" 
+    });
   }
 });
 

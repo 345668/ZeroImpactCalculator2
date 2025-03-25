@@ -100,7 +100,7 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
         subject: template.subject,
         body: template.body,
         description: template.description || "",
-        isDefault: template.isDefault || false,
+        isDefault: Boolean(template.isDefault),
         language: template.language || "en",
         variables: template.variables || "",
       });
@@ -124,16 +124,24 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
   // Create template mutation
   const createMutation = useMutation({
     mutationFn: async (data: EmailTemplateFormValues) => {
-      return apiRequest<EmailTemplate>("/api/email-templates", {
+      const response = await fetch("/api/email-templates", {
         method: "POST",
-        data,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
         title: t("Template created successfully"),
         description: t("Your email template has been saved"),
-        variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/email-templates'] });
       if (onSaved) onSaved();
@@ -151,16 +159,24 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
   // Update template mutation
   const updateMutation = useMutation({
     mutationFn: async (data: EmailTemplateFormValues) => {
-      return apiRequest<EmailTemplate>(`/api/email-templates/${templateId}`, {
+      const response = await fetch(`/api/email-templates/${templateId}`, {
         method: "PATCH",
-        data,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
+      
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
         title: t("Template updated successfully"),
         description: t("Your changes have been saved"),
-        variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/email-templates'] });
       if (onSaved) onSaved();
@@ -177,15 +193,20 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
   // Delete template mutation
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      return apiRequest(`/api/email-templates/${templateId}`, {
+      const response = await fetch(`/api/email-templates/${templateId}`, {
         method: "DELETE",
       });
+      
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       toast({
         title: t("Template deleted"),
         description: t("The email template has been removed"),
-        variant: "success",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/email-templates'] });
       if (onSaved) onSaved();
@@ -350,7 +371,7 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
                 <FormItem>
                   <FormLabel>{t("Description")}</FormLabel>
                   <FormControl>
-                    <Input placeholder={t("Optional template description")} {...field} />
+                    <Input placeholder={t("Optional template description")} {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -366,8 +387,8 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
                     <FormLabel>{t("Language")}</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      value={field.value}
+                      defaultValue={field.value || "en"}
+                      value={field.value || "en"}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -537,15 +558,19 @@ export function EmailTemplatesList() {
 
   // Fetch all templates
   const { 
-    data: templates, 
+    data: templates = [], 
     isLoading, 
     error 
   } = useQuery({
     queryKey: ['/api/email-templates'],
-    queryFn: getQueryFn({ 
-      path: '/api/email-templates',
-      on401: "throw"
-    }),
+    queryFn: async () => {
+      const response = await fetch('/api/email-templates');
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Unauthorized');
+        throw new Error('Failed to fetch templates');
+      }
+      return response.json();
+    },
   });
 
   const handleEditComplete = () => {

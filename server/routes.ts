@@ -9,7 +9,7 @@ import { EmailService } from "./services/email.js";
 import { uploadFileToBlobStorage, ensureContainerExists, getBlobUrl } from "./utils/azure-storage.js";
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
-import emailTemplatesRouter from "./routes/email-templates.js";
+import emailTemplatesRouter from "./routes/email-templates";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import rateLimit from 'express-rate-limit';
