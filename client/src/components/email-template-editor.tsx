@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { insertEmailTemplateSchema } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
@@ -418,7 +419,7 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
                     </div>
                     <FormControl>
                       <Checkbox
-                        checked={field.value}
+                        checked={field.value === true}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
