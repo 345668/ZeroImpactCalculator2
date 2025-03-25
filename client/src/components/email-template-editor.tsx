@@ -12,7 +12,10 @@ import * as CheckboxPrimitive from "@radix-ui/react-checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
-import { AlertCircle, Check, Loader2, Save, Trash2 } from "lucide-react";
+import { 
+  AlertCircle, Check, Loader2, Save, Trash2, Mail, FileText, 
+  Shield, Mail as MailIcon, Globe, Settings, SendHorizontal, Code 
+} from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
   Dialog,
@@ -26,12 +29,15 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { z } from "zod";
 
 // Extended schema for form validation
 const emailTemplateFormSchema = insertEmailTemplateSchema.extend({
   body: z.string().min(10, { message: "Template body must be at least 10 characters" }),
   variables: z.string().optional(),
+  templateType: z.enum(["standard", "dmarc-report", "security-alert"]).default("standard"),
+  sendgridTemplateId: z.string().optional(),
 });
 
 type EmailTemplateFormValues = z.infer<typeof emailTemplateFormSchema>;
@@ -45,6 +51,8 @@ type EmailTemplate = {
   isDefault: boolean | null;
   language: string | null;
   variables: string | null;
+  templateType: string;
+  sendgridTemplateId: string | null;
   createdAt: string | null;
   updatedAt: string | null;
   createdBy: number;

@@ -48,8 +48,8 @@ export class SendGridService {
         });
       }
       
-      // Prepare SendGrid mail data
-      const msg: MailDataRequired = {
+      // Prepare the email data
+      const emailData: Record<string, any> = {
         to,
         from: process.env.SENDGRID_FROM_EMAIL || 'info@radicaldecarbonization.com',
         subject,
@@ -57,21 +57,21 @@ export class SendGridService {
       };
       
       // Add optional parameters
-      if (cc) msg.cc = cc;
-      if (bcc) msg.bcc = bcc;
-      if (replyTo) msg.replyTo = replyTo;
-      if (attachments && attachments.length > 0) msg.attachments = attachments;
+      if (cc) emailData.cc = cc;
+      if (bcc) emailData.bcc = bcc;
+      if (replyTo) emailData.replyTo = replyTo;
+      if (attachments && attachments.length > 0) emailData.attachments = attachments;
       
       // If there's a SendGrid template ID on the template, use it
       if (template.sendgridTemplateId) {
-        msg.templateId = template.sendgridTemplateId;
-        msg.dynamicTemplateData = dynamicData;
-        // Remove html content when using SendGrid templates
-        delete msg.html;
+        emailData.templateId = template.sendgridTemplateId;
+        emailData.dynamicTemplateData = dynamicData;
+        // When using SendGrid templates, we don't need the html content
+        delete emailData.html;
       }
       
-      // Send the email
-      const [response] = await sgMail.send(msg);
+      // Send the email (cast to MailDataRequired since we know we have all required fields)
+      const [response] = await sgMail.send(emailData as MailDataRequired);
       console.log(`Email sent with template ${templateId}. Status: ${response.statusCode}`);
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (error) {
