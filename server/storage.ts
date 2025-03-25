@@ -2,12 +2,15 @@ import {
   submissions, 
   users, 
   emailTemplates,
+  dmarcReports,
   type Submission, 
   type InsertSubmission, 
   type User, 
   type InsertUser,
   type EmailTemplate,
-  type InsertEmailTemplate
+  type InsertEmailTemplate,
+  type DmarcReport,
+  type InsertDmarcReport
 } from "@shared/schema";
 import { eq, desc, and } from "drizzle-orm";
 import { db } from "./db";
@@ -42,6 +45,15 @@ export interface IStorage {
   getDefaultEmailTemplate(language?: string): Promise<EmailTemplate | undefined>;
   updateEmailTemplate(id: number, template: Partial<InsertEmailTemplate>): Promise<EmailTemplate>;
   deleteEmailTemplate(id: number): Promise<boolean>;
+  
+  // DMARC report operations
+  createDmarcReport(report: InsertDmarcReport): Promise<DmarcReport>;
+  getDmarcReportById(id: number): Promise<DmarcReport | undefined>;
+  getAllDmarcReports(): Promise<DmarcReport[]>;
+  getDmarcReportsByDomain(domain: string): Promise<DmarcReport[]>;
+  getDmarcReportsByDateRange(startDate: Date, endDate: Date): Promise<DmarcReport[]>;
+  updateDmarcReportStatus(id: number, processed: boolean, emailSent: boolean): Promise<boolean>;
+  deleteDmarcReport(id: number): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {

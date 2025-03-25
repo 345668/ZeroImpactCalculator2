@@ -54,6 +54,7 @@
     "@types/pdfkit": "^0.13.9",
     "@types/serve-favicon": "^2.5.7",
     "@types/three": "^0.174.0",
+    "@types/xml2js": "^0.4.14",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
@@ -106,6 +107,7 @@
     "vaul": "^1.1.0",
     "wouter": "^3.6.0",
     "ws": "^8.18.1",
+    "xml2js": "^0.6.2",
     "zod": "^3.24.2",
     "zod-validation-error": "^3.4.0"
   },
