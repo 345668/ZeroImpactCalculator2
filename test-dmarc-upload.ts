@@ -122,7 +122,7 @@ async function testDmarcReportUpload() {
     // Test 3: File Upload Test
     console.log('\n📊 Test 3: File Upload Test');
     const formData = new FormData();
-    formData.append('report', fs.createReadStream(COMPREHENSIVE_REPORT_PATH), {
+    formData.append('file', fs.createReadStream(COMPREHENSIVE_REPORT_PATH), {
       filename: 'dmarc-report.xml',
       contentType: 'application/xml',
     });
