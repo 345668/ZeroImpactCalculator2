@@ -72,6 +72,116 @@ type EmailTemplate = {
   createdBy: number;
 };
 
+/**
+ * SubmissionDataHelper Component
+ * 
+ * Displays available dynamic content fields that can be used in email templates
+ * from the submission data structure. Organized into logical categories for ease of use.
+ */
+function SubmissionDataHelper({ onInsert }: { onInsert?: (field: string) => void }) {
+  const { t } = useTranslation();
+  
+  // Define the available fields organized by categories
+  const submissionFields = {
+    "User Information": {
+      firstName: "First name of the user",
+      lastName: "Last name of the user",
+      email: "Email address",
+      address: "Full address",
+      phone: "Phone number",
+      acceptedTerms: "Date when terms were accepted",
+      gdprConsent: "GDPR consent status",
+    },
+    "Building Information": {
+      buildingOwnership: "Type of building ownership",
+      buildingSize: "Size of the building in square meters",
+      heatingSystem: "Current heating system type",
+      currentEnergySource: "Current energy source",
+      currentConsumption: "Current energy consumption",
+      projectedConsumption: "Projected energy consumption after improvements",
+    },
+    "Calculation Results": {
+      co2Savings: "Total CO2 savings in kg",
+      carbonCredits: "Carbon credits earned",
+      financialValue: "Financial value of carbon credits",
+      calculationDetails: "Detailed calculation breakdown",
+    },
+    "Energy Consultant": {
+      energyConsultantName: "Name of the energy consultant",
+      energyConsultantCompany: "Company of the energy consultant",
+      energyConsultantId: "ID of the energy consultant",
+      energyConsultantBafaNumber: "BAFA registration number",
+    },
+    "Document Information": {
+      fileName: "Name of the uploaded document",
+      fileType: "Type of the uploaded document",
+      fileUploadedAt: "Date when document was uploaded",
+      documentUrl: "URL to view the uploaded document",
+      submittedAt: "Date when submission was created",
+    }
+  };
+
+  // Handler for inserting a field into the template
+  const handleInsertField = (field: string) => {
+    if (onInsert) {
+      onInsert(field);
+    }
+  };
+
+  return (
+    <div className="p-4 border rounded-md bg-background">
+      <div className="flex items-center space-x-2 mb-3">
+        <Database className="h-5 w-5 text-primary" />
+        <h3 className="text-lg font-medium">{t("Available Dynamic Content Fields")}</h3>
+      </div>
+      
+      <p className="text-sm text-muted-foreground mb-4">
+        {t("Click on any field to insert it as a variable in your template. Use with double curly braces like {{fieldName}}.")}
+      </p>
+      
+      <Accordion type="multiple" className="w-full">
+        {Object.entries(submissionFields).map(([category, fields]) => (
+          <AccordionItem key={category} value={category}>
+            <AccordionTrigger className="hover:bg-muted/50 px-3 rounded-md">
+              {t(category)}
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-1 gap-2 p-2">
+                {Object.entries(fields).map(([field, description]) => (
+                  <TooltipProvider key={field}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="justify-start text-left font-mono h-auto py-2"
+                          onClick={() => handleInsertField(field)}
+                        >
+                          <Badge variant="outline" className="mr-2 bg-primary/10">
+                            {field}
+                          </Badge>
+                          <span className="text-xs truncate">{t(description)}</span>
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right" className="max-w-md">
+                        <div className="space-y-2">
+                          <p className="font-medium">{field}</p>
+                          <p className="text-xs">{t(description)}</p>
+                          <p className="text-xs font-mono bg-muted p-1 rounded">{"{{" + field + "}}"}</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
+  );
+}
+
 interface EmailTemplateEditorProps {
   templateId?: number;
   onSaved?: () => void;
@@ -543,26 +653,134 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="variables"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("Template Variables")}</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder={t("firstName: User's first name\nlastName: User's last name")} 
-                      {...field} 
-                      className="min-h-[100px] font-mono text-sm"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    {t("Enter one variable per line in the format name:description, or as a JSON object")}
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="variables"
+                render={({ field }) => {
+                  // Create a function to insert variables at cursor position or append
+                  const insertVariable = (varName: string) => {
+                    const textarea = document.querySelector('textarea[name="variables"]') as HTMLTextAreaElement;
+                    if (textarea) {
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      const currentValue = field.value || '';
+                      
+                      // Format the variable entry
+                      const newVar = `${varName}: ${t("Dynamic field from submission data")}`;
+                      
+                      // Determine line ending (respect existing format)
+                      const lineEnding = currentValue.includes('\r\n') ? '\r\n' : '\n';
+                      
+                      // Add a line break if not empty and last character is not already a line break
+                      const prefix = currentValue && !currentValue.endsWith(lineEnding) ? lineEnding : '';
+                      
+                      // If values ends with colon and space, don't add a new line
+                      const newValue = currentValue.trim().endsWith(':') 
+                        ? `${currentValue} ${varName}`
+                        : `${currentValue}${prefix}${newVar}`;
+                      
+                      // Update the field
+                      field.onChange(newValue);
+                      
+                      // Focus the textarea and position cursor at the end of inserted text
+                      setTimeout(() => {
+                        textarea.focus();
+                        const newPosition = newValue.length;
+                        textarea.setSelectionRange(newPosition, newPosition);
+                      }, 100);
+                    }
+                  };
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>{t("Template Variables")}</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder={t("firstName: User's first name\nlastName: User's last name")} 
+                          {...field} 
+                          className="min-h-[180px] font-mono text-sm"
+                        />
+                      </FormControl>
+                      <FormDescription className="flex items-center space-x-1">
+                        <span>{t("Enter one variable per line in the format name:description, or as a JSON object")}</span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-5 w-5 rounded-full">
+                                <HelpCircle className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <div className="space-y-2 text-xs">
+                                <p>{t("Variables will be available in your email template via double curly braces.")}</p>
+                                <p>{t("Example: {{firstName}} will be replaced with the actual first name from submission.")}</p>
+                                <p className="font-mono bg-muted p-1 rounded-sm">firstName: User's first name</p>
+                              </div>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
+              />
+              
+              {/* Dynamic content helper */}
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <FormLabel>{t("Dynamic Content Helper")}</FormLabel>
+                  <Badge variant="outline" className="font-normal text-xs">
+                    {t("Click to Insert")}
+                  </Badge>
+                </div>
+                <SubmissionDataHelper 
+                  onInsert={(field) => {
+                    // For body textarea
+                    const bodyTextarea = document.querySelector('textarea[name="body"]') as HTMLTextAreaElement;
+                    if (bodyTextarea) {
+                      const start = bodyTextarea.selectionStart;
+                      const end = bodyTextarea.selectionEnd;
+                      const value = form.getValues("body");
+                      
+                      // Insert variable wrapped in double curly braces at cursor position
+                      const newValue = value.substring(0, start) + 
+                        `{{${field}}}` + 
+                        value.substring(end);
+                      
+                      form.setValue("body", newValue, { shouldDirty: true });
+                      
+                      // Update the variables field also
+                      const variableField = form.getValues("variables") || "";
+                      if (!variableField.includes(field + ":")) {
+                        const variables = document.querySelector('textarea[name="variables"]') as HTMLTextAreaElement;
+                        // If variables contains valid JSON, try to update it
+                        if (variableField.trim().startsWith('{') && variableField.trim().endsWith('}')) {
+                          try {
+                            const vars = JSON.parse(variableField);
+                            if (!vars[field]) {
+                              vars[field] = t("Dynamic field from submission data");
+                              form.setValue("variables", JSON.stringify(vars, null, 2), { shouldDirty: true });
+                            }
+                          } catch (e) {
+                            // If JSON is invalid, just append as text
+                            const lineEnding = variableField.includes('\r\n') ? '\r\n' : '\n';
+                            const prefix = variableField && !variableField.endsWith(lineEnding) ? lineEnding : '';
+                            form.setValue("variables", `${variableField}${prefix}${field}: ${t("Dynamic field from submission data")}`, { shouldDirty: true });
+                          }
+                        } else {
+                          // Append as text
+                          const lineEnding = variableField.includes('\r\n') ? '\r\n' : '\n';
+                          const prefix = variableField && !variableField.endsWith(lineEnding) ? lineEnding : '';
+                          form.setValue("variables", `${variableField}${prefix}${field}: ${t("Dynamic field from submission data")}`, { shouldDirty: true });
+                        }
+                      }
+                    }
+                  }} 
+                />
+              </div>
+            </div>
             
             <div className="border rounded-md p-4">
               <h3 className="font-medium mb-2">{t("Template Preview")}</h3>
@@ -646,6 +864,7 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
 }
 
 // Component to list available templates
+
 export function EmailTemplatesList() {
   const { t } = useTranslation();
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
