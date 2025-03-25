@@ -7,16 +7,34 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Helper function to get the CSRF token from cookies
-function getCsrfToken(): string | null {
-  const cookies = document.cookie.split(';');
-  for (let cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
-    if (name === '_csrf') {
-      return value;
+// Cache for the CSRF token
+let csrfTokenCache: string | null = null;
+
+// Helper function to get the CSRF token from the server
+async function fetchCsrfToken(): Promise<string | null> {
+  try {
+    // Return cached token if available
+    if (csrfTokenCache) {
+      return csrfTokenCache;
     }
+    
+    // Otherwise fetch it from the server
+    const response = await fetch('/api/csrf-token', {
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      console.error('Failed to fetch CSRF token:', response.status);
+      return null;
+    }
+    
+    const data = await response.json();
+    csrfTokenCache = data.csrfToken;
+    return csrfTokenCache;
+  } catch (error) {
+    console.error('Error fetching CSRF token:', error);
+    return null;
   }
-  return null;
 }
 
 // Original apiRequest function with CSRF token support
@@ -25,8 +43,8 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Get CSRF token from cookie
-  const csrfToken = getCsrfToken();
+  // Get CSRF token from server
+  const csrfToken = await fetchCsrfToken();
   
   const headers: Record<string, string> = {};
   if (data) {
@@ -54,8 +72,8 @@ export async function fetchApi<T = any>(
   url: string,
   options?: RequestInit
 ): Promise<T> {
-  // Get CSRF token from cookie
-  const csrfToken = getCsrfToken();
+  // Get CSRF token from server
+  const csrfToken = await fetchCsrfToken();
   
   // Create a new headers object by merging the existing headers with the CSRF token
   const headers = new Headers(options?.headers || {});
@@ -81,8 +99,8 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    // Get CSRF token from cookie
-    const csrfToken = getCsrfToken();
+    // Get CSRF token from server
+    const csrfToken = await fetchCsrfToken();
     
     // Create headers and add CSRF token
     const headers: Record<string, string> = {};
