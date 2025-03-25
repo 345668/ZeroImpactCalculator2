@@ -11,7 +11,7 @@ async function throwIfResNotOk(res: Response) {
 let csrfTokenCache: string | null = null;
 
 // Helper function to get the CSRF token from the server
-async function fetchCsrfToken(): Promise<string | null> {
+export async function fetchCsrfToken(): Promise<string | null> {
   try {
     // Return cached token if available
     if (csrfTokenCache) {

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { useLocation } from "wouter";
+import { fetchCsrfToken } from "@/lib/queryClient";
 
 interface LoginModalProps {
   open: boolean;
@@ -39,24 +40,16 @@ export function LoginModal({ open, onOpenChange, onSuccess }: LoginModalProps) {
     setIsLoading(true);
     
     try {
-      // Fetch CSRF token first
-      let csrfToken = '';
-      try {
-        const tokenResponse = await fetch('/api/csrf-token');
-        if (tokenResponse.ok) {
-          const tokenData = await tokenResponse.json();
-          csrfToken = tokenData.csrfToken;
-        }
-      } catch (tokenError) {
-        console.error('Failed to fetch CSRF token:', tokenError);
-      }
+      // Fetch CSRF token using the utility function
+      const csrfToken = await fetchCsrfToken();
+      console.log("Got CSRF token for login request:", csrfToken ? "Yes" : "No");
       
       // Now make the login request with the CSRF token
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRF-Token": csrfToken
+          "X-CSRF-Token": csrfToken || ''
         },
         body: JSON.stringify(data),
       });

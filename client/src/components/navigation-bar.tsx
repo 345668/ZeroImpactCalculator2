@@ -7,16 +7,11 @@ import { LanguageSwitcher } from "@/components/language-switcher";
 import { ShieldAlert } from "lucide-react";
 
 export function NavigationBar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useTranslation();
-  
-  // Debug logging for the login state
-  useEffect(() => {
-    console.log("Navigation bar - Login modal state:", showLoginModal);
-  }, [showLoginModal]);
   
   // Check if user is logged in on component mount
   useEffect(() => {
@@ -40,15 +35,15 @@ export function NavigationBar() {
   }, []);
   
   const handleCompanyClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Always prevent default to handle login check
-    console.log("Company button clicked, logged in:", isLoggedIn);
+    e.preventDefault();
     
     if (!isLoggedIn) {
-      console.log("Opening login modal from navigation bar");
+      // Only show login modal when not logged in and clicking Company button
+      console.log("Opening login modal for company access");
       setShowLoginModal(true);
     } else {
       // If already logged in, navigate to company page
-      window.location.href = "/company";
+      setLocation("/company");
     }
   };
   
@@ -60,6 +55,8 @@ export function NavigationBar() {
       try {
         const userData = JSON.parse(user);
         setIsAdmin(userData.role === 'admin');
+        // Navigate to company page after successful login
+        setLocation("/company");
       } catch (e) {
         console.error("Error parsing user data:", e);
       }
@@ -69,6 +66,7 @@ export function NavigationBar() {
   return (
     <>
       <nav className="fixed top-0 right-0 px-6 py-4 z-50 flex items-center gap-3">
+        {/* Home button - always accessible */}
         <Link href="/">
           <Button 
             variant="link" 
@@ -79,7 +77,7 @@ export function NavigationBar() {
           </Button>
         </Link>
         
-        {/* Simplified Company button - same button for both states */}
+        {/* Company button - protected with login */}
         <Button 
           variant="link" 
           size="sm" 
@@ -89,12 +87,11 @@ export function NavigationBar() {
           {t('navigation.company')}
         </Button>
         
-        {/* Admin access is now integrated in the company portal */}
-        
         {/* Language switcher */}
         <LanguageSwitcher />
       </nav>
       
+      {/* Login modal only shows when Company button is clicked while not logged in */}
       <LoginModal 
         open={showLoginModal} 
         onOpenChange={setShowLoginModal}
