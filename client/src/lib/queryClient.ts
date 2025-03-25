@@ -7,15 +7,40 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
-// Original apiRequest function
+// Helper function to get the CSRF token from cookies
+function getCsrfToken(): string | null {
+  const cookies = document.cookie.split(';');
+  for (let cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === '_csrf') {
+      return value;
+    }
+  }
+  return null;
+}
+
+// Original apiRequest function with CSRF token support
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Get CSRF token from cookie
+  const csrfToken = getCsrfToken();
+  
+  const headers: Record<string, string> = {};
+  if (data) {
+    headers["Content-Type"] = "application/json";
+  }
+  
+  // Add CSRF token header if available
+  if (csrfToken) {
+    headers["X-CSRF-Token"] = csrfToken;
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
   });
@@ -24,13 +49,25 @@ export async function apiRequest(
   return res;
 }
 
-// New function for JSON API requests using object options
+// Enhanced function for JSON API requests using object options with CSRF token
 export async function fetchApi<T = any>(
   url: string,
   options?: RequestInit
 ): Promise<T> {
+  // Get CSRF token from cookie
+  const csrfToken = getCsrfToken();
+  
+  // Create a new headers object by merging the existing headers with the CSRF token
+  const headers = new Headers(options?.headers || {});
+  
+  // Add CSRF token header if available and not already set
+  if (csrfToken && !headers.has('X-CSRF-Token')) {
+    headers.set('X-CSRF-Token', csrfToken);
+  }
+
   const res = await fetch(url, {
     ...options,
+    headers,
     credentials: "include",
   });
 
@@ -44,8 +81,18 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Get CSRF token from cookie
+    const csrfToken = getCsrfToken();
+    
+    // Create headers and add CSRF token
+    const headers: Record<string, string> = {};
+    if (csrfToken) {
+      headers["X-CSRF-Token"] = csrfToken;
+    }
+    
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
