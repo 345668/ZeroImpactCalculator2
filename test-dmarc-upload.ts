@@ -95,7 +95,7 @@ async function testDmarcReportUpload() {
       throw new Error(`Failed to upload file: ${uploadResponse.statusText} (${uploadResponse.status})`);
     }
 
-    const uploadResult = await uploadResponse.json();
+    const uploadResult = await uploadResponse.json() as DmarcReportData[];
     console.log('✅ Upload successful!');
     console.log('Upload result:', JSON.stringify(uploadResult, null, 2));
 
@@ -107,17 +107,17 @@ async function testDmarcReportUpload() {
       throw new Error(`Failed to retrieve reports: ${getResponse.statusText} (${getResponse.status})`);
     }
 
-    const reports = await getResponse.json();
+    const reports = await getResponse.json() as DmarcReportData[];
     console.log('✅ Retrieved reports successfully!');
     console.log(`Found ${reports.length} reports:`);
-    reports.forEach((report: any, index: number) => {
+    reports.forEach((report: DmarcReportData, index: number) => {
       console.log(`Report #${index + 1}:`);
       console.log(`  ID: ${report.id}`);
       console.log(`  Domain: ${report.domain}`);
       console.log(`  Report ID: ${report.reportId}`);
-      console.log(`  Start Date: ${report.startDate}`);
-      console.log(`  End Date: ${report.endDate}`);
-      console.log(`  Messages: ${report.messageCount}`);
+      console.log(`  Start Date: ${report.startDate || 'N/A'}`);
+      console.log(`  End Date: ${report.endDate || 'N/A'}`);
+      console.log(`  Messages: ${report.messageCount || report.count || 0}`);
     });
 
     // Fourth test: Get analytics
@@ -128,7 +128,7 @@ async function testDmarcReportUpload() {
       throw new Error(`Failed to retrieve analytics: ${analyticsResponse.statusText} (${analyticsResponse.status})`);
     }
 
-    const analytics = await analyticsResponse.json();
+    const analytics = await analyticsResponse.json() as AnalyticsResponse;
     console.log('✅ Retrieved analytics successfully!');
     console.log('Analytics:', JSON.stringify(analytics, null, 2));
 
