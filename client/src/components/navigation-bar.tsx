@@ -4,11 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { LoginModal } from "@/components/login-modal";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { ShieldAlert } from "lucide-react";
 
 export function NavigationBar() {
   const [location] = useLocation();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const { t } = useTranslation();
   
   // Check if user is logged in on component mount
@@ -19,6 +21,11 @@ export function NavigationBar() {
         const userData = JSON.parse(user);
         if (userData && userData.id) {
           setIsLoggedIn(true);
+          
+          // Check if user has admin role
+          if (userData.role === 'admin') {
+            setIsAdmin(true);
+          }
         }
       } catch (e) {
         console.error("Error parsing user data:", e);
@@ -66,6 +73,20 @@ export function NavigationBar() {
           >
             {t('navigation.company')}
           </Button>
+        )}
+        
+        {/* Admin panel link - visible only for admin users */}
+        {isAdmin && (
+          <Link href="/admin">
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="text-sm font-medium text-primary flex items-center gap-1 hover:text-primary/90"
+            >
+              <ShieldAlert className="h-3.5 w-3.5" />
+              Admin
+            </Button>
+          </Link>
         )}
         
         {/* Language switcher */}

@@ -18,7 +18,8 @@
     "about": "Über uns",
     "login": "Anmelden",
     "logout": "Abmelden",
-    "company": "Unternehmen"
+    "company": "Unternehmen",
+    "admin": "Admin"
   },
   "calculator": {
     "title": "CO₂-Gutschriften-Rechner",
