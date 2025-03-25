@@ -407,16 +407,74 @@ router.get('/analytics/summary', async (req, res) => {
     const domain = req.query.domain as string | undefined;
     const startDate = req.query.startDate ? new Date(req.query.startDate as string) : undefined;
     const endDate = req.query.endDate ? new Date(req.query.endDate as string) : undefined;
+
+    // Define default dates if not provided (last 30 days)
+    const defaultEndDate = new Date();
+    const defaultStartDate = new Date();
+    defaultStartDate.setDate(defaultStartDate.getDate() - 30);
     
-    // TODO: Implement getDmarcAnalytics in storage.ts
-    // This would provide aggregated stats about DMARC reports
+    // Fetch DMARC reports based on filters
+    let reports: DmarcReport[] = [];
+    if (domain) {
+      reports = await storage.getDmarcReportsByDomain(domain);
+    } else if (startDate && endDate) {
+      reports = await storage.getDmarcReportsByDateRange(startDate, endDate);
+    } else {
+      reports = await storage.getAllDmarcReports();
+    }
+
+    // Calculate total reports
+    const totalReports = reports.length;
+    
+    // Calculate pass/fail rates (based on both DKIM and SPF)
+    let passCount = 0;
+    let failCount = 0;
+    
+    for (const report of reports) {
+      if (report.dkimResult === 'pass' && report.spfResult === 'pass') {
+        passCount++;
+      } else if (report.dkimResult === 'fail' || report.spfResult === 'fail') {
+        failCount++;
+      }
+      // Note: If both are neither pass nor fail (like 'neutral'), we don't count them in either category
+    }
+    
+    const passRate = totalReports > 0 ? (passCount / totalReports) * 100 : 0;
+    const failRate = totalReports > 0 ? (failCount / totalReports) * 100 : 0;
+    
+    // Calculate top sources (by IP address)
+    const sourceMap = new Map<string, number>();
+    for (const report of reports) {
+      if (report.sourceIp) {
+        const currentCount = sourceMap.get(report.sourceIp) || 0;
+        sourceMap.set(report.sourceIp, currentCount + 1);
+      }
+    }
+    
+    const topSources = Array.from(sourceMap.entries())
+      .map(([sourceIp, count]) => ({ sourceIp, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5); // Get top 5
+    
+    // Group reports by day
+    const reportsByDayMap = new Map<string, number>();
+    for (const report of reports) {
+      const dateStr = report.reportDate ? new Date(report.reportDate).toISOString().split('T')[0] : 'unknown';
+      const currentCount = reportsByDayMap.get(dateStr) || 0;
+      reportsByDayMap.set(dateStr, currentCount + 1);
+    }
+    
+    const reportsByDay = Array.from(reportsByDayMap.entries())
+      .map(([date, count]) => ({ date, count }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    
     const analytics = {
-      totalReports: 0,
-      passRate: 0,
-      failRate: 0,
-      topSources: [],
-      reportsByDay: [],
-      message: 'DMARC analytics feature to be implemented'
+      totalReports,
+      passRate: Math.round(passRate * 100) / 100, // Round to 2 decimal places
+      failRate: Math.round(failRate * 100) / 100,
+      topSources,
+      reportsByDay,
+      message: totalReports > 0 ? 'DMARC analytics generated successfully' : 'No DMARC reports found'
     };
     
     res.json(analytics);
