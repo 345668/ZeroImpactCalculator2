@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<feedback>
+  <report_metadata>
+    <org_name>example.com</org_name>
+    <report_id>simple-report-id</report_id>
+    <date_range>
+      <begin>1711344000</begin>
+      <end>1711430400</end>
+    </date_range>
+  </report_metadata>
+  <policy_published>
+    <domain>example.com</domain>
+  </policy_published>
+  <record>
+    <row>
+      <source_ip>192.168.1.1</source_ip>
+      <count>5</count>
+      <policy_evaluated>
+        <disposition>none</disposition>
+      </policy_evaluated>
+    </row>
+    <auth_results>
+      <dkim>
+        <result>pass</result>
+      </dkim>
+      <spf>
+        <result>pass</result>
+      </spf>
+    </auth_results>
+  </record>
+</feedback>
