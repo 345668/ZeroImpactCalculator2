@@ -75,19 +75,7 @@ export function NavigationBar() {
           </Button>
         )}
         
-        {/* Admin panel link - visible only for admin users */}
-        {isAdmin && (
-          <Link href="/admin">
-            <Button 
-              variant="link" 
-              size="sm" 
-              className="text-sm font-medium text-primary flex items-center gap-1 hover:text-primary/90"
-            >
-              <ShieldAlert className="h-3.5 w-3.5" />
-              {t('navigation.admin')}
-            </Button>
-          </Link>
-        )}
+        {/* Admin access is now integrated in the company portal */}
         
         {/* Language switcher */}
         <LanguageSwitcher />
