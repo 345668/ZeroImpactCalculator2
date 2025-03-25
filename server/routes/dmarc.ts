@@ -16,7 +16,27 @@ const __dirname = path.dirname(__filename);
 const readFile = promisify(fs.readFile);
 const router = express.Router();
 const xmlParser = new xml2js.Parser({ explicitArray: false });
-const parseXmlString = promisify<string, any>(xmlParser.parseString.bind(xmlParser));
+
+// Create a wrapper around xml2js for better error handling
+async function parseXmlString(xmlContent: string): Promise<any> {
+  try {
+    console.log('XML Parse - Starting to parse XML');
+    return new Promise((resolve, reject) => {
+      xmlParser.parseString(xmlContent, (err, result) => {
+        if (err) {
+          console.error('XML Parse - Error in parsing:', err);
+          reject(new Error(`XML parsing error: ${err.message}`));
+        } else {
+          console.log('XML Parse - Successfully parsed XML');
+          resolve(result);
+        }
+      });
+    });
+  } catch (error) {
+    console.error('XML Parse - Exception outside of parseString:', error);
+    throw new Error(`XML parsing exception: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
 
 // Configure multer for XML file uploads
 const upload = multer({
@@ -68,11 +88,12 @@ interface DmarcReportXML {
           dkim?: string;
           spf?: string;
           result?: string;
+          r?: string;  // Some reports use 'r' instead of 'result'
         };
       };
       auth_results: {
-        dkim?: { result: string };
-        spf?: { result: string };
+        dkim?: { result?: string; r?: string; };  // Some reports use 'r' instead of 'result'
+        spf?: { result?: string; r?: string; };   // Some reports use 'r' instead of 'result'
       };
     }> | {
       row: {
@@ -84,11 +105,12 @@ interface DmarcReportXML {
           dkim?: string;
           spf?: string;
           result?: string;
+          r?: string;  // Some reports use 'r' instead of 'result'
         };
       };
       auth_results: {
-        dkim?: { result: string };
-        spf?: { result: string };
+        dkim?: { result?: string; r?: string; };  // Some reports use 'r' instead of 'result'
+        spf?: { result?: string; r?: string; };   // Some reports use 'r' instead of 'result'
       };
     };
   };
@@ -97,14 +119,35 @@ interface DmarcReportXML {
 // Function to process XML DMARC report
 async function processDmarcReport(xmlContent: string): Promise<InsertDmarcReport[]> {
   try {
-    // Parse XML with type assertion
-    const parsedXml = await parseXmlString(xmlContent) as DmarcReportXML;
+    console.log('Starting to process DMARC XML content');
+    
+    // Parse XML with type assertion 
+    console.log('Parsing XML string...');
+    let parsedXml;
+    try {
+      parsedXml = await parseXmlString(xmlContent) as DmarcReportXML;
+      console.log('XML parsed successfully:', JSON.stringify(parsedXml, null, 2).substring(0, 500) + '...');
+    } catch (parseError) {
+      console.error('XML parsing failed:', parseError);
+      throw new Error(`XML parsing failed: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+    }
     
     // DMARC report structure validation
-    if (!parsedXml.feedback || !parsedXml.feedback.report_metadata || !parsedXml.feedback.policy_published || !parsedXml.feedback.record) {
-      throw new Error('Invalid DMARC report format');
+    console.log('Validating DMARC report structure...');
+    if (!parsedXml.feedback) {
+      throw new Error('Invalid DMARC report: missing feedback element');
+    }
+    if (!parsedXml.feedback.report_metadata) {
+      throw new Error('Invalid DMARC report: missing report_metadata');
+    }
+    if (!parsedXml.feedback.policy_published) {
+      throw new Error('Invalid DMARC report: missing policy_published');
+    }
+    if (!parsedXml.feedback.record) {
+      throw new Error('Invalid DMARC report: missing record data');
     }
 
+    console.log('DMARC report structure is valid');
     const metadata = parsedXml.feedback.report_metadata;
     const policy = parsedXml.feedback.policy_published;
     
@@ -113,28 +156,65 @@ async function processDmarcReport(xmlContent: string): Promise<InsertDmarcReport
       ? parsedXml.feedback.record 
       : [parsedXml.feedback.record];
     
+    console.log(`Processing ${records.length} records from DMARC report`);
+    
     // Map XML records to DmarcReport objects
-    return records.map((record) => {
-      const row: Partial<InsertDmarcReport> = {
-        reportId: metadata.report_id,
-        domain: policy.domain,
-        sourceIp: record.row.source_ip,
-        sourceOrg: record.row.source_org || null,
-        reportingOrg: metadata.org_name,
-        count: parseInt(record.row.count, 10),
-        disposition: validateDisposition(record.row.policy_evaluated.disposition),
-        dkimResult: record.auth_results.dkim ? record.auth_results.dkim.result : null,
-        spfResult: record.auth_results.spf ? record.auth_results.spf.result : null,
-        alignmentDkim: record.row.policy_evaluated.dkim || null,
-        alignmentSpf: record.row.policy_evaluated.spf || null,
-        policyEvaluated: record.row.policy_evaluated.result || null,
-        reportDate: new Date(metadata.date_range.end * 1000), // Convert UNIX timestamp to Date
-        rawReport: xmlContent,
-      };
-      
-      // Validate with schema
-      return insertDmarcReportSchema.parse(row);
-    });
+    const result: InsertDmarcReport[] = [];
+    
+    for (let i = 0; i < records.length; i++) {
+      try {
+        const record = records[i];
+        console.log(`Processing record ${i+1}/${records.length}`);
+        
+        if (!record.row) {
+          console.error(`Record ${i+1} missing 'row' element`);
+          continue;
+        }
+        
+        if (!record.auth_results) {
+          console.error(`Record ${i+1} missing 'auth_results' element`);
+          continue;
+        }
+        
+        const row: Partial<InsertDmarcReport> = {
+          reportId: metadata.report_id,
+          domain: policy.domain,
+          sourceIp: record.row.source_ip,
+          sourceOrg: record.row.source_org || null,
+          reportingOrg: metadata.org_name,
+          count: parseInt(record.row.count, 10),
+          disposition: validateDisposition(record.row.policy_evaluated.disposition),
+          dkimResult: record.auth_results.dkim ? (record.auth_results.dkim.result || record.auth_results.dkim.r) : null,
+          spfResult: record.auth_results.spf ? (record.auth_results.spf.result || record.auth_results.spf.r) : null,
+          alignmentDkim: record.row.policy_evaluated.dkim || null,
+          alignmentSpf: record.row.policy_evaluated.spf || null,
+          policyEvaluated: record.row.policy_evaluated.result || record.row.policy_evaluated.r || null,
+          reportDate: new Date(metadata.date_range.end * 1000), // Convert UNIX timestamp to Date
+          rawReport: xmlContent,
+          processed: false,
+          emailNotificationSent: false
+        };
+        
+        // Print what we're about to validate
+        console.log('Validating report data with schema:', JSON.stringify(row, null, 2));
+        
+        try {
+          // Validate with schema
+          const validatedReport = insertDmarcReportSchema.parse(row);
+          result.push(validatedReport);
+          console.log(`Record ${i+1} validated successfully`);
+        } catch (validationError) {
+          console.error(`Schema validation failed for record ${i+1}:`, validationError);
+          throw validationError;
+        }
+      } catch (recordError) {
+        console.error(`Error processing record ${i+1}:`, recordError);
+        throw recordError;
+      }
+    }
+    
+    console.log(`Successfully processed ${result.length} DMARC report records`);
+    return result;
     
   } catch (error) {
     console.error('Error processing DMARC report:', error);
