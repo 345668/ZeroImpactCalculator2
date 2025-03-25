@@ -484,4 +484,52 @@ router.get('/analytics/summary', async (req, res) => {
   }
 });
 
+// Send a test DMARC notification email
+router.post('/notifications/test', async (req, res) => {
+  try {
+    // Validate the request
+    const { reportId, email } = req.body;
+    
+    if (!reportId || !email) {
+      return res.status(400).json({ 
+        error: 'Missing required parameters', 
+        message: 'Both reportId and email are required' 
+      });
+    }
+    
+    // Get the report
+    const report = await storage.getDmarcReportById(Number(reportId));
+    if (!report) {
+      return res.status(404).json({ 
+        error: 'Report not found', 
+        message: `No DMARC report found with ID ${reportId}` 
+      });
+    }
+    
+    // Send the notification
+    const sendResult = await SendGridService.sendDmarcAlert(report, email);
+    
+    if (sendResult) {
+      // Update the report status if email was sent successfully
+      await storage.updateDmarcReportStatus(report.id, true, true);
+      
+      return res.status(200).json({ 
+        success: true, 
+        message: `DMARC notification sent to ${email}` 
+      });
+    } else {
+      return res.status(500).json({ 
+        error: 'Failed to send notification', 
+        message: 'The email service was unable to send the notification. Check logs for details.' 
+      });
+    }
+  } catch (error) {
+    console.error('Error sending DMARC notification:', error);
+    res.status(500).json({ 
+      error: 'Failed to send DMARC notification', 
+      message: error instanceof Error ? error.message : 'Unknown error' 
+    });
+  }
+});
+
 export default router;
