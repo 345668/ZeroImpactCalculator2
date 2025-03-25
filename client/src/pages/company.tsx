@@ -264,6 +264,7 @@ function CompanyPage() {
 export default function CompanyPageWithAuth() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [, setLocation] = useLocation();
   
   useEffect(() => {
     // Check if user is already logged in
@@ -281,8 +282,8 @@ export default function CompanyPageWithAuth() {
       }
     }
     
-    // If not authenticated, show login modal
-    setShowLoginModal(true);
+    // If not authenticated, show auth required page but don't auto-show login modal
+    // Let the navigation-bar handle showing the login modal when needed
   }, []);
   
   // When login is successful, hide modal and set authenticated
@@ -304,10 +305,13 @@ export default function CompanyPageWithAuth() {
                 Please log in to access the company portal.
               </p>
               <Button 
-                onClick={() => setShowLoginModal(true)}
+                onClick={() => {
+                  // On button click, redirect to home and let navigation bar handle login dialog
+                  setLocation("/");
+                }}
                 className="px-6"
               >
-                Log In
+                Back to Home
               </Button>
             </div>
           </div>
