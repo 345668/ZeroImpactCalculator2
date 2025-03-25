@@ -36,6 +36,14 @@ const upload = multer({
   }
 });
 
+// Helper function to validate disposition value
+function validateDisposition(disposition: string): "none" | "quarantine" | "reject" {
+  const validValues = ["none", "quarantine", "reject"];
+  return validValues.includes(disposition) 
+    ? (disposition as "none" | "quarantine" | "reject") 
+    : "none"; // Default to "none" if invalid
+}
+
 // Define types for XML parsing
 interface DmarcReportXML {
   feedback: {
@@ -114,7 +122,7 @@ async function processDmarcReport(xmlContent: string): Promise<InsertDmarcReport
         sourceOrg: record.row.source_org || null,
         reportingOrg: metadata.org_name,
         count: parseInt(record.row.count, 10),
-        disposition: record.row.policy_evaluated.disposition,
+        disposition: validateDisposition(record.row.policy_evaluated.disposition),
         dkimResult: record.auth_results.dkim ? record.auth_results.dkim.result : null,
         spfResult: record.auth_results.spf ? record.auth_results.spf.result : null,
         alignmentDkim: record.row.policy_evaluated.dkim || null,
