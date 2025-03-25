@@ -736,7 +736,7 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
                   </Badge>
                 </div>
                 <SubmissionDataHelper 
-                  onInsert={(field) => {
+                  onInsert={(field: string) => {
                     // For body textarea
                     const bodyTextarea = document.querySelector('textarea[name="body"]') as HTMLTextAreaElement;
                     if (bodyTextarea) {
