@@ -98,6 +98,8 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
       isDefault: false,
       language: "en",
       variables: "",
+      templateType: "standard",
+      sendgridTemplateId: "",
     },
   });
 
@@ -112,6 +114,8 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
         isDefault: Boolean(template.isDefault),
         language: template.language || "en",
         variables: template.variables || "",
+        templateType: template.templateType || "standard",
+        sendgridTemplateId: template.sendgridTemplateId || "",
       });
 
       // Parse variables into preview data
@@ -431,6 +435,74 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="templateType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("Template Type")}</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value || "standard"}
+                      value={field.value || "standard"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={t("Select template type")} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="standard">
+                          <div className="flex items-center">
+                            <Mail className="mr-2 h-4 w-4" />
+                            <span>Standard Email</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="dmarc-report">
+                          <div className="flex items-center">
+                            <Shield className="mr-2 h-4 w-4" />
+                            <span>DMARC Report</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="security-alert">
+                          <div className="flex items-center">
+                            <AlertCircle className="mr-2 h-4 w-4" />
+                            <span>Security Alert</span>
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      {t("Select the purpose of this template")}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="sendgridTemplateId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t("SendGrid Template ID")}</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder={t("Enter SendGrid dynamic template ID (optional)")} 
+                        {...field} 
+                        value={field.value || ""}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      {t("If using a SendGrid dynamic template, enter its ID here")}
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
