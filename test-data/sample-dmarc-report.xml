@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<feedback>
+  <report_metadata>
+    <org_name>example.com</org_name>
+    <email>dmarc-reports@example.com</email>
+    <report_id>example-report-2025-03-25</report_id>
+    <date_range>
+      <begin>1711344000</begin> <!-- 2025-03-25T00:00:00Z -->
+      <end>1711430400</end> <!-- 2025-03-26T00:00:00Z -->
+    </date_range>
+  </report_metadata>
+  <policy_published>
+    <domain>yourdomain.com</domain>
+    <adkim>r</adkim>
+    <aspf>r</aspf>
+    <p>none</p>
+    <sp>none</sp>
+    <pct>100</pct>
+  </policy_published>
+  <record>
+    <row>
+      <source_ip>203.0.113.1</source_ip>
+      <source_org>Example Sender Organization</source_org>
+      <count>12</count>
+      <policy_evaluated>
+        <disposition>none</disposition>
+        <dkim>pass</dkim>
+        <spf>pass</spf>
+        <result>pass</result>
+      </policy_evaluated>
+    </row>
+    <auth_results>
+      <dkim>
+        <domain>yourdomain.com</domain>
+        <result>pass</result>
+        <selector>default</selector>
+      </dkim>
+      <spf>
+        <domain>yourdomain.com</domain>
+        <result>pass</result>
+      </spf>
+    </auth_results>
+  </record>
+  <record>
+    <row>
+      <source_ip>203.0.113.2</source_ip>
+      <count>5</count>
+      <policy_evaluated>
+        <disposition>quarantine</disposition>
+        <dkim>fail</dkim>
+        <spf>pass</spf>
+        <result>fail</result>
+      </policy_evaluated>
+    </row>
+    <auth_results>
+      <dkim>
+        <domain>yourdomain.com</domain>
+        <result>fail</result>
+        <selector>default</selector>
+      </dkim>
+      <spf>
+        <domain>yourdomain.com</domain>
+        <result>pass</result>
+      </spf>
+    </auth_results>
+  </record>
+</feedback>

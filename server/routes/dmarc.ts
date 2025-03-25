@@ -185,8 +185,36 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// Parse XML content directly without file upload
+router.post('/parse', async (req, res) => {
+  try {
+    const { xml } = req.body;
+    
+    if (!xml || typeof xml !== 'string') {
+      return res.status(400).json({ error: 'XML content is required' });
+    }
+    
+    // Process the DMARC report without saving to database
+    const parsedReports = await processDmarcReport(xml);
+    
+    res.json({
+      success: true,
+      reports: parsedReports,
+      message: 'DMARC XML parsed successfully'
+    });
+  } catch (error) {
+    console.error('Error parsing DMARC XML:', error);
+    
+    if (error instanceof Error) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: 'Failed to parse DMARC XML' });
+    }
+  }
+});
+
 // Upload a DMARC report XML file
-router.post('/upload', upload.single('report'), async (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
