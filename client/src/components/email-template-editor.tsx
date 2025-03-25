@@ -14,7 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getQueryFn, queryClient, apiRequest } from "@/lib/queryClient";
 import { 
   AlertCircle, Check, Loader2, Save, Trash2, Mail, FileText, 
-  Shield, Mail as MailIcon, Globe, Settings, SendHorizontal, Code 
+  Shield, Mail as MailIcon, Globe, Settings, SendHorizontal, Code,
+  CopyIcon, HelpCircle, Database
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import {
@@ -31,6 +32,19 @@ import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { z } from "zod";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Extended schema for form validation
 const emailTemplateFormSchema = insertEmailTemplateSchema.extend({
