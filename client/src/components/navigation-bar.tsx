@@ -84,7 +84,7 @@ export function NavigationBar() {
               className="text-sm font-medium text-primary flex items-center gap-1 hover:text-primary/90"
             >
               <ShieldAlert className="h-3.5 w-3.5" />
-              Admin
+              {t('navigation.admin')}
             </Button>
           </Link>
         )}
