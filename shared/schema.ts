@@ -1,4 +1,4 @@
-import { pgTable, text, serial, numeric, timestamp, index } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, numeric, timestamp, index, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -124,6 +124,36 @@ export const insertSubmissionSchema = createInsertSchema(submissions).extend({
 // Export types
 export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 export type Submission = typeof submissions.$inferSelect;
+// Email Templates table
+export const emailTemplates = pgTable("email_templates", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  description: text("description"),
+  isDefault: boolean("is_default").default(false),
+  language: text("language").default("en"),
+  variables: text("variables"), // JSON string of available variables
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdBy: serial("created_by").references(() => users.id),
+});
+
+// Email Template schema
+export const insertEmailTemplateSchema = createInsertSchema(emailTemplates)
+  .extend({
+    body: z.string().min(10, "Template body must be at least 10 characters"),
+    name: z.string().min(3, "Template name must be at least 3 characters"),
+    subject: z.string().min(3, "Subject must be at least 3 characters"),
+  })
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+  });
+
+export type EmailTemplate = typeof emailTemplates.$inferSelect;
+export type InsertEmailTemplate = z.infer<typeof insertEmailTemplateSchema>;
 export type CalculationResult = z.infer<typeof calculationResultSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
