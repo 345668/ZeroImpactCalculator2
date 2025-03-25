@@ -131,6 +131,17 @@ interface SendDmarcAlertRequest {
   to: string | string[] | { email: string; name?: string }[];
 }
 
+interface DomainAuthenticationRequest {
+  domain: string;
+  subdomain?: string;
+  customSPF?: boolean;
+  automaticSecurity?: boolean;
+}
+
+interface DomainAlignmentRequest {
+  domain: string;
+}
+
 /**
  * Register email agent routes
  */
@@ -554,6 +565,136 @@ export function registerEmailAgentRoutes(app: express.Express): void {
       return res.json(result);
     } catch (error: any) {
       console.error('Error in /email-agent/send-dmarc-alert:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal server error'
+      });
+    }
+  });
+
+  /**
+   * Domain Authentication & Alignment 
+   */
+   
+  // Create domain authentication
+  router.post('/domains', requireAdmin, csrfProtection, async (req, res) => {
+    try {
+      const domainRequest: DomainAuthenticationRequest = req.body;
+      
+      // Basic validation
+      if (!domainRequest.domain) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required field: domain'
+        });
+      }
+      
+      const result = await SendGridAgent.createAuthenticatedDomain(domainRequest);
+      return res.json(result);
+    } catch (error: any) {
+      console.error('Error in POST /email-agent/domains:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal server error'
+      });
+    }
+  });
+  
+  // Get all authenticated domains
+  router.get('/domains', requireAuth, csrfProtection, async (req, res) => {
+    try {
+      const result = await SendGridAgent.getAuthenticatedDomains();
+      return res.json(result);
+    } catch (error: any) {
+      console.error('Error in GET /email-agent/domains:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal server error'
+      });
+    }
+  });
+  
+  // Check domain alignment
+  router.post('/domains/check-alignment', requireAuth, csrfProtection, async (req, res) => {
+    try {
+      const request: DomainAlignmentRequest = req.body;
+      
+      // Basic validation
+      if (!request.domain) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required field: domain'
+        });
+      }
+      
+      const result = await SendGridAgent.checkDomainAlignment(request.domain);
+      return res.json(result);
+    } catch (error: any) {
+      console.error('Error in POST /email-agent/domains/check-alignment:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal server error'
+      });
+    }
+  });
+  
+  // Validate domain authentication
+  router.post('/domains/:domainId/validate', requireAuth, csrfProtection, async (req, res) => {
+    try {
+      const { domainId } = req.params;
+      
+      if (!domainId || isNaN(parseInt(domainId))) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid domain ID'
+        });
+      }
+      
+      const result = await SendGridAgent.validateDomainAuthentication(parseInt(domainId));
+      return res.json(result);
+    } catch (error: any) {
+      console.error(`Error in POST /email-agent/domains/${req.params.domainId}/validate:`, error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Internal server error'
+      });
+    }
+  });
+  
+  // Generate DMARC record
+  router.post('/domains/generate-dmarc', requireAuth, csrfProtection, async (req, res) => {
+    try {
+      const { domain, policy, subdomainPolicy, reportEmail, reportForensicEmail, percentage } = req.body;
+      
+      if (!domain) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required field: domain'
+        });
+      }
+      
+      // Validate policy values
+      const validPolicies = ['none', 'quarantine', 'reject'];
+      const validatedPolicy = validPolicies.includes(policy) ? policy : 'none';
+      const validatedSubdomainPolicy = validPolicies.includes(subdomainPolicy) ? subdomainPolicy : validatedPolicy;
+      
+      const dmarcRecord = SendGridAgent.generateDmarcRecord(domain, validatedPolicy as any, {
+        subdomainPolicy: validatedSubdomainPolicy as any,
+        reportEmail, 
+        reportForensicEmail,
+        percentage: percentage ? parseInt(percentage) : 100
+      });
+      
+      return res.json({
+        success: true,
+        domain,
+        policy: validatedPolicy,
+        subdomainPolicy: validatedSubdomainPolicy,
+        dmarcRecord,
+        message: 'DMARC record generated successfully'
+      });
+    } catch (error: any) {
+      console.error('Error in POST /email-agent/domains/generate-dmarc:', error);
       return res.status(500).json({
         success: false,
         message: error.message || 'Internal server error'

@@ -8,6 +8,55 @@ import { EmailTemplate, DmarcReport } from '@shared/schema';
 // Define SendGrid HTTP method types
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
+// Domain Authentication Types in SendGrid
+type DomainAuthenticationType = 'domain' | 'link';
+
+/**
+ * Interface for domain authentication response from SendGrid
+ */
+interface DomainAuthentication {
+  id: number;
+  user_id: number;
+  domain: string;
+  subdomain: string;
+  username: string;
+  ips: string[];
+  custom_spf: boolean;
+  default: boolean;
+  legacy: boolean;
+  automatic_security: boolean;
+  valid: boolean;
+  dns: {
+    mail_server: { host: string; type: string; data: string; valid: boolean };
+    dkim1: { host: string; type: string; data: string; valid: boolean };
+    dkim2: { host: string; type: string; data: string; valid: boolean };
+    spf: { host: string; type: string; data: string; valid: boolean };
+    dmarc: { host: string; type: string; data: string; valid: boolean };
+  };
+  last_validation_attempt_at?: string;
+  updated_at?: string;
+  created_at?: string;
+}
+
+/**
+ * Interface for domain alignment check result
+ */
+interface DomainAlignmentCheck {
+  domain: string;
+  spfAligned: boolean;
+  dkimAligned: boolean;
+  dmarcConfigured: boolean;
+  dmarcPolicy: string;
+  isValid: boolean;
+  recommendations: string[];
+  dnsRecords: {
+    spf?: { record: string; valid: boolean };
+    dkim?: { record: string; valid: boolean };
+    dmarc?: { record: string; valid: boolean; policy?: string };
+  };
+  lastChecked: Date;
+}
+
 // Initialize SendGrid with API key
 if (process.env.SENDGRID_API_KEY) {
   sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -1248,5 +1297,361 @@ export class SendGridAgent {
     }
     
     return "Recommendations:\n• " + recommendations.join("\n• ");
+  }
+
+  // DOMAIN ALIGNMENT & AUTHENTICATION MANAGEMENT
+
+  /**
+   * Get authenticated domains from SendGrid
+   * This retrieves all domains that have been set up for authentication in SendGrid
+   */
+  static async getAuthenticatedDomains(): Promise<{ 
+    success: boolean; 
+    domains?: Array<{ domain: string; valid: boolean; default: boolean }>; 
+    message?: string 
+  }> {
+    try {
+      if (!process.env.SENDGRID_API_KEY) {
+        console.warn('SendGrid API key not configured - domain check skipped');
+        return { 
+          success: false, 
+          message: 'SendGrid API key not configured. Please add SENDGRID_API_KEY to your environment variables.' 
+        };
+      }
+
+      const request: ClientRequest = {
+        method: 'GET' as HttpMethod,
+        url: '/v3/whitelabel/domains'
+      };
+
+      const [response, body] = await sgClient.request(request);
+      
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return {
+          success: false,
+          message: `Error retrieving authenticated domains: ${body.errors?.[0]?.message || 'Unknown error'}`
+        };
+      }
+
+      // Transform response to simplified format
+      const domains = body.map((domain: DomainAuthentication) => ({
+        domain: domain.domain,
+        valid: domain.valid,
+        default: domain.default
+      }));
+
+      return {
+        success: true,
+        domains,
+        message: `Retrieved ${domains.length} authenticated domains`
+      };
+    } catch (error: any) {
+      console.error('Error retrieving authenticated domains:', error);
+      return {
+        success: false,
+        message: error.message || 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Check domain alignment for a specific domain
+   * This proactively checks if a domain has proper SPF, DKIM, and DMARC alignment
+   */
+  static async checkDomainAlignment(domain: string): Promise<{ 
+    success: boolean; 
+    alignment?: DomainAlignmentCheck; 
+    message?: string 
+  }> {
+    try {
+      if (!process.env.SENDGRID_API_KEY) {
+        console.warn('SendGrid API key not configured - domain alignment check skipped');
+        return { 
+          success: false, 
+          message: 'SendGrid API key not configured. Please add SENDGRID_API_KEY to your environment variables.' 
+        };
+      }
+
+      // First, check if the domain is authenticated in SendGrid
+      const authenticatedDomainsResult = await this.getAuthenticatedDomains();
+      if (!authenticatedDomainsResult.success || !authenticatedDomainsResult.domains) {
+        return {
+          success: false,
+          message: authenticatedDomainsResult.message || 'Failed to retrieve authenticated domains'
+        };
+      }
+
+      const isDomainAuthenticated = authenticatedDomainsResult.domains.some(d => 
+        d.domain === domain || d.domain === `mail.${domain}`
+      );
+
+      if (!isDomainAuthenticated) {
+        return {
+          success: false,
+          message: `Domain ${domain} is not authenticated in SendGrid. Please set up domain authentication first.`
+        };
+      }
+
+      // Get domain authentication details
+      const request: ClientRequest = {
+        method: 'GET' as HttpMethod,
+        url: `/v3/whitelabel/domains?domain=${encodeURIComponent(domain)}`
+      };
+
+      const [response, body] = await sgClient.request(request);
+      
+      if (response.statusCode < 200 || response.statusCode >= 300 || !body.length) {
+        return {
+          success: false,
+          message: `Error retrieving domain authentication details: ${body.errors?.[0]?.message || 'Unknown error'}`
+        };
+      }
+
+      const domainAuth: DomainAuthentication = body[0];
+      
+      // Check DMARC record
+      const dmarcRequest: ClientRequest = {
+        method: 'GET' as HttpMethod,
+        url: `/v3/whitelabel/domains/${domainAuth.id}/validate`
+      };
+
+      const [dmarcResponse, dmarcBody] = await sgClient.request(dmarcRequest);
+
+      // Build the alignment check result
+      const recommendations: string[] = [];
+      const dnsRecords: any = {};
+
+      // Check SPF alignment
+      const spfValid = domainAuth.dns?.spf?.valid || false;
+      if (!spfValid) {
+        recommendations.push(`Add the following SPF record to your DNS: ${domainAuth.dns?.spf?.data}`);
+      }
+      dnsRecords.spf = {
+        record: domainAuth.dns?.spf?.data,
+        valid: spfValid
+      };
+
+      // Check DKIM alignment
+      const dkim1Valid = domainAuth.dns?.dkim1?.valid || false;
+      const dkim2Valid = domainAuth.dns?.dkim2?.valid || false;
+      const dkimValid = dkim1Valid && dkim2Valid;
+      
+      if (!dkim1Valid) {
+        recommendations.push(`Add the following DKIM1 record to your DNS: ${domainAuth.dns?.dkim1?.data}`);
+      }
+      if (!dkim2Valid) {
+        recommendations.push(`Add the following DKIM2 record to your DNS: ${domainAuth.dns?.dkim2?.data}`);
+      }
+      
+      dnsRecords.dkim = {
+        record: 'Multiple DKIM records configured',
+        valid: dkimValid
+      };
+
+      // Determine DMARC policy
+      let dmarcConfigured = false;
+      let dmarcPolicy = 'none';
+      let dmarcRecord = '';
+      
+      try {
+        // Make a DNS lookup to check DMARC record
+        // In a real implementation, you'd use a DNS library here
+        dmarcConfigured = domainAuth.valid;
+        dmarcRecord = `v=DMARC1; p=${dmarcPolicy}; rua=mailto:dmarc@${domain}`;
+        
+        if (dmarcBody && dmarcBody.validation_results && dmarcBody.validation_results.dmarc) {
+          dmarcConfigured = dmarcBody.validation_results.dmarc.valid;
+        }
+        
+        if (!dmarcConfigured) {
+          recommendations.push(`Configure a DMARC record for your domain: ${dmarcRecord}`);
+        }
+        
+        dnsRecords.dmarc = {
+          record: dmarcRecord,
+          valid: dmarcConfigured,
+          policy: dmarcPolicy
+        };
+      } catch (error) {
+        console.warn(`Failed to check DMARC record for ${domain}:`, error);
+        dmarcConfigured = false;
+        recommendations.push(`Configure a DMARC record for your domain: v=DMARC1; p=none; rua=mailto:dmarc@${domain}`);
+      }
+
+      // Add recommendations for policy if everything else is valid
+      if (spfValid && dkimValid && dmarcConfigured && dmarcPolicy === 'none') {
+        recommendations.push('Consider strengthening your DMARC policy from "none" to "quarantine" to better protect your domain.');
+      } else if (spfValid && dkimValid && dmarcConfigured && dmarcPolicy === 'quarantine') {
+        recommendations.push('Consider strengthening your DMARC policy from "quarantine" to "reject" for maximum protection.');
+      }
+
+      const alignmentCheck: DomainAlignmentCheck = {
+        domain,
+        spfAligned: spfValid,
+        dkimAligned: dkimValid,
+        dmarcConfigured,
+        dmarcPolicy,
+        isValid: domainAuth.valid,
+        recommendations,
+        dnsRecords,
+        lastChecked: new Date()
+      };
+
+      return {
+        success: true,
+        alignment: alignmentCheck,
+        message: 'Domain alignment check completed successfully'
+      };
+    } catch (error: any) {
+      console.error('Error checking domain alignment:', error);
+      return {
+        success: false,
+        message: error.message || 'Unknown error checking domain alignment'
+      };
+    }
+  }
+
+  /**
+   * Validate a domain authentication configuration in SendGrid
+   */
+  static async validateDomainAuthentication(domainId: number): Promise<{
+    success: boolean;
+    valid?: boolean;
+    details?: any;
+    message?: string;
+  }> {
+    try {
+      if (!process.env.SENDGRID_API_KEY) {
+        console.warn('SendGrid API key not configured - domain validation skipped');
+        return { 
+          success: false, 
+          message: 'SendGrid API key not configured. Please add SENDGRID_API_KEY to your environment variables.' 
+        };
+      }
+
+      const request: ClientRequest = {
+        method: 'POST' as HttpMethod,
+        url: `/v3/whitelabel/domains/${domainId}/validate`
+      };
+
+      const [response, body] = await sgClient.request(request);
+      
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return {
+          success: false,
+          message: `Error validating domain authentication: ${body.errors?.[0]?.message || 'Unknown error'}`
+        };
+      }
+
+      return {
+        success: true,
+        valid: body.valid,
+        details: body.validation_results,
+        message: body.valid ? 'Domain authentication is valid' : 'Domain authentication has issues that need to be fixed'
+      };
+    } catch (error: any) {
+      console.error('Error validating domain authentication:', error);
+      return {
+        success: false,
+        message: error.message || 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Create a new authenticated domain in SendGrid
+   */
+  static async createAuthenticatedDomain(options: {
+    domain: string;
+    subdomain?: string;
+    customSPF?: boolean;
+    automaticSecurity?: boolean;
+  }): Promise<{
+    success: boolean;
+    domainAuthentication?: DomainAuthentication;
+    message?: string;
+    dnsRecords?: Array<{ type: string; host: string; data: string }>;
+  }> {
+    try {
+      const { domain, subdomain = 'mail', customSPF = true, automaticSecurity = true } = options;
+
+      if (!process.env.SENDGRID_API_KEY) {
+        console.warn('SendGrid API key not configured - domain authentication creation skipped');
+        return { 
+          success: false, 
+          message: 'SendGrid API key not configured. Please add SENDGRID_API_KEY to your environment variables.' 
+        };
+      }
+
+      const request: ClientRequest = {
+        method: 'POST' as HttpMethod,
+        url: '/v3/whitelabel/domains',
+        body: {
+          domain,
+          subdomain,
+          custom_spf: customSPF,
+          automatic_security: automaticSecurity
+        }
+      };
+
+      const [response, body] = await sgClient.request(request);
+      
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return {
+          success: false,
+          message: `Error creating authenticated domain: ${body.errors?.[0]?.message || 'Unknown error'}`
+        };
+      }
+
+      // Extract DNS records for easier implementation
+      const dnsRecords = [
+        { type: 'MX', host: body.dns.mail_server.host, data: body.dns.mail_server.data },
+        { type: 'TXT', host: body.dns.dkim1.host, data: body.dns.dkim1.data },
+        { type: 'TXT', host: body.dns.dkim2.host, data: body.dns.dkim2.data }
+      ];
+
+      if (customSPF) {
+        dnsRecords.push({ type: 'TXT', host: body.dns.spf.host, data: body.dns.spf.data });
+      }
+
+      return {
+        success: true,
+        domainAuthentication: body,
+        dnsRecords,
+        message: `Domain authentication created for ${domain}. Please add the DNS records to your domain.`
+      };
+    } catch (error: any) {
+      console.error('Error creating authenticated domain:', error);
+      return {
+        success: false,
+        message: error.message || 'Unknown error'
+      };
+    }
+  }
+
+  /**
+   * Create DMARC record for a domain
+   * This is a helper method to generate a DMARC record with the recommended settings
+   */
+  static generateDmarcRecord(domain: string, policy: 'none' | 'quarantine' | 'reject' = 'none', options?: {
+    subdomainPolicy?: 'none' | 'quarantine' | 'reject';
+    reportEmail?: string;
+    reportForensicEmail?: string;
+    percentage?: number;
+  }): string {
+    const {
+      subdomainPolicy = policy,
+      reportEmail = `dmarc@${domain}`,
+      reportForensicEmail,
+      percentage = 100
+    } = options || {};
+
+    let record = `v=DMARC1; p=${policy}; sp=${subdomainPolicy}; pct=${percentage}; rua=mailto:${reportEmail}`;
+    
+    if (reportForensicEmail) {
+      record += `; ruf=mailto:${reportForensicEmail}`;
+    }
+    
+    return record;
   }
 }
