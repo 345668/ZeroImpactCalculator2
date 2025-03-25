@@ -395,9 +395,10 @@ export class DbStorage implements IStorage {
 
       // Set only one default template per language
       if (template.isDefault) {
+        const templateLanguage = template.language || 'en';
         await db.update(emailTemplates)
           .set({ isDefault: false })
-          .where(eq(emailTemplates.language, template.language || 'en'));
+          .where(eq(emailTemplates.language, templateLanguage));
       }
 
       // Insert new template
@@ -492,13 +493,13 @@ export class DbStorage implements IStorage {
       if (template.isDefault) {
         // Get the current template to know its language
         const currentTemplate = await this.getEmailTemplateById(id);
-        if (currentTemplate) {
+        if (currentTemplate && currentTemplate.language) {
+          // Reset all default templates for this language
           await db.update(emailTemplates)
             .set({ isDefault: false })
-            .where(and(
-              eq(emailTemplates.language, currentTemplate.language),
-              eq(emailTemplates.isDefault, true)
-            ));
+            .where(
+              eq(emailTemplates.language, currentTemplate.language || 'en')
+            );
         }
       }
 

@@ -9,6 +9,7 @@ import { EmailService } from "./services/email.js";
 import { uploadFileToBlobStorage, ensureContainerExists, getBlobUrl } from "./utils/azure-storage.js";
 import aiRouter from "./routes/ai.js";
 import emailRouter from "./routes/email.js";
+import emailTemplatesRouter from "./routes/email-templates.js";
 import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import rateLimit from 'express-rate-limit';
@@ -153,6 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register API routes
   app.use('/api/ai', aiRouter);
   app.use('/api/email', emailRouter);
+  app.use('/api/email-templates', emailTemplatesRouter);
   app.use('/api/auth', authRouter);
   app.use('/api/users', usersRouter);
 
