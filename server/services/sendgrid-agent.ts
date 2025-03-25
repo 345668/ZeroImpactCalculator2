@@ -1,7 +1,12 @@
 import sgMail from '@sendgrid/mail';
 import sgClient from '@sendgrid/client';
+import { ClientRequest } from '@sendgrid/client/src/request';
+import { MailDataRequired } from '@sendgrid/helpers/classes/mail';
 import { storage } from '../storage';
 import { EmailTemplate, DmarcReport } from '@shared/schema';
+
+// Define SendGrid HTTP method types
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 // Initialize SendGrid with API key
 if (process.env.SENDGRID_API_KEY) {
@@ -165,7 +170,7 @@ export class SendGridAgent {
       if (options.tracking_settings) msg.tracking_settings = options.tracking_settings;
 
       console.log(`Sending email to ${typeof options.to === 'string' ? options.to : 'multiple recipients'}`);
-      const [response] = await sgMail.send(msg);
+      const [response] = await sgMail.send(msg as MailDataRequired);
       
       return {
         success: response.statusCode >= 200 && response.statusCode < 300,
@@ -274,7 +279,7 @@ export class SendGridAgent {
       }
       
       // Send the email
-      const [response] = await sgMail.send(emailConfig);
+      const [response] = await sgMail.send(emailConfig as MailDataRequired);
       console.log(`Email sent with template ${templateId}. Status: ${response.statusCode}`);
       
       return {
@@ -449,8 +454,8 @@ export class SendGridAgent {
    */
   static async addContact(contact: ContactData): Promise<{ success: boolean; message?: string; contactId?: string }> {
     try {
-      const request = {
-        method: 'PUT',
+      const request: ClientRequest = {
+        method: 'PUT' as HttpMethod,
         url: '/v3/marketing/contacts',
         body: {
           contacts: [contact]
