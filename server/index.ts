@@ -10,6 +10,7 @@ import connectPgSimple from "connect-pg-simple";
 import cookieParser from "cookie-parser";
 import csrf from "csurf";
 import crypto from "crypto";
+import monitoringService, { apiMonitoringMiddleware } from "./utils/monitoring";
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
@@ -130,6 +131,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Apply API monitoring middleware
+app.use(apiMonitoringMiddleware);
+
 // Enhanced request logging
 app.use((req, res, next) => {
   const start = Date.now();
@@ -157,6 +161,14 @@ app.use((req, res, next) => {
     } else {
       // Development logging
       log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
+    }
+    
+    // For errors, also log to monitoring system
+    if (res.statusCode >= 400) {
+      monitoringService.logToFile(
+        `API ERROR [${req.method} ${req.path}] Status: ${res.statusCode}, Duration: ${duration}ms`, 
+        'error'
+      );
     }
   });
   next();
