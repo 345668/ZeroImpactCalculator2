@@ -1,0 +1,111 @@
+Express error: {
+  errorId: 'ikgyqp',
+  error: 'invalid csrf token',
+  stack: 'ForbiddenError: invalid csrf token\n' +
+    '    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)\n' +
+    '    at <anonymous> (/home/runner/workspace/server/index.ts:87:5)\n' +
+    '    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)\n' +
+    '    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)\n' +
+    '    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9\n' +
+    '    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)\n' +
+    '    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)\n' +
+    '    at /home/runner/workspace/node_modules/express-session/index.js:514:7\n' +
+    '    at /home/runner/workspace/node_modules/connect-pg-simple/index.js:370:18\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)',
+  path: '/api/email-templates',
+  method: 'POST',
+  body: {
+    name: 'email_report',
+    subject: 'Ihre Carbon Credit Einschätzung',
+    body: 'Sehr geehrte(r) {{firstName}}{{lastName}}',
+    description: 'German carbon credits report',
+    isDefault: false,
+    language: 'de',
+    variables: '{"firstName":"Dynamic field from submission data","lastName":"Dynamic field from submission data"}',
+    templateType: 'standard',
+    sendgridTemplateId: ''
+  },
+  timestamp: '2025-03-26T13:10:39.167Z',
+  headers: {
+    host: '80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15',
+    'content-length': '369',
+    accept: '*/*',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'en-US,en;q=0.9',
+    'content-type': 'application/json',
+    cookie: 'radical.sid=s%3AJWYmGe12Y6GA2c7WwIXII4xKe_A5pb5H.IRkK499JL8g7vTGfv4fOm0sei927NQ8xoLWIxSrD9wc; _csrf=Y1DWd4ns25cYEIut0R7Ipe95',
+    origin: 'https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
+    priority: 'u=3, i',
+    referer: 'https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/company',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'x-forwarded-for': '158.181.69.203, 10.83.10.199',
+    'x-forwarded-proto': 'https',
+    'x-replit-user-bio': '',
+    'x-replit-user-id': '',
+    'x-replit-user-name': '',
+    'x-replit-user-profile-image': '',
+    'x-replit-user-roles': '',
+    'x-replit-user-teams': '',
+    'x-replit-user-url': ''
+  }
+}
+Express error: {
+  errorId: 'd1mzto',
+  error: 'invalid csrf token',
+  stack: 'ForbiddenError: invalid csrf token\n' +
+    '    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)\n' +
+    '    at <anonymous> (/home/runner/workspace/server/index.ts:87:5)\n' +
+    '    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)\n' +
+    '    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)\n' +
+    '    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9\n' +
+    '    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)\n' +
+    '    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)\n' +
+    '    at /home/runner/workspace/node_modules/express-session/index.js:514:7\n' +
+    '    at /home/runner/workspace/node_modules/connect-pg-simple/index.js:370:18\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)',
+  path: '/api/email-templates',
+  method: 'POST',
+  body: {
+    name: 'email_report',
+    subject: 'Ihre Carbon Credit Einschätzung',
+    body: 'Sehr geehrte(r) {{firstName}}{{lastName}}',
+    description: 'German carbon credits report',
+    isDefault: false,
+    language: 'de',
+    variables: '{"firstName":"Dynamic field from submission data","lastName":"Dynamic field from submission data"}',
+    templateType: 'standard',
+    sendgridTemplateId: ''
+  },
+  timestamp: '2025-03-26T13:10:50.336Z',
+  headers: {
+    host: '80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15',
+    'content-length': '369',
+    accept: '*/*',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'en-US,en;q=0.9',
+    'content-type': 'application/json',
+    cookie: 'radical.sid=s%3AJWYmGe12Y6GA2c7WwIXII4xKe_A5pb5H.IRkK499JL8g7vTGfv4fOm0sei927NQ8xoLWIxSrD9wc; _csrf=Y1DWd4ns25cYEIut0R7Ipe95',
+    origin: 'https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
+    priority: 'u=3, i',
+    referer: 'https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/company',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'x-forwarded-for': '158.181.69.203, 10.83.10.199',
+    'x-forwarded-proto': 'https',
+    'x-replit-user-bio': '',
+    'x-replit-user-id': '',
+    'x-replit-user-name': '',
+    'x-replit-user-profile-image': '',
+    'x-replit-user-roles': '',
+    'x-replit-user-teams': '',
+    'x-replit-user-url': ''
+  }
+}
+1:11:02 PM [express] GET /locales/de/translation.json 304 in 1ms
+1:11:03 PM [express] GET /locales/en/translation.json 304 in 0ms
+Database connection test result: { test: 1 }

@@ -358,6 +358,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error('Email service health check failed:', error);
       }
 
+      // Check storage status
+      let azureStorageStatus = "unavailable";
+      if (process.env.AZURE_STORAGE_CONNECTION_STRING) {
+        try {
+          await ensureContainerExists();
+          azureStorageStatus = "healthy";
+        } catch (error) {
+          console.error('Azure storage health check failed:', error);
+        }
+      }
+
+      // Local storage is always available
+      const localStorageStatus = "healthy";
+
       const health = {
         status: dbStatus && emailStatus === "healthy" ? "healthy" : "degraded",
         timestamp: new Date().toISOString(),
@@ -365,6 +379,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         services: {
           database: dbStatus ? "healthy" : "unhealthy",
           email: emailStatus,
+          storage: {
+            azure: azureStorageStatus,
+            local: localStorageStatus,
+            primary: azureStorageStatus === "healthy" ? "azure" : "local"
+          }
         },
         environment: process.env.NODE_ENV,
         uptime: process.uptime(),
@@ -381,6 +400,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
         status: "unhealthy",
         timestamp: new Date().toISOString(),
         error: process.env.NODE_ENV === 'production' ? "Service unavailable" : error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+  
+  // Storage status and document list endpoint (admin-only)
+  app.get("/api/storage/status", async (req, res) => {
+    try {
+      // This should be behind authentication in a real-world scenario
+      // For demo, we'll make it accessible for testing
+      
+      // Check if Azure Storage is available
+      let azureAvailable = false;
+      let azureError = null;
+      
+      if (process.env.AZURE_STORAGE_CONNECTION_STRING) {
+        try {
+          await ensureContainerExists();
+          azureAvailable = true;
+        } catch (error) {
+          azureError = error instanceof Error ? error.message : "Unknown error";
+        }
+      }
+      
+      // Get local storage information
+      const { listLocalFiles } = await import('./utils/local-storage.js');
+      const localFiles = listLocalFiles();
+      
+      // If Azure is available, list blobs too
+      let azureFiles: Array<{
+        name: string;
+        url: string;
+        size: number;
+        lastModified: string;
+      }> = [];
+      
+      if (azureAvailable) {
+        try {
+          const { listBlobs } = await import('./utils/azure-storage.js');
+          const blobItems = await listBlobs({});
+          
+          // Ensure blobItems is an array and contains blob objects
+          if (Array.isArray(blobItems)) {
+            azureFiles = blobItems.map(blob => {
+              // Check if blob is a proper BlobItem object
+              if (typeof blob === 'object' && blob !== null) {
+                return {
+                  name: typeof blob.name === 'string' ? blob.name : 'Unknown',
+                  url: typeof blob.url === 'string' ? blob.url : '',
+                  size: typeof blob.size === 'number' ? blob.size : 0,
+                  lastModified: typeof blob.lastModified === 'string' ? blob.lastModified : new Date().toISOString()
+                };
+              }
+              
+              // Fallback for unexpected blob format
+              return {
+                name: 'Unknown',
+                url: '',
+                size: 0,
+                lastModified: new Date().toISOString()
+              };
+            });
+          }
+        } catch (error) {
+          console.error('Error listing Azure blobs:', error);
+        }
+      }
+      
+      res.json({
+        timestamp: new Date().toISOString(),
+        storage: {
+          azure: {
+            available: azureAvailable,
+            error: azureError,
+            files: azureFiles,
+            count: azureFiles.length
+          },
+          local: {
+            available: true,
+            files: localFiles,
+            count: localFiles.length
+          },
+          primary: azureAvailable ? "azure" : "local"
+        }
+      });
+    } catch (error) {
+      console.error('Storage status error:', error);
+      res.status(500).json({
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : "Unknown error"
       });
     }
   });

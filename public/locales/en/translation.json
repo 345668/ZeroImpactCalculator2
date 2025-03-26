@@ -12,6 +12,38 @@
     "startNew": "Start New Calculation",
     "sendEmail": "Send Email Report"
   },
+  "storage": {
+    "title": "Document Storage Status",
+    "description": "Current status of document storage systems",
+    "status": {
+      "error": "Storage Error",
+      "errorMessage": "Unable to retrieve storage status information",
+      "azure": "Cloud Storage",
+      "local": "Local Storage",
+      "azureAvailable": "Cloud storage (Azure) is available",
+      "azureUnavailable": "Cloud storage (Azure) is currently unavailable",
+      "localAvailable": "Local storage is available",
+      "localUnavailable": "Local storage is currently unavailable"
+    },
+    "azure": {
+      "title": "Cloud Storage (Azure)",
+      "available": "Cloud Storage Available",
+      "unavailable": "Cloud Storage Unavailable",
+      "availableDescription": "Documents will be stored in Azure Blob Storage for enhanced durability and accessibility.",
+      "unavailableDescription": "Azure Blob Storage is currently unavailable. Documents will be stored locally."
+    },
+    "local": {
+      "title": "Local Storage",
+      "available": "Local Storage Available",
+      "unavailable": "Local Storage Unavailable",
+      "availableDescription": "Documents can be stored locally when cloud storage is unavailable.",
+      "unavailableDescription": "Local storage system is experiencing issues. Contact support for assistance."
+    },
+    "actions": {
+      "viewFiles": "View Files",
+      "checkStatus": "Check Status"
+    }
+  },
   "navigation": {
     "home": "Home",
     "dashboard": "Dashboard",
