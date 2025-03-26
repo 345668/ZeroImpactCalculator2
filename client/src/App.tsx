@@ -8,6 +8,7 @@ import Home from "@/pages/home";
 import Dashboard from "@/pages/dashboard";
 import CompanyPage from "@/pages/company";
 import AdminPage from "@/pages/admin";
+import ToolsPage from "@/pages/tools";
 import { ResultsPage } from "@/pages/ResultsPage";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/company" component={CompanyPage} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/tools" component={ToolsPage} />
       <Route path="/results" component={ResultsPage} />
       <Route component={NotFound} />
     </Switch>

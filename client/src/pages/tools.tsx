@@ -525,7 +525,7 @@ function ToolsPage() {
                   className="gap-1"
                   onClick={refetchHealth}
                 >
-                  <Refresh className="h-4 w-4" />
+                  <RefreshCw className="h-4 w-4" />
                   {t('tools.actions.refreshStatus')}
                 </Button>
               </CardFooter>

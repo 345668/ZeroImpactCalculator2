@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { LoginModal } from "@/components/login-modal";
 import { LanguageSwitcher } from "@/components/language-switcher";
-import { StorageStatus } from "@/components/storage-status";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Wrench } from "lucide-react";
 
 export function NavigationBar() {
   const [location, setLocation] = useLocation();
@@ -88,8 +87,19 @@ export function NavigationBar() {
           {t('navigation.company')}
         </Button>
         
-        {/* Storage status indicator */}
-        <StorageStatus className="mx-1" />
+        {/* Tools access for logged in users */}
+        {isLoggedIn && (
+          <Link href="/tools">
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="text-sm font-medium text-foreground/90 hover:text-foreground flex items-center gap-1"
+            >
+              <Wrench className="h-3 w-3" />
+              {t('navigation.tools')}
+            </Button>
+          </Link>
+        )}
         
         {/* Language switcher */}
         <LanguageSwitcher />
