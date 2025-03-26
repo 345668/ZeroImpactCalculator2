@@ -7,7 +7,7 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
 );
 
 // Use the container name directly for now
-const containerName = "carbon-credits-docs";
+const containerName = "carbon-credits-doc";
 
 console.log(`Using Azure Blob Storage container: ${containerName}`);
 
