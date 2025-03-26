@@ -1,5 +1,10 @@
 import OpenAI from "openai";
 import { AI_CONFIG } from "@shared/config";
+import { storage } from '../storage';
+
+// Flag to indicate if LLM email generation should be used
+// Set to false to disable LLM and use templates instead
+const USE_LLM_FOR_EMAIL_GENERATION = false;
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -55,40 +60,110 @@ export class AIService {
     heatingSystem: string;
   }): Promise<string> {
     try {
-      const response = await openai.chat.completions.create({
-        model: AI_CONFIG.openai.model,
-        messages: [
-          {
-            role: "system",
-            content: "You are an expert in carbon credits and energy efficiency. Write a professional and personalized email to explain the carbon savings calculation results. Use a friendly but professional tone."
-          },
-          {
-            role: "user",
-            content: `Write an email for:
-            Name: ${data.firstName} ${data.lastName}
-            CO2 Savings: ${data.co2Savings} tons/year
-            Carbon Credits: ${data.carbonCredits}
-            Financial Value: €${data.financialValue}
-            Building Size: ${data.buildingSize}m²
-            Current Consumption: ${data.currentConsumption} kWh/year
-            Projected Consumption: ${data.projectedConsumption} kWh/year
-            Heating System: ${data.heatingSystem}
+      // If LLM email generation is enabled, use OpenAI to generate content
+      if (USE_LLM_FOR_EMAIL_GENERATION) {
+        console.log('Using LLM to generate email content');
+        const response = await openai.chat.completions.create({
+          model: AI_CONFIG.openai.model,
+          messages: [
+            {
+              role: "system",
+              content: "You are an expert in carbon credits and energy efficiency. Write a professional and personalized email to explain the carbon savings calculation results. Use a friendly but professional tone."
+            },
+            {
+              role: "user",
+              content: `Write an email for:
+              Name: ${data.firstName} ${data.lastName}
+              CO2 Savings: ${data.co2Savings} tons/year
+              Carbon Credits: ${data.carbonCredits}
+              Financial Value: €${data.financialValue}
+              Building Size: ${data.buildingSize}m²
+              Current Consumption: ${data.currentConsumption} kWh/year
+              Projected Consumption: ${data.projectedConsumption} kWh/year
+              Heating System: ${data.heatingSystem}
 
-            Include:
-            1. Personal greeting
-            2. Summary of their potential savings
-            3. Explanation of how carbon credits work
-            4. Next steps
-            5. Professional closing
+              Include:
+              1. Personal greeting
+              2. Summary of their potential savings
+              3. Explanation of how carbon credits work
+              4. Next steps
+              5. Professional closing
 
-            Format the email in HTML with proper styling.`
-          }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
-      });
+              Format the email in HTML with proper styling.`
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7,
+        });
 
-      return response.choices[0].message.content || '';
+        return response.choices[0].message.content || '';
+      }
+      
+      // If LLM is disabled, use template-based approach
+      console.log('LLM email generation is disabled. Using template-based approach.');
+      
+      try {
+        // Look for a standard email template
+        let template = await storage.getDefaultEmailTemplate();
+        
+        if (!template) {
+          console.warn('No default email template found. Using fallback HTML template.');
+          // Fallback to a basic HTML template if no template is found
+          return `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 5px;">
+              <h2>Your Carbon Credits Report</h2>
+              <p>Hello ${data.firstName} ${data.lastName},</p>
+              <p>Thank you for using our Carbon Credits Calculator. Here's a summary of your results:</p>
+              
+              <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin: 15px 0;">
+                <p><strong>CO2 Savings:</strong> ${data.co2Savings} tons/year</p>
+                <p><strong>Carbon Credits:</strong> ${data.carbonCredits}</p>
+                <p><strong>Financial Value:</strong> €${data.financialValue}</p>
+                <p><strong>Building Size:</strong> ${data.buildingSize}m²</p>
+                <p><strong>Current Consumption:</strong> ${data.currentConsumption} kWh/year</p>
+                <p><strong>Projected Consumption:</strong> ${data.projectedConsumption} kWh/year</p>
+                <p><strong>Heating System:</strong> ${data.heatingSystem}</p>
+              </div>
+              
+              <p>These results represent your potential contribution to reducing carbon emissions and fighting climate change.</p>
+              
+              <p>Best regards,<br>Radical Zero Carbon Credits Team</p>
+            </div>
+          `;
+        }
+        
+        // Replace variables in the template
+        let body = template.body;
+        
+        // Replace all the variables in the template
+        const variables = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          fullName: `${data.firstName} ${data.lastName}`,
+          co2Savings: data.co2Savings,
+          carbonCredits: data.carbonCredits,
+          financialValue: data.financialValue,
+          buildingSize: data.buildingSize,
+          currentConsumption: data.currentConsumption,
+          projectedConsumption: data.projectedConsumption,
+          heatingSystem: data.heatingSystem,
+          energyReduction: (data.currentConsumption - data.projectedConsumption).toFixed(2),
+          reductionPercentage: ((1 - (data.projectedConsumption / data.currentConsumption)) * 100).toFixed(2),
+          date: new Date().toLocaleDateString(),
+          year: new Date().getFullYear().toString()
+        };
+        
+        // Replace all placeholders with actual values
+        Object.entries(variables).forEach(([key, value]) => {
+          const regex = new RegExp(`{{${key}}}`, 'g');
+          body = body.replace(regex, String(value));
+        });
+        
+        return body;
+      } catch (templateError) {
+        console.error("Error using template:", templateError);
+        throw new Error("Failed to generate email content using template");
+      }
     } catch (error) {
       console.error("Error generating email content:", error);
       throw new Error("Failed to generate email content");

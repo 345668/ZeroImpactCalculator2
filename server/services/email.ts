@@ -1,5 +1,6 @@
 import sgMail from '@sendgrid/mail';
 import { AIService } from './ai.js';
+import { storage } from '../storage';
 
 if (!process.env.SENDGRID_API_KEY) {
   throw new Error("SENDGRID_API_KEY environment variable must be set");
@@ -15,8 +16,26 @@ export class EmailService {
     try {
       console.log('Starting email generation process for:', data.email);
 
-      // Generate personalized content using Mistral AI
-      const emailContent = await AIService.generateEmailContent({
+      // Try to find a carbon report email template first
+      const templates = await storage.getAllEmailTemplates();
+      let subject = 'Your Carbon Savings Report from Radical Zero';
+      let customTemplate = false;
+      let emailContent;
+      
+      const carbonReportTemplate = templates.find((t: any) => 
+        t.templateType === 'standard' && 
+        t.isDefault === true && 
+        (t.name.toLowerCase().includes('carbon') || t.name.toLowerCase().includes('report'))
+      );
+      
+      if (carbonReportTemplate) {
+        console.log(`Using custom email template: ${carbonReportTemplate.name} (ID: ${carbonReportTemplate.id})`);
+        subject = carbonReportTemplate.subject;
+        customTemplate = true;
+      }
+
+      // Generate content - if a custom template exists, the AIService will use it
+      emailContent = await AIService.generateEmailContent({
         firstName: data.firstName,
         lastName: data.lastName,
         co2Savings: data.co2Savings,
@@ -40,7 +59,7 @@ export class EmailService {
           email: SENDER_EMAIL,
           name: SENDER_NAME
         },
-        subject: 'Your Carbon Savings Report from Radical Zero',
+        subject: subject,
         html: emailContent,
         trackingSettings: {
           clickTracking: { enable: true },
