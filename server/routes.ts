@@ -701,8 +701,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).send('Document not found');
       }
       
-      // Serve the file
+      // Determine the content type based on file extension
+      const fileExtension = filePath.toLowerCase().split('.').pop() || '';
+      let contentType = 'application/octet-stream'; // Default binary content type
+      
+      // Set the appropriate content type based on file extension
+      switch (fileExtension) {
+        case 'pdf':
+          contentType = 'application/pdf';
+          break;
+        case 'jpg':
+        case 'jpeg':
+          contentType = 'image/jpeg';
+          break;
+        case 'png':
+          contentType = 'image/png';
+          break;
+        case 'gif':
+          contentType = 'image/gif';
+          break;
+        case 'tiff':
+          contentType = 'image/tiff';
+          break;
+        case 'txt':
+          contentType = 'text/plain';
+          break;
+        // Add more types as needed
+      }
+      
+      // Set the appropriate content disposition and type
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', 'inline');
+      
+      // Serve the file with the correct content type
       res.sendFile(filePath);
+      
+      console.log(`Serving file: ${filePath} with content type: ${contentType}`);
     } catch (error) {
       console.error('Error serving local file:', error);
       res.status(500).send('Error accessing the document');
