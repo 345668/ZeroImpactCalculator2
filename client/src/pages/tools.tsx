@@ -345,6 +345,42 @@ function ToolsPage() {
                     <FileCog className="h-4 w-4" />
                     {t('tools.actions.manageFiles')}
                   </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start gap-2"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/monitoring/create-azure-container', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json'
+                          }
+                        });
+                        
+                        if (!response.ok) {
+                          throw new Error(`Error: ${response.status}`);
+                        }
+                        
+                        const data = await response.json();
+                        console.log('Container creation result:', data);
+                        alert(data.message || 'Container creation completed successfully');
+                        
+                        // Refresh storage data
+                        setTimeout(() => {
+                          refetchStorage();
+                          refetchHealth();
+                        }, 1000);
+                        
+                      } catch (error) {
+                        console.error('Container creation failed:', error);
+                        alert(`Container creation failed: ${error instanceof Error ? error.message : String(error)}`);
+                      }
+                    }}
+                  >
+                    <Server className="h-4 w-4" />
+                    Create Azure Container
+                  </Button>
                 </CardContent>
               </Card>
             </div>

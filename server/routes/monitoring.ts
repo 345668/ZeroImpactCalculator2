@@ -277,7 +277,6 @@ router.post('/create-azure-container', requireAuth, requireAdmin, async (req: Re
         // Create the container if it doesn't exist
         const createResult = await containerClient.create();
         console.log(`Container "${containerName}" created successfully:`, {
-          succeeded: createResult.succeeded,
           requestId: createResult.requestId
         });
         
@@ -332,7 +331,7 @@ router.post('/test-email-service', requireAuth, requireAdmin, async (req: Reques
       const result = await SendGridService.sendTemplatedEmail({
         to: email,
         subject: 'Test Email from Carbon Credit Calculator',
-        templateId: 'test',
+        templateId: 1, // Using a numeric ID for the template
         templateData: {
           name: (req.session as any)?.user?.username || 'Admin',
           timestamp: new Date().toISOString(),
