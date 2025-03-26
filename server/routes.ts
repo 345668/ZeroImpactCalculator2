@@ -15,6 +15,8 @@ import authRouter from "./routes/auth.js";
 import usersRouter from "./routes/users.js";
 import dmarcRouter from "./routes/dmarc";
 import { registerEmailAgentRoutes } from "./routes/email-agent";
+import monitoringRouter from "./routes/monitoring";
+import monitoringService from "./utils/monitoring";
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { testDatabaseConnection } from "./database.js";
@@ -161,6 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/auth', authRouter);
   app.use('/api/users', usersRouter);
   app.use('/api/dmarc/reports', dmarcRouter);
+  app.use('/api/monitoring', monitoringRouter);
   
   // Register email agent routes
   registerEmailAgentRoutes(app);

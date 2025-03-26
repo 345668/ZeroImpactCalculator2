@@ -54,9 +54,49 @@ interface HealthData {
   };
 }
 
+interface ApiCallRecord {
+  timestamp: string;
+  method: string;
+  endpoint: string;
+  statusCode: number;
+  responseTime: number;
+  userAgent?: string;
+  ip?: string;
+  userId?: number | string;
+  errors?: string[];
+}
+
+interface ServiceHealthStatus {
+  service: string;
+  status: 'healthy' | 'degraded' | 'unhealthy';
+  latency?: number;
+  errors?: string[];
+  lastChecked: string;
+}
+
+interface SystemMetrics {
+  timestamp: string;
+  cpuUsage?: number;
+  memoryUsage?: {
+    rss: number;
+    heapTotal: number;
+    heapUsed: number;
+    external: number;
+  };
+  activeConnections?: number;
+  pendingRequests?: number;
+}
+
+interface LogFile {
+  name: string;
+  size: number;
+  lastModified: string;
+}
+
 function ToolsPage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState("storage");
+  const [selectedLogFile, setSelectedLogFile] = useState<string | null>(null);
   
   // Check if user is logged in
   const [, navigate] = useLocation();
@@ -98,10 +138,72 @@ function ToolsPage() {
     refetchInterval: 60000, // Auto-refresh every minute
   });
   
+  // API calls monitoring query
+  const {
+    data: apiCallsData,
+    isLoading: apiCallsLoading,
+    error: apiCallsError,
+    refetch: refetchApiCalls
+  } = useQuery({
+    queryKey: ["/api/monitoring/api-calls"],
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+  });
+  
+  // Service health query
+  const {
+    data: serviceHealthData,
+    isLoading: serviceHealthLoading,
+    error: serviceHealthError,
+    refetch: refetchServiceHealth
+  } = useQuery({
+    queryKey: ["/api/monitoring/service-health"],
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+  });
+  
+  // System metrics query
+  const {
+    data: systemMetricsData,
+    isLoading: systemMetricsLoading,
+    error: systemMetricsError,
+    refetch: refetchSystemMetrics
+  } = useQuery({
+    queryKey: ["/api/monitoring/system-metrics"],
+    refetchInterval: 30000, // Auto-refresh every 30 seconds
+  });
+  
+  // Log files query
+  const {
+    data: logFilesData,
+    isLoading: logFilesLoading,
+    error: logFilesError,
+    refetch: refetchLogFiles
+  } = useQuery({
+    queryKey: ["/api/monitoring/logs"],
+    refetchInterval: 60000, // Auto-refresh every minute
+  });
+  
+  // Log file content query - only run when a file is selected
+  const {
+    data: logFileContentData,
+    isLoading: logFileContentLoading,
+    error: logFileContentError,
+    refetch: refetchLogContent
+  } = useQuery({
+    queryKey: ["/api/monitoring/logs", selectedLogFile],
+    enabled: !!selectedLogFile, // Only run query when a file is selected
+  });
+  
   // Handle manual refresh button click
   const handleRefreshClick = () => {
     refetchStorage();
     refetchHealth();
+    refetchApiCalls();
+    refetchServiceHealth();
+    refetchSystemMetrics();
+    refetchLogFiles();
+    if (selectedLogFile) {
+      refetchLogContent();
+    }
   };
   
   // Function to format file size
