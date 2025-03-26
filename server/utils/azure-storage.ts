@@ -377,7 +377,8 @@ export async function deleteBlob(blobPath: string): Promise<boolean> {
     }
     
     console.log(`Deleting blob: ${blobPath}`);
-    const blockBlobClient = containerClient.getBlockBlobClient(blobPath);
+    const client = containerClient!; // Non-null assertion is safe here because we checked earlier
+    const blockBlobClient = client.getBlockBlobClient(blobPath);
     const response = await blockBlobClient.delete();
     console.log('Delete response:', response);
     return true;
