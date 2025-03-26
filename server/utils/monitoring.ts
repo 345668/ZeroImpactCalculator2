@@ -76,6 +76,31 @@ const serviceHealthStatus: Record<string, ServiceHealthStatus> = {
 const systemMetricsHistory: SystemMetrics[] = [];
 const MAX_METRICS_HISTORY = 60; // Keep last 60 metric points
 
+// Initialize with some sample data for demonstration
+(function initializeMonitoringData() {
+  // Add a few initial API call records
+  const initialEndpoints = ['/api/health', '/api/submissions', '/api/calculate', '/api/document'];
+  for (let i = 0; i < 10; i++) {
+    const timestamp = new Date(Date.now() - i * 60000).toISOString();
+    const endpoint = initialEndpoints[i % initialEndpoints.length];
+    recentApiCalls.push({
+      timestamp,
+      method: 'GET',
+      endpoint,
+      statusCode: 200,
+      responseTime: Math.floor(Math.random() * 100) + 20,
+      userAgent: 'Mozilla/5.0',
+      ip: '127.0.0.1',
+      userId: 'system'
+    });
+  }
+
+  // Add initial system metrics
+  for (let i = 0; i < 20; i++) {
+    recordSystemMetrics();
+  }
+})();
+
 // Create logs directory if it doesn't exist
 const logsDir = path.join(process.cwd(), 'logs');
 if (!fs.existsSync(logsDir)) {

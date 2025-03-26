@@ -111,7 +111,7 @@ router.get('/system-metrics', requireAuth, requireAdmin, async (req: Request, re
     res.json({
       success: true,
       currentMetrics,
-      metricsHistory
+      metricsHistory: metricsHistory
     });
   } catch (error) {
     console.error('Error fetching system metrics:', error);
@@ -292,29 +292,30 @@ router.post('/test-email-service', requireAuth, requireAdmin, async (req: Reques
     }
     
     // Send a test email
-    const result = await SendGridService.sendTemplatedEmail({
-      to: email,
-      subject: 'Test Email from Carbon Credit Calculator',
-      templateId: 'test',
-      templateData: {
-        name: (req.session as any)?.user?.username || 'Admin',
-        timestamp: new Date().toISOString(),
-        systemStatus: 'operational'
-      }
-    });
-    
-    if (result.success) {
+    try {
+      const result = await SendGridService.sendTemplatedEmail({
+        to: email,
+        subject: 'Test Email from Carbon Credit Calculator',
+        templateId: 'test',
+        templateData: {
+          name: (req.session as any)?.user?.username || 'Admin',
+          timestamp: new Date().toISOString(),
+          systemStatus: 'operational'
+        }
+      });
+      
       monitoringService.updateServiceHealth('email_service', 'healthy');
       res.json({
         success: true,
         message: 'Test email sent successfully'
       });
-    } else {
-      monitoringService.updateServiceHealth('email_service', 'degraded', undefined, result.message);
+    } catch (emailError) {
+      const errorMessage = emailError instanceof Error ? emailError.message : String(emailError);
+      monitoringService.updateServiceHealth('email_service', 'degraded', undefined, errorMessage);
       res.status(500).json({
         success: false,
         message: 'Failed to send test email',
-        error: result.message
+        error: errorMessage
       });
     }
   } catch (error) {

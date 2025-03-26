@@ -164,7 +164,7 @@ function ToolsPage() {
   
   // System metrics query
   const {
-    data: systemMetricsData,
+    data: systemMetricsResponse,
     isLoading: systemMetricsLoading,
     error: systemMetricsError,
     refetch: refetchSystemMetrics
@@ -172,6 +172,9 @@ function ToolsPage() {
     queryKey: ["/api/monitoring/system-metrics"],
     refetchInterval: 30000, // Auto-refresh every 30 seconds
   });
+  
+  // Extract metrics data from response
+  const systemMetricsData = systemMetricsResponse?.metricsHistory || [];
   
   // Log files query
   const {
