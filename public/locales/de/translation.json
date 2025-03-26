@@ -12,6 +12,38 @@
     "startNew": "Neue Berechnung starten",
     "sendEmail": "E-Mail-Bericht senden"
   },
+  "storage": {
+    "title": "Dokumentenspeicher-Status",
+    "description": "Aktueller Status der Dokumentenspeichersysteme",
+    "status": {
+      "error": "Speicherfehler",
+      "errorMessage": "Speicherstatusinformationen konnten nicht abgerufen werden",
+      "azure": "Cloud-Speicher",
+      "local": "Lokaler Speicher",
+      "azureAvailable": "Cloud-Speicher (Azure) ist verfügbar",
+      "azureUnavailable": "Cloud-Speicher (Azure) ist derzeit nicht verfügbar",
+      "localAvailable": "Lokaler Speicher ist verfügbar",
+      "localUnavailable": "Lokaler Speicher ist derzeit nicht verfügbar"
+    },
+    "azure": {
+      "title": "Cloud-Speicher (Azure)",
+      "available": "Cloud-Speicher verfügbar",
+      "unavailable": "Cloud-Speicher nicht verfügbar",
+      "availableDescription": "Dokumente werden in Azure Blob Storage für verbesserte Haltbarkeit und Zugänglichkeit gespeichert.",
+      "unavailableDescription": "Azure Blob Storage ist derzeit nicht verfügbar. Dokumente werden lokal gespeichert."
+    },
+    "local": {
+      "title": "Lokaler Speicher",
+      "available": "Lokaler Speicher verfügbar",
+      "unavailable": "Lokaler Speicher nicht verfügbar",
+      "availableDescription": "Dokumente können lokal gespeichert werden, wenn Cloud-Speicher nicht verfügbar ist.",
+      "unavailableDescription": "Das lokale Speichersystem hat Probleme. Kontaktieren Sie den Support für Unterstützung."
+    },
+    "actions": {
+      "viewFiles": "Dateien anzeigen",
+      "checkStatus": "Status prüfen"
+    }
+  },
   "navigation": {
     "home": "Startseite",
     "dashboard": "Dashboard",

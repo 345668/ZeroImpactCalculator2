@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { LoginModal } from "@/components/login-modal";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { StorageStatus } from "@/components/storage-status";
 import { ShieldAlert } from "lucide-react";
 
 export function NavigationBar() {
@@ -86,6 +87,9 @@ export function NavigationBar() {
         >
           {t('navigation.company')}
         </Button>
+        
+        {/* Storage status indicator */}
+        <StorageStatus className="mx-1" />
         
         {/* Language switcher */}
         <LanguageSwitcher />
