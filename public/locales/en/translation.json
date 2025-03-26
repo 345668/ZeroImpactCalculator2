@@ -98,7 +98,8 @@
     "login": "Log In",
     "logout": "Log Out",
     "company": "Company",
-    "admin": "Admin"
+    "admin": "Admin",
+    "tools": "Tools"
   },
   "calculator": {
     "title": "Carbon Credit Calculator",
