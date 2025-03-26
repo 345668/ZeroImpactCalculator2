@@ -11,9 +11,10 @@ import fs from 'fs';
 import monitoringService from '../utils/monitoring';
 import { db } from '../db';
 import { testDatabaseConnection } from '../database';
-import { ensureContainerExists } from '../utils/azure-storage';
+import { ensureContainerExists, containerName } from '../utils/azure-storage';
 import { storeFileLocally, getLocalFilePath } from '../utils/local-storage';
 import { SendGridService } from '../utils/sendgrid-service';
+import { BlobServiceClient } from '@azure/storage-blob';
 
 const router = express.Router();
 
@@ -261,12 +262,47 @@ router.post('/create-azure-container', requireAuth, requireAdmin, async (req: Re
       });
     }
     
-    await ensureContainerExists();
+    const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING;
+    const containerName = "carbon-credits-docs";
     
-    res.json({
-      success: true,
-      message: 'Azure Storage container created successfully'
-    });
+    // Create BlobServiceClient and ContainerClient directly here for better control
+    const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString);
+    const containerClient = blobServiceClient.getContainerClient(containerName);
+    
+    try {
+      // Check if the container exists
+      const exists = await containerClient.exists();
+      
+      if (!exists) {
+        // Create the container if it doesn't exist
+        const createResult = await containerClient.create();
+        console.log(`Container "${containerName}" created successfully:`, {
+          succeeded: createResult.succeeded,
+          requestId: createResult.requestId
+        });
+        
+        // Set container public access for blobs to be accessible via URLs
+        await containerClient.setAccessPolicy("blob");
+        console.log(`Container "${containerName}" is now set with public blob access`);
+      } else {
+        console.log(`Container "${containerName}" already exists`);
+      }
+      
+      res.json({
+        success: true,
+        message: exists 
+          ? `Azure Storage container "${containerName}" already exists` 
+          : `Azure Storage container "${containerName}" created successfully`
+      });
+    } catch (containerError: any) {
+      console.error('Detailed container creation error:', {
+        message: containerError?.message,
+        code: containerError?.code,
+        details: containerError?.details || {}
+      });
+      
+      throw new Error(`Container creation failed: ${containerError?.message || 'Unknown error'}`);
+    }
   } catch (error) {
     console.error('Error creating Azure Storage container:', error);
     res.status(500).json({

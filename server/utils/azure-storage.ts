@@ -7,7 +7,7 @@ const blobServiceClient = BlobServiceClient.fromConnectionString(
 );
 
 // Use a known working container name for consistent operations
-const containerName = "carbon-credits-docs";
+export const containerName = "carbon-credits-docs";
 
 console.log(`Using Azure Blob Storage container: ${containerName}`);
 
@@ -301,5 +301,4 @@ export async function deleteBlob(blobPath: string): Promise<boolean> {
   }
 }
 
-// Export container name for diagnostic purposes
-export { containerName };
+// containerName is already exported
