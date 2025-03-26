@@ -44,6 +44,53 @@
       "checkStatus": "Status prüfen"
     }
   },
+  "tools": {
+    "title": "Systemwerkzeuge",
+    "description": "System-Management und Diagnose-Tools",
+    "tabs": {
+      "storage": "Speicher",
+      "system": "Systemstatus"
+    },
+    "actions": {
+      "refresh": "Aktualisieren",
+      "refreshStatus": "Status aktualisieren",
+      "backup": "Datenbank sichern",
+      "manageFiles": "Dateien verwalten"
+    },
+    "storage": {
+      "status": "Speicherstatus",
+      "statusDescription": "Aktueller Status Ihrer Dokumentenspeichersysteme",
+      "actions": "Speicheraktionen",
+      "actionsDescription": "Führen Sie Aktionen für Ihre Speichersysteme durch",
+      "files": "Gespeicherte Dateien",
+      "filesDescription": "Dateien im System anzeigen",
+      "fileCount": "Dateien",
+      "noFiles": "Keine Dateien an diesem Speicherort gefunden",
+      "showingLimited": "Zeige {{showing}} von {{total}} Dateien",
+      "errorTitle": "Speicherfehler",
+      "errorDescription": "Dateiinformationen konnten nicht abgerufen werden. Bitte versuchen Sie es später erneut."
+    },
+    "system": {
+      "status": "Systemstatus",
+      "statusDescription": "Gesundheitsstatus der Systemkomponenten",
+      "overall": "Gesamtzustand",
+      "database": "Datenbank",
+      "email": "E-Mail",
+      "storage": "Speicher",
+      "healthy": "Gesund",
+      "unhealthy": "Fehlerhaft",
+      "degraded": "Beeinträchtigt",
+      "misconfigured": "Falsch konfiguriert",
+      "version": "Version",
+      "environment": "Umgebung",
+      "uptime": "Betriebszeit",
+      "minutes": "Minuten",
+      "lastChecked": "Zuletzt geprüft",
+      "memory": "Speichernutzung",
+      "errorTitle": "Systemfehler",
+      "errorDescription": "Systeminformationen konnten nicht abgerufen werden. Bitte versuchen Sie es später erneut."
+    }
+  },
   "navigation": {
     "home": "Startseite",
     "dashboard": "Dashboard",

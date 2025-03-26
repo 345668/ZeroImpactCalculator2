@@ -44,6 +44,53 @@
       "checkStatus": "Check Status"
     }
   },
+  "tools": {
+    "title": "System Tools",
+    "description": "System management and diagnostic tools",
+    "tabs": {
+      "storage": "Storage",
+      "system": "System Status"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "refreshStatus": "Refresh Status",
+      "backup": "Backup Database",
+      "manageFiles": "Manage Files"
+    },
+    "storage": {
+      "status": "Storage Status",
+      "statusDescription": "Current status of your document storage systems",
+      "actions": "Storage Actions",
+      "actionsDescription": "Perform actions on your storage systems",
+      "files": "Stored Files",
+      "filesDescription": "View files stored in the system",
+      "fileCount": "files",
+      "noFiles": "No files found in this storage location",
+      "showingLimited": "Showing {{showing}} of {{total}} files",
+      "errorTitle": "Storage Error",
+      "errorDescription": "Unable to retrieve file information. Please try again later."
+    },
+    "system": {
+      "status": "System Status",
+      "statusDescription": "Health status of system components",
+      "overall": "Overall",
+      "database": "Database",
+      "email": "Email",
+      "storage": "Storage",
+      "healthy": "Healthy",
+      "unhealthy": "Unhealthy",
+      "degraded": "Degraded",
+      "misconfigured": "Misconfigured",
+      "version": "Version",
+      "environment": "Environment",
+      "uptime": "Uptime",
+      "minutes": "minutes",
+      "lastChecked": "Last Checked",
+      "memory": "Memory Usage",
+      "errorTitle": "System Error",
+      "errorDescription": "Unable to retrieve system information. Please try again later."
+    }
+  },
   "navigation": {
     "home": "Home",
     "dashboard": "Dashboard",
