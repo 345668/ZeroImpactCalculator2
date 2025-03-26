@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useLocation } from "wouter";
 import { Layout } from "@/components/layout";
-import { Building2, BarChart2, Users, Mail, Home, Globe, Loader2, ShieldAlert } from "lucide-react";
+import { Building2, BarChart2, Users, Mail, Home, Globe, Loader2, ShieldAlert, Wrench } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { GlobeMap } from "@/components/globe-map";
 import { motion } from "framer-motion";
@@ -250,6 +250,27 @@ function CompanyPage() {
                       Admin Access Required
                     </Button>
                   )}
+                </CardContent>
+              </Card>
+              
+              {/* System Tools Card */}
+              <Card className="hover:shadow-lg transition-shadow">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Wrench className="h-5 w-5 text-primary" />
+                    System Tools
+                  </CardTitle>
+                  <CardDescription>
+                    Manage system storage and status
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Access system tools for storage management, database backups, and system health monitoring.
+                  </p>
+                  <Link href="/tools">
+                    <Button className="w-full">Go to Tools</Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>

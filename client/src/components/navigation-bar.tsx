@@ -87,19 +87,7 @@ export function NavigationBar() {
           {t('navigation.company')}
         </Button>
         
-        {/* Tools access for logged in users */}
-        {isLoggedIn && (
-          <Link href="/tools">
-            <Button 
-              variant="link" 
-              size="sm" 
-              className="text-sm font-medium text-foreground/90 hover:text-foreground flex items-center gap-1"
-            >
-              <Wrench className="h-3 w-3" />
-              {t('navigation.tools')}
-            </Button>
-          </Link>
-        )}
+        {/* Tools access is moved to the Company portal and no longer appears in the navigation bar */}
         
         {/* Language switcher */}
         <LanguageSwitcher />
