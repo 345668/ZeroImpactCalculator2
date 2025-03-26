@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Submission } from "@shared/schema";
 import { useTranslation } from "react-i18next";
+import { apiRequest } from "@/lib/queryClient";
 
 interface DashboardTableProps {
   submissions: Submission[];
@@ -102,20 +103,21 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                           e.preventDefault();
                           console.log('Accessing document via API endpoint');
                           
-                          // Make a fetch request to get the document URL through our API endpoint
-                          fetch(`/api/documents/url?path=${encodeURIComponent(submission.fileUrl || '')}`)
+                          // Make a request to get the document URL through our API endpoint using apiRequest to include CSRF token
+                          apiRequest('GET', `/api/documents/url?path=${encodeURIComponent(submission.fileUrl || '')}`)
                             .then(response => {
-                              if (!response.ok) {
-                                // Check specific error status
-                                if (response.status === 404) {
-                                  throw new Error('Document not found');
-                                } else if (response.status === 503) {
-                                  throw new Error('Document storage service unavailable');
-                                } else {
-                                  throw new Error('Failed to fetch document URL');
-                                }
-                              }
+                              // apiRequest throws on error, so we don't need to check response.ok
                               return response.json();
+                            })
+                            .catch(error => {
+                              // Handle specific error codes from apiRequest error
+                              if (error.status === 404) {
+                                throw new Error('Document not found');
+                              } else if (error.status === 503) {
+                                throw new Error('Document storage service unavailable');
+                              } else {
+                                throw new Error('Failed to fetch document URL');
+                              }
                             })
                             .then(data => {
                               if (data.url) {
@@ -181,17 +183,11 @@ export function DashboardTable({ submissions }: DashboardTableProps) {
                     size="sm"
                     onClick={async () => {
                       try {
-                        const response = await fetch('/api/send-report', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({ submissionId: submission.id }),
-                        });
-
-                        if (!response.ok) {
-                          throw new Error('Failed to send report');
-                        }
+                        const response = await apiRequest('POST', '/api/send-report', 
+                          { submissionId: submission.id }
+                        );
+                        
+                        // apiRequest throws an error if the response is not OK, so we don't need to check response.ok
 
                         // Invalidate the query to refresh the data
                         await queryClient.invalidateQueries({ queryKey: ["/api/submissions"] });
