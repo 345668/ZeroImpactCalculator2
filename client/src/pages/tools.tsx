@@ -7,8 +7,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StorageStatus } from "@/components/storage-status";
-import { Database, Server, HardDrive, RefreshCw, Download, FileCog } from "lucide-react";
+import { Database, Server, HardDrive, RefreshCw, Download, FileCog, X } from "lucide-react";
 import { useLocation } from "wouter";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 // Define data types
 interface StorageData {
@@ -266,7 +268,7 @@ function ToolsPage() {
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList>
+          <TabsList className="flex flex-wrap">
             <TabsTrigger value="storage" className="gap-2">
               <Database className="h-4 w-4" />
               {t('tools.tabs.storage')}
@@ -274,6 +276,24 @@ function ToolsPage() {
             <TabsTrigger value="system" className="gap-2">
               <Server className="h-4 w-4" />
               {t('tools.tabs.system')}
+            </TabsTrigger>
+            <TabsTrigger value="api" className="gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <path d="M9 22h6"></path><path d="M2 13h20"></path><path d="M21 13c-2 0-4.5-2-4.5-6s2.5-6 4.5-6"></path><path d="M3 13c2 0 4.5-2 4.5-6S5 1 3 1"></path>
+              </svg>
+              {t('tools.tabs.api')}
+            </TabsTrigger>
+            <TabsTrigger value="logs" className="gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <path d="M12 2H2v10h10V2z"></path><path d="M12 12h10v10H12V12z"></path><path d="M2 12h10v10H2V12z"></path>
+              </svg>
+              {t('tools.tabs.logs')}
+            </TabsTrigger>
+            <TabsTrigger value="metrics" className="gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                <path d="M3 3v18h18"></path><path d="M19 9l-5 5-4-4-3 3"></path>
+              </svg>
+              {t('tools.tabs.metrics')}
             </TabsTrigger>
           </TabsList>
           
@@ -467,6 +487,562 @@ function ToolsPage() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+          
+          {/* API Monitoring Tab */}
+          <TabsContent value="api" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">{t('tools.api.recentCalls')}</CardTitle>
+                <CardDescription>
+                  {t('tools.api.recentCallsDescription')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {apiCallsLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : apiCallsError ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>{t('tools.api.errorTitle')}</AlertTitle>
+                    <AlertDescription>
+                      {t('tools.api.errorDescription')}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="border rounded-md overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="text-left p-2 font-medium">{t('tools.api.timestamp')}</th>
+                            <th className="text-left p-2 font-medium">{t('tools.api.method')}</th>
+                            <th className="text-left p-2 font-medium">{t('tools.api.endpoint')}</th>
+                            <th className="text-right p-2 font-medium">{t('tools.api.status')}</th>
+                            <th className="text-right p-2 font-medium">{t('tools.api.responseTime')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {Array.isArray(apiCallsData) && apiCallsData.map((call: ApiCallRecord, index: number) => (
+                            <tr key={index} className="border-t hover:bg-muted/20">
+                              <td className="p-2 text-muted-foreground">
+                                {new Date(call.timestamp).toLocaleString()}
+                              </td>
+                              <td className="p-2">
+                                <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                                  call.method === 'GET' ? 'bg-blue-100 text-blue-800' :
+                                  call.method === 'POST' ? 'bg-green-100 text-green-800' :
+                                  call.method === 'PUT' ? 'bg-amber-100 text-amber-800' :
+                                  call.method === 'DELETE' ? 'bg-red-100 text-red-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {call.method}
+                                </span>
+                              </td>
+                              <td className="p-2 font-mono text-xs truncate max-w-[200px]">
+                                {call.endpoint}
+                              </td>
+                              <td className="p-2 text-right">
+                                <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                                  call.statusCode >= 200 && call.statusCode < 300 ? 'bg-green-100 text-green-800' :
+                                  call.statusCode >= 300 && call.statusCode < 400 ? 'bg-blue-100 text-blue-800' :
+                                  call.statusCode >= 400 && call.statusCode < 500 ? 'bg-amber-100 text-amber-800' :
+                                  'bg-red-100 text-red-800'
+                                }`}>
+                                  {call.statusCode}
+                                </span>
+                              </td>
+                              <td className="p-2 text-right font-mono">
+                                {call.responseTime} ms
+                              </td>
+                            </tr>
+                          ))}
+                          
+                          {(!Array.isArray(apiCallsData) || apiCallsData.length === 0) && (
+                            <tr className="border-t">
+                              <td colSpan={5} className="p-4 text-center text-muted-foreground">
+                                {t('tools.api.noData')}
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">{t('tools.api.serviceHealth')}</CardTitle>
+                <CardDescription>
+                  {t('tools.api.serviceHealthDescription')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {serviceHealthLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : serviceHealthError ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>{t('tools.api.errorTitle')}</AlertTitle>
+                    <AlertDescription>
+                      {t('tools.api.errorDescription')}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.isArray(serviceHealthData) && serviceHealthData.map((service: ServiceHealthStatus, index: number) => (
+                      <div key={index} className="border rounded-lg p-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <h3 className="font-medium">{service.service}</h3>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                            service.status === 'healthy' ? 'bg-green-100 text-green-800' :
+                            service.status === 'degraded' ? 'bg-amber-100 text-amber-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {service.status}
+                          </span>
+                        </div>
+                        
+                        {service.latency !== undefined && (
+                          <div className="text-sm text-muted-foreground">
+                            {t('tools.api.latency')}: {service.latency}ms
+                          </div>
+                        )}
+                        
+                        {service.errors && service.errors.length > 0 && (
+                          <div className="text-sm text-red-500 mt-2">
+                            <div>{t('tools.api.errors')}:</div>
+                            <ul className="list-disc pl-4 mt-1">
+                              {service.errors.map((error, i) => (
+                                <li key={i}>{error}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        <div className="text-xs text-muted-foreground">
+                          {t('tools.api.lastChecked')}: {new Date(service.lastChecked).toLocaleString()}
+                        </div>
+                      </div>
+                    ))}
+                    
+                    {(!Array.isArray(serviceHealthData) || serviceHealthData.length === 0) && (
+                      <div className="md:col-span-2 lg:col-span-3 p-4 text-center text-muted-foreground border rounded-md">
+                        {t('tools.api.noServiceData')}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          {/* Logs Tab */}
+          {/* Metrics Tab */}
+          <TabsContent value="metrics" className="space-y-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">{t('tools.metrics.title')}</CardTitle>
+                <CardDescription>
+                  {t('tools.metrics.description')}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {systemMetricsLoading ? (
+                  <div className="space-y-2">
+                    <Skeleton className="h-[200px] w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                ) : systemMetricsError ? (
+                  <Alert variant="destructive">
+                    <AlertTitle>{t('tools.metrics.errorTitle')}</AlertTitle>
+                    <AlertDescription>
+                      {t('tools.metrics.errorDescription')}
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <div className="space-y-8">
+                    {Array.isArray(systemMetricsData) && systemMetricsData.length > 0 ? (
+                      <>
+                        {/* CPU Usage Chart */}
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-medium">{t('tools.metrics.cpuUsage')}</h3>
+                          <div className="h-[200px] border rounded-md p-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart
+                                data={systemMetricsData.slice(-20)} // Show last 20 data points
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                  dataKey="timestamp" 
+                                  tick={{ fontSize: 12 }}
+                                  tickFormatter={(value) => {
+                                    const date = new Date(value);
+                                    return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+                                  }}
+                                />
+                                <YAxis 
+                                  tick={{ fontSize: 12 }}
+                                  tickFormatter={(value) => `${value}%`}
+                                  domain={[0, 100]}
+                                />
+                                <Tooltip 
+                                  formatter={(value) => [`${value}%`, t('tools.metrics.cpuUsage')]}
+                                  labelFormatter={(value) => new Date(value).toLocaleTimeString()}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  dataKey="cpuUsage" 
+                                  stroke="#3b82f6" 
+                                  strokeWidth={2}
+                                  dot={{ r: 3 }}
+                                  activeDot={{ r: 5 }}
+                                />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        
+                        {/* Memory Usage Chart */}
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-medium">{t('tools.metrics.memoryUsage')}</h3>
+                          <div className="h-[200px] border rounded-md p-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <LineChart
+                                data={systemMetricsData.slice(-20).map(metric => ({
+                                  ...metric,
+                                  heapUsed: metric.memoryUsage?.heapUsed ? Math.round(metric.memoryUsage.heapUsed / 1024 / 1024 * 100) / 100 : 0,
+                                  heapTotal: metric.memoryUsage?.heapTotal ? Math.round(metric.memoryUsage.heapTotal / 1024 / 1024 * 100) / 100 : 0,
+                                  rss: metric.memoryUsage?.rss ? Math.round(metric.memoryUsage.rss / 1024 / 1024 * 100) / 100 : 0,
+                                }))}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                  dataKey="timestamp" 
+                                  tick={{ fontSize: 12 }}
+                                  tickFormatter={(value) => {
+                                    const date = new Date(value);
+                                    return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+                                  }}
+                                />
+                                <YAxis 
+                                  tick={{ fontSize: 12 }}
+                                  tickFormatter={(value) => `${value} MB`}
+                                />
+                                <Tooltip 
+                                  formatter={(value) => [`${value} MB`, t('tools.metrics.memoryUsage')]}
+                                  labelFormatter={(value) => new Date(value).toLocaleTimeString()}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  name={t('tools.metrics.heapUsed')}
+                                  dataKey="heapUsed" 
+                                  stroke="#3b82f6" 
+                                  strokeWidth={2}
+                                  dot={{ r: 3 }}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  name={t('tools.metrics.heapTotal')}
+                                  dataKey="heapTotal" 
+                                  stroke="#10b981" 
+                                  strokeWidth={2}
+                                  dot={{ r: 3 }}
+                                />
+                                <Line 
+                                  type="monotone" 
+                                  name={t('tools.metrics.rss')}
+                                  dataKey="rss" 
+                                  stroke="#f59e0b" 
+                                  strokeWidth={2}
+                                  dot={{ r: 3 }}
+                                />
+                                <Legend />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </div>
+                        
+                        {/* Active Connections Chart */}
+                        {systemMetricsData.some(metric => metric.activeConnections !== undefined) && (
+                          <div className="space-y-2">
+                            <h3 className="text-sm font-medium">{t('tools.metrics.activeConnections')}</h3>
+                            <div className="h-[200px] border rounded-md p-4">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={systemMetricsData.slice(-20)}>
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis 
+                                    dataKey="timestamp" 
+                                    tick={{ fontSize: 12 }}
+                                    tickFormatter={(value) => {
+                                      const date = new Date(value);
+                                      return `${date.getHours()}:${date.getMinutes().toString().padStart(2, '0')}`;
+                                    }}
+                                  />
+                                  <YAxis tick={{ fontSize: 12 }} />
+                                  <Tooltip 
+                                    formatter={(value) => [value, t('tools.metrics.activeConnections')]}
+                                    labelFormatter={(value) => new Date(value).toLocaleTimeString()}
+                                  />
+                                  <Line 
+                                    type="monotone" 
+                                    dataKey="activeConnections" 
+                                    stroke="#8b5cf6" 
+                                    strokeWidth={2}
+                                    dot={{ r: 3 }}
+                                  />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Latest Metrics Table */}
+                        <div className="space-y-2">
+                          <h3 className="text-sm font-medium">{t('tools.metrics.latestMetrics')}</h3>
+                          <div className="border rounded-md overflow-hidden">
+                            <table className="w-full text-sm">
+                              <thead className="bg-muted/50">
+                                <tr>
+                                  <th className="text-left p-2 font-medium">{t('tools.metrics.metric')}</th>
+                                  <th className="text-right p-2 font-medium">{t('tools.metrics.value')}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {/* CPU Usage */}
+                                <tr className="border-t">
+                                  <td className="p-2">{t('tools.metrics.cpuUsage')}</td>
+                                  <td className="p-2 text-right font-mono">
+                                    {systemMetricsData[systemMetricsData.length - 1]?.cpuUsage !== undefined 
+                                      ? `${systemMetricsData[systemMetricsData.length - 1].cpuUsage}%` 
+                                      : 'N/A'}
+                                  </td>
+                                </tr>
+                                
+                                {/* Memory: Heap Used */}
+                                <tr className="border-t">
+                                  <td className="p-2">{t('tools.metrics.heapUsed')}</td>
+                                  <td className="p-2 text-right font-mono">
+                                    {systemMetricsData[systemMetricsData.length - 1]?.memoryUsage?.heapUsed !== undefined 
+                                      ? `${Math.round(systemMetricsData[systemMetricsData.length - 1].memoryUsage.heapUsed / 1024 / 1024 * 100) / 100} MB` 
+                                      : 'N/A'}
+                                  </td>
+                                </tr>
+                                
+                                {/* Memory: Total Heap */}
+                                <tr className="border-t">
+                                  <td className="p-2">{t('tools.metrics.heapTotal')}</td>
+                                  <td className="p-2 text-right font-mono">
+                                    {systemMetricsData[systemMetricsData.length - 1]?.memoryUsage?.heapTotal !== undefined 
+                                      ? `${Math.round(systemMetricsData[systemMetricsData.length - 1].memoryUsage.heapTotal / 1024 / 1024 * 100) / 100} MB` 
+                                      : 'N/A'}
+                                  </td>
+                                </tr>
+                                
+                                {/* Memory: RSS */}
+                                <tr className="border-t">
+                                  <td className="p-2">{t('tools.metrics.rss')}</td>
+                                  <td className="p-2 text-right font-mono">
+                                    {systemMetricsData[systemMetricsData.length - 1]?.memoryUsage?.rss !== undefined 
+                                      ? `${Math.round(systemMetricsData[systemMetricsData.length - 1].memoryUsage.rss / 1024 / 1024 * 100) / 100} MB` 
+                                      : 'N/A'}
+                                  </td>
+                                </tr>
+                                
+                                {/* Active Connections */}
+                                <tr className="border-t">
+                                  <td className="p-2">{t('tools.metrics.activeConnections')}</td>
+                                  <td className="p-2 text-right font-mono">
+                                    {systemMetricsData[systemMetricsData.length - 1]?.activeConnections !== undefined 
+                                      ? systemMetricsData[systemMetricsData.length - 1].activeConnections 
+                                      : 'N/A'}
+                                  </td>
+                                </tr>
+                                
+                                {/* Last Updated */}
+                                <tr className="border-t">
+                                  <td className="p-2">{t('tools.metrics.lastUpdated')}</td>
+                                  <td className="p-2 text-right text-muted-foreground">
+                                    {systemMetricsData[systemMetricsData.length - 1]?.timestamp !== undefined 
+                                      ? new Date(systemMetricsData[systemMetricsData.length - 1].timestamp).toLocaleString() 
+                                      : new Date().toLocaleString()}
+                                  </td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="p-8 text-center text-muted-foreground border rounded-md">
+                        {t('tools.metrics.noData')}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => refetchSystemMetrics()}
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  {t('tools.actions.refreshMetrics')}
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="logs" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="md:col-span-1">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{t('tools.logs.availableFiles')}</CardTitle>
+                  <CardDescription>
+                    {t('tools.logs.availableFilesDescription')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {logFilesLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                      <Skeleton className="h-8 w-full" />
+                    </div>
+                  ) : logFilesError ? (
+                    <Alert variant="destructive">
+                      <AlertTitle>{t('tools.logs.errorTitle')}</AlertTitle>
+                      <AlertDescription>
+                        {t('tools.logs.errorDescription')}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="space-y-2">
+                      {Array.isArray(logFilesData) && logFilesData.map((logFile: LogFile, index: number) => (
+                        <div
+                          key={index}
+                          className={`p-2 border rounded-md cursor-pointer flex justify-between items-center hover:bg-muted/20 ${
+                            selectedLogFile === logFile.name ? 'bg-muted/40 border-primary' : ''
+                          }`}
+                          onClick={() => setSelectedLogFile(logFile.name)}
+                        >
+                          <div className="flex items-center gap-2">
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              className="h-4 w-4 text-muted-foreground"
+                            >
+                              <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                              <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
+                              <path d="M9 9h1"></path><path d="M9 13h6"></path><path d="M9 17h6"></path>
+                            </svg>
+                            <span className="text-sm truncate max-w-[200px]">
+                              {logFile.name}
+                            </span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {formatFileSize(logFile.size)}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {(!Array.isArray(logFilesData) || logFilesData.length === 0) && (
+                        <div className="text-sm text-muted-foreground p-4 text-center border rounded-md">
+                          {t('tools.logs.noLogFiles')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+              
+              <Card className="md:col-span-2">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    <span>
+                      {selectedLogFile ? selectedLogFile : t('tools.logs.logContent')}
+                    </span>
+                    
+                    {selectedLogFile && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setSelectedLogFile(null)}
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        {t('tools.logs.close')}
+                      </Button>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    {selectedLogFile 
+                      ? t('tools.logs.selectedFileDescription') 
+                      : t('tools.logs.selectFileDescription')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!selectedLogFile ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center text-muted-foreground border rounded-md">
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        className="h-12 w-12 mb-4 text-muted-foreground/50"
+                      >
+                        <path d="M14 3v4a1 1 0 0 0 1 1h4"></path>
+                        <path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <path d="M9 9h1"></path><path d="M9 13h6"></path><path d="M9 17h6"></path>
+                      </svg>
+                      <p>{t('tools.logs.selectFilePrompt')}</p>
+                    </div>
+                  ) : logFileContentLoading ? (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-full" />
+                    </div>
+                  ) : logFileContentError ? (
+                    <Alert variant="destructive">
+                      <AlertTitle>{t('tools.logs.errorTitle')}</AlertTitle>
+                      <AlertDescription>
+                        {t('tools.logs.errorLoadingContent')}
+                      </AlertDescription>
+                    </Alert>
+                  ) : (
+                    <div className="border rounded-md overflow-hidden">
+                      <ScrollArea className="h-[400px] w-full">
+                        <pre className="p-4 text-xs font-mono leading-relaxed">{logFileContentData}</pre>
+                      </ScrollArea>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
           
           {/* System Tab */}
