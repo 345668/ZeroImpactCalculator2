@@ -5,6 +5,7 @@ import { useMutation } from "@tanstack/react-query";
 import { InsertSubmission, insertSubmissionSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Check, Mail, RefreshCw, Loader2, 
   Droplet, Flame, Cylinder, Network, Zap, Box,
@@ -159,19 +160,8 @@ export function CalculatorForm() {
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: FormState) => {
       console.log('Submitting form data:', data);
-      const response = await fetch("/api/calculate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to submit calculation");
-      }
-
+      // Use the apiRequest function which handles CSRF tokens
+      const response = await apiRequest("POST", "/api/calculate", data);
       return await response.json();
     },
     onSuccess: (data) => {
@@ -274,29 +264,22 @@ export function CalculatorForm() {
 
     setIsEmailSending(true);
     try {
-      const response = await fetch("/api/email/send-report", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          firstName: form.getValues("firstName"),
-          lastName: form.getValues("lastName"),
-          email: form.getValues("email"),
-          co2Savings: calculateCO2Savings(form.getValues()),
-          carbonCredits: calculateCarbonCredits(form.getValues()),
-          financialValue: calculateFinancialValue(form.getValues()),
-          buildingSize: form.getValues("buildingSize"),
-          currentConsumption: form.getValues("currentConsumption"),
-          projectedConsumption: form.getValues("projectedConsumption"),
-          heatingSystem: form.getValues("heatingSystem")
-        }),
+      // Use apiRequest to include CSRF token
+      const response = await apiRequest("POST", "/api/email/send-report", {
+        firstName: form.getValues("firstName"),
+        lastName: form.getValues("lastName"),
+        email: form.getValues("email"),
+        co2Savings: calculateCO2Savings(form.getValues()),
+        carbonCredits: calculateCarbonCredits(form.getValues()),
+        financialValue: calculateFinancialValue(form.getValues()),
+        buildingSize: form.getValues("buildingSize"),
+        currentConsumption: form.getValues("currentConsumption"),
+        projectedConsumption: form.getValues("projectedConsumption"),
+        heatingSystem: form.getValues("heatingSystem")
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to send email');
-      }
+      // No need to check response.ok as apiRequest will throw on error
+      const data = await response.json();
 
       setIsEmailSent(true);
       toast({
