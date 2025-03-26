@@ -28,7 +28,8 @@ function requireAuth(req: Request, res: Response, next: express.NextFunction) {
 }
 
 function requireAdmin(req: Request, res: Response, next: express.NextFunction) {
-  if (!(req.session as any)?.user?.role === 'admin') {
+  const userRole = (req.session as any)?.user?.role;
+  if (userRole !== 'admin') {
     return res.status(403).json({ success: false, message: 'Admin privileges required' });
   }
   next();
