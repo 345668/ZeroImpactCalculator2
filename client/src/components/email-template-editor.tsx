@@ -261,13 +261,7 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
   // Create template mutation
   const createMutation = useMutation({
     mutationFn: async (data: EmailTemplateFormValues) => {
-      const response = await fetch("/api/email-templates", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("POST", "/api/email-templates", data);
       
       if (!response.ok) {
         throw new Error(await response.text());
@@ -296,13 +290,7 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
   // Update template mutation
   const updateMutation = useMutation({
     mutationFn: async (data: EmailTemplateFormValues) => {
-      const response = await fetch(`/api/email-templates/${templateId}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
+      const response = await apiRequest("PATCH", `/api/email-templates/${templateId}`, data);
       
       if (!response.ok) {
         throw new Error(await response.text());
@@ -330,9 +318,7 @@ export function EmailTemplateEditor({ templateId, onSaved }: EmailTemplateEditor
   // Delete template mutation
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`/api/email-templates/${templateId}`, {
-        method: "DELETE",
-      });
+      const response = await apiRequest("DELETE", `/api/email-templates/${templateId}`);
       
       if (!response.ok) {
         throw new Error(await response.text());

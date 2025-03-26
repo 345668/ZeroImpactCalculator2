@@ -1,0 +1,198 @@
+Express error: {
+  errorId: 'n2oxb8',
+  error: 'invalid csrf token',
+  stack: 'ForbiddenError: invalid csrf token\n' +
+    '    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)\n' +
+    '    at <anonymous> (/home/runner/workspace/server/index.ts:88:5)\n' +
+    '    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)\n' +
+    '    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)\n' +
+    '    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9\n' +
+    '    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)\n' +
+    '    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)\n' +
+    '    at /home/runner/workspace/node_modules/express-session/index.js:514:7\n' +
+    '    at /home/runner/workspace/node_modules/connect-pg-simple/index.js:370:18\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)',
+  path: '/api/email-templates',
+  method: 'POST',
+  body: {
+    name: 'carbon_credit_bericht_de',
+    subject: 'Ergebnisse Ihrer CO₂-Kalkulation – Ihr möglicher Beitrag & Wert',
+    body: 'Sehr geehrte(r) {{firstName}} {{lastName}},\n' +
+      '\n' +
+      'wir freuen uns, Ihnen die Ergebnisse Ihrer CO₂-Kalkulation basierend auf den von Ihnen bereitgestellten Daten mitzuteilen.\n' +
+      '\n' +
+      '🌱 Zusammenfassung Ihrer potenziellen Einsparungen\n' +
+      '\n' +
+      'Basierend auf unseren Berechnungen sparen Sie jährlich etwa {{co2Savings}} kg CO₂ ein. Das entspricht insgesamt {{carbonCredits}} handelbaren Carbon Credits.\n' +
+      '\n' +
+      '💶 Finanzieller Nutzen\n' +
+      '\n' +
+      'Diese CO₂-Einsparung hat einen geschätzten Marktwert von {{financialValue}} pro Jahr – ein direkter wirtschaftlicher Vorteil durch Ihren Beitrag zum Klimaschutz.\n' +
+      '\n' +
+      '📊 Details der Berechnung\n' +
+      '\n' +
+      'Für eine transparente Übersicht haben wir die Ergebnisse wie folgt zusammengefasst:  \n' +
+      '{{calculationDetails}}{{calculationDetails}}\n' +
+      '\n' +
+      '---\n' +
+      '\n' +
+      '📍Was bedeutet das konkret für Sie?\n' +
+      '\n' +
+      '- Für jede eingesparte Tonne CO₂ erhalten Sie einen Carbon Credit.\n' +
+      '- Diese Carbon Credits können über Radical Zero am Markt verkauft werden.\n' +
+      '- Sie leisten damit nicht nur einen aktiven Beitrag zum Klimaschutz, sondern profitieren auch finanziell.\n' +
+      '\n' +
+      'Gerne stehen wir Ihnen für weitere Informationen oder zur Besprechung der nächsten Schritte zur Verfügung.\n' +
+      '\n' +
+      '---\n' +
+      '\n' +
+      'Mit freundlichen Grüßen,  \n' +
+      'Laurent Kaestli  \n' +
+      'Geschäftsführer Radical Zero GmbH\n' +
+      '\n' +
+      'LK@radical-zero.eu  \n' +
+      'Tel +49 178 18750 25  \n' +
+      '📅 [Video-Call buchen](https://calendly.com/laurentkaestli)  \n' +
+      '🌐 [Mehr Infos](https://www.radical-zero.com)\n' +
+      '\n' +
+      'Radical Zero GmbH  \n' +
+      'Local Carbon Offset Supply  \n' +
+      'Co/Q:ARC  \n' +
+      'Danziger Straße 145  \n' +
+      '10407 Berlin\n' +
+      '\n' +
+      'Amtsgericht Charlottenburg (HRB 255861 B)\n',
+    description: '',
+    isDefault: false,
+    language: 'de',
+    variables: '{"firstName":"Dynamic field from submission data","lastName":"Dynamic field from submission data","co2Savings":"Dynamic field from submission data","financialValue":"Dynamic field from submission data","calculationDetails":"Dynamic field from submission data"}',
+    templateType: 'standard',
+    sendgridTemplateId: ''
+  },
+  timestamp: '2025-03-26T23:02:47.131Z',
+  headers: {
+    host: '80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15',
+    'content-length': '2108',
+    accept: '*/*',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'en-US,en;q=0.9',
+    'content-type': 'application/json',
+    cookie: '_csrf=aSyjv5BKAjgQmLI2T9ttnk6g; radical.sid=s%3AJWYmGe12Y6GA2c7WwIXII4xKe_A5pb5H.IRkK499JL8g7vTGfv4fOm0sei927NQ8xoLWIxSrD9wc',
+    origin: 'https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
+    priority: 'u=3, i',
+    referer: 'https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/company',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'x-forwarded-for': '158.181.69.203, 10.83.8.124',
+    'x-forwarded-proto': 'https',
+    'x-replit-user-bio': '',
+    'x-replit-user-id': '',
+    'x-replit-user-name': '',
+    'x-replit-user-profile-image': '',
+    'x-replit-user-roles': '',
+    'x-replit-user-teams': '',
+    'x-replit-user-url': ''
+  }
+}
+Database connection test result: { test: 1 }
+Database connection test result: { test: 1 }
+Express error: {
+  errorId: 'hj1wkw',
+  error: 'invalid csrf token',
+  stack: 'ForbiddenError: invalid csrf token\n' +
+    '    at csrf (/home/runner/workspace/node_modules/csurf/index.js:112:19)\n' +
+    '    at <anonymous> (/home/runner/workspace/server/index.ts:88:5)\n' +
+    '    at Layer.handle [as handle_request] (/home/runner/workspace/node_modules/express/lib/router/layer.js:95:5)\n' +
+    '    at trim_prefix (/home/runner/workspace/node_modules/express/lib/router/index.js:328:13)\n' +
+    '    at /home/runner/workspace/node_modules/express/lib/router/index.js:286:9\n' +
+    '    at Function.process_params (/home/runner/workspace/node_modules/express/lib/router/index.js:346:12)\n' +
+    '    at next (/home/runner/workspace/node_modules/express/lib/router/index.js:280:10)\n' +
+    '    at /home/runner/workspace/node_modules/express-session/index.js:514:7\n' +
+    '    at /home/runner/workspace/node_modules/connect-pg-simple/index.js:370:18\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)',
+  path: '/api/email-templates',
+  method: 'POST',
+  body: {
+    name: 'carbon_credit_bericht_de',
+    subject: 'Ergebnisse Ihrer CO₂-Kalkulation – Ihr möglicher Beitrag & Wert',
+    body: 'Sehr geehrte(r) {{firstName}} {{lastName}},\n' +
+      '\n' +
+      'wir freuen uns, Ihnen die Ergebnisse Ihrer CO₂-Kalkulation basierend auf den von Ihnen bereitgestellten Daten mitzuteilen.\n' +
+      '\n' +
+      '🌱 Zusammenfassung Ihrer potenziellen Einsparungen\n' +
+      '\n' +
+      'Basierend auf unseren Berechnungen sparen Sie jährlich etwa {{co2Savings}} kg CO₂ ein. Das entspricht insgesamt {{carbonCredits}} handelbaren Carbon Credits.\n' +
+      '\n' +
+      '💶 Finanzieller Nutzen\n' +
+      '\n' +
+      'Diese CO₂-Einsparung hat einen geschätzten Marktwert von {{financialValue}} pro Jahr – ein direkter wirtschaftlicher Vorteil durch Ihren Beitrag zum Klimaschutz.\n' +
+      '\n' +
+      '📊 Details der Berechnung\n' +
+      '\n' +
+      'Für eine transparente Übersicht haben wir die Ergebnisse wie folgt zusammengefasst:  \n' +
+      '{{calculationDetails}}\n' +
+      '\n' +
+      '---\n' +
+      '\n' +
+      '📍Was bedeutet das konkret für Sie?\n' +
+      '\n' +
+      '- Für jede eingesparte Tonne CO₂ erhalten Sie einen Carbon Credit.\n' +
+      '- Diese Carbon Credits können über Radical Zero am Markt verkauft werden.\n' +
+      '- Sie leisten damit nicht nur einen aktiven Beitrag zum Klimaschutz, sondern profitieren auch finanziell.\n' +
+      '\n' +
+      'Gerne stehen wir Ihnen für weitere Informationen oder zur Besprechung der nächsten Schritte zur Verfügung.\n' +
+      '\n' +
+      '---\n' +
+      '\n' +
+      'Mit freundlichen Grüßen,  \n' +
+      'Laurent Kaestli  \n' +
+      'Geschäftsführer Radical Zero GmbH\n' +
+      '\n' +
+      'LK@radical-zero.eu  \n' +
+      'Tel +49 178 18750 25  \n' +
+      '📅 [Video-Call buchen](https://calendly.com/laurentkaestli)  \n' +
+      '🌐 [Mehr Infos](https://www.radical-zero.com)\n' +
+      '\n' +
+      'Radical Zero GmbH  \n' +
+      'Local Carbon Offset Supply  \n' +
+      'Co/Q:ARC  \n' +
+      'Danziger Straße 145  \n' +
+      '10407 Berlin\n' +
+      '\n' +
+      'Amtsgericht Charlottenburg (HRB 255861 B)\n',
+    description: '',
+    isDefault: false,
+    language: 'de',
+    variables: '{"firstName":"Dynamic field from submission data","lastName":"Dynamic field from submission data","co2Savings":"Dynamic field from submission data","financialValue":"Dynamic field from submission data","calculationDetails":"Dynamic field from submission data"}',
+    templateType: 'standard',
+    sendgridTemplateId: ''
+  },
+  timestamp: '2025-03-26T23:03:31.916Z',
+  headers: {
+    host: '80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
+    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.4 Safari/605.1.15',
+    'content-length': '2086',
+    accept: '*/*',
+    'accept-encoding': 'gzip, deflate, br',
+    'accept-language': 'en-US,en;q=0.9',
+    'content-type': 'application/json',
+    cookie: '_csrf=aSyjv5BKAjgQmLI2T9ttnk6g; radical.sid=s%3AJWYmGe12Y6GA2c7WwIXII4xKe_A5pb5H.IRkK499JL8g7vTGfv4fOm0sei927NQ8xoLWIxSrD9wc',
+    origin: 'https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev',
+    priority: 'u=3, i',
+    referer: 'https://80a36a14-7632-4fff-9138-de31bccab802-00-shf5pxykxvjs.janeway.replit.dev/company',
+    'sec-fetch-dest': 'empty',
+    'sec-fetch-mode': 'cors',
+    'sec-fetch-site': 'same-origin',
+    'x-forwarded-for': '158.181.69.203, 10.83.6.34',
+    'x-forwarded-proto': 'https',
+    'x-replit-user-bio': '',
+    'x-replit-user-id': '',
+    'x-replit-user-name': '',
+    'x-replit-user-profile-image': '',
+    'x-replit-user-roles': '',
+    'x-replit-user-teams': '',
+    'x-replit-user-url': ''
+  }
+}
