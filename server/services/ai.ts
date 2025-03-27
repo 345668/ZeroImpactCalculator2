@@ -180,15 +180,19 @@ export class AIService {
           // Replace horizontal rules
           processed = processed.replace(/---/g, '<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">');
           
-          // Replace double line breaks with paragraph tags for better spacing
-          processed = processed.replace(/\n\n/g, '</p><p style="margin: 10px 0;">');
+          // First, preserve consecutive line breaks to maintain paragraph spacing
+          // This will replace double line breaks with a special marker
+          processed = processed.replace(/\n\n/g, '§PARAGRAPH§');
           
-          // Replace remaining single line breaks with <br> tags
-          processed = processed.replace(/\n/g, '<br>');
+          // Now replace remaining single line breaks with <br> tags for line breaks within paragraphs
+          processed = processed.replace(/\n/g, '<br>\n');
+          
+          // Now convert the paragraph markers back to proper paragraph tags
+          processed = processed.replace(/§PARAGRAPH§/g, '</p><p style="margin: 16px 0;">');
           
           // Wrap in paragraph tags if not already wrapped
           if (!processed.startsWith('<p')) {
-            processed = '<p style="margin: 10px 0;">' + processed;
+            processed = '<p style="margin: 16px 0;">' + processed;
           }
           if (!processed.endsWith('</p>')) {
             processed = processed + '</p>';
@@ -203,7 +207,9 @@ export class AIService {
         // Add proper styling for paragraphs and other elements
         body = `
           <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
-            ${body}
+            <div style="padding: 20px;">
+              ${body}
+            </div>
           </div>
         `;
         
