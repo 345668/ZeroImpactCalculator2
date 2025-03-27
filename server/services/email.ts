@@ -34,7 +34,7 @@ export class EmailService {
         customTemplate = true;
       }
 
-      // Generate content - if a custom template exists, the AIService will use it
+      // Generate content - pass the template directly to AIService
       emailContent = await AIService.generateEmailContent({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -44,7 +44,8 @@ export class EmailService {
         buildingSize: data.buildingSize,
         currentConsumption: data.currentConsumption,
         projectedConsumption: data.projectedConsumption,
-        heatingSystem: data.heatingSystem
+        heatingSystem: data.heatingSystem,
+        template: carbonReportTemplate // Pass the template directly
       });
 
       console.log('Email content generated successfully');

@@ -58,6 +58,7 @@ export class AIService {
     currentConsumption: number;
     projectedConsumption: number;
     heatingSystem: string;
+    template?: any; // Accept template directly
   }): Promise<string> {
     try {
       // If LLM email generation is enabled, use OpenAI to generate content
@@ -103,11 +104,16 @@ export class AIService {
       console.log('LLM email generation is disabled. Using template-based approach.');
       
       try {
-        // Look for a standard email template
-        let template = await storage.getDefaultEmailTemplate();
+        // Use the directly provided template if available
+        let template = data.template;
+        
+        // If no template was provided, try to find one from the database
+        if (!template) {
+          template = await storage.getDefaultEmailTemplate();
+        }
         
         if (!template) {
-          console.warn('No default email template found. Using fallback HTML template.');
+          console.warn('No template found. Using fallback HTML template.');
           // Fallback to a basic HTML template if no template is found
           return `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 5px;">
