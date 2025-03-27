@@ -165,6 +165,48 @@ export class AIService {
           body = body.replace(regex, String(value));
         });
         
+        // Process markdown-style formatting
+        const processEmailTemplate = (content: string): string => {
+          let processed = content;
+          
+          // Convert markdown links to HTML links
+          processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #007bff; text-decoration: underline;">$1</a>');
+          
+          // Convert bullet points
+          processed = processed.replace(/^- (.+)$/gm, '<li style="margin-bottom: 8px;">$1</li>');
+          processed = processed.replace(/(<li[^>]*>.*<\/li>)\s*(<li[^>]*>)/g, '$1$2');
+          processed = processed.replace(/(<li[^>]*>.*<\/li>)+/g, '<ul style="padding-left: 20px; margin: 15px 0;">$&</ul>');
+          
+          // Replace horizontal rules
+          processed = processed.replace(/---/g, '<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">');
+          
+          // Replace double line breaks with paragraph tags for better spacing
+          processed = processed.replace(/\n\n/g, '</p><p style="margin: 10px 0;">');
+          
+          // Replace remaining single line breaks with <br> tags
+          processed = processed.replace(/\n/g, '<br>');
+          
+          // Wrap in paragraph tags if not already wrapped
+          if (!processed.startsWith('<p')) {
+            processed = '<p style="margin: 10px 0;">' + processed;
+          }
+          if (!processed.endsWith('</p>')) {
+            processed = processed + '</p>';
+          }
+          
+          return processed;
+        };
+        
+        // Process the template
+        body = processEmailTemplate(body);
+        
+        // Add proper styling for paragraphs and other elements
+        body = `
+          <div style="font-family: Arial, Helvetica, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
+            ${body}
+          </div>
+        `;
+        
         return body;
       } catch (templateError) {
         console.error("Error using template:", templateError);
