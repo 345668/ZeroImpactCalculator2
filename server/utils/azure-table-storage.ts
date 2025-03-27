@@ -187,7 +187,7 @@ export async function createSubmissionEntity(submission: any): Promise<boolean> 
       fileMetadata: submission.fileMetadata || "",
       
       // Email status
-      emailSent: submission.emailSent,
+      emailSent: submission.emailSent || "no", // Ensure default value is "no"
       emailSentAt: submission.emailSentAt ? new Date(submission.emailSentAt) : new Date(0),
       
       // Timestamps
@@ -289,7 +289,7 @@ export async function updateSubmission(submission: any): Promise<boolean> {
       fileMetadata: submission.fileMetadata || existingEntity.fileMetadata || "",
       
       // Email status
-      emailSent: submission.emailSent || existingEntity.emailSent,
+      emailSent: submission.emailSent || existingEntity.emailSent || "no", // Ensure default value is "no" 
       emailSentAt: submission.emailSentAt ? new Date(submission.emailSentAt) : (existingEntity.emailSentAt ? new Date(existingEntity.emailSentAt) : new Date(0)),
     };
     
@@ -355,7 +355,7 @@ function mapEntityToSubmission(entity: Record<string, any>): any {
     fileType: entity.fileType || '',
     fileUploadedAt: entity.fileUploadedAt ? new Date(entity.fileUploadedAt) : new Date(),
     fileMetadata: entity.fileMetadata || '',
-    emailSent: entity.emailSent || '',
+    emailSent: entity.emailSent || 'no', // Ensure default value is "no"
     emailSentAt: entity.emailSentAt ? new Date(entity.emailSentAt) : new Date(0),
     submittedAt: entity.submittedAt ? new Date(entity.submittedAt) : new Date(),
   };
