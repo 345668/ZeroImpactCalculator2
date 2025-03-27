@@ -8,7 +8,9 @@ A cutting-edge web application that helps building owners and tenants calculate 
 - **Multi-step Calculation Form**: User-friendly interface for inputting building and energy consumption data
 - **Real-time Analysis**: Instant calculation of CO₂ savings and potential carbon credits
 - **Interactive Dashboard**: Visualize your energy savings and carbon credit potential
-- **Automated Reporting**: Receive detailed PDF reports via email
+- **Automated Reporting**: Receive detailed HTML reports via email with customizable templates
+- **Email Template Editor**: Create and manage email templates with dynamic content fields
+- **Domain Security Monitoring**: DMARC analysis for enhanced email security
 - **GDPR Compliant**: Built-in data protection and privacy features
 
 ## Tech Stack 🛠️
@@ -17,9 +19,11 @@ A cutting-edge web application that helps building owners and tenants calculate 
 - **Backend**: Express.js, Node.js
 - **Database**: PostgreSQL with Drizzle ORM
 - **AI/ML**: Mistral AI for document processing
-- **Storage**: Azure Blob Storage
-- **Email**: SendGrid integration
+- **Storage**: Azure Blob Storage with local storage fallback
+- **Email**: SendGrid V3 API integration with templating
+- **Security**: DMARC monitoring and domain alignment checking
 - **Authentication**: Session-based auth with PostgreSQL
+- **Internationalization**: i18next with support for English and German
 
 ## Prerequisites 📋
 
@@ -86,6 +90,22 @@ radical-zero/
 - `GET /api/submissions`: Retrieve all submissions
 - `POST /api/send-report`: Send email reports
 
+### Email Management
+- `GET /api/email-templates`: Retrieve all email templates
+- `GET /api/email-templates/:id`: Get a specific template
+- `POST /api/email-templates`: Create a new email template
+- `PUT /api/email-templates/:id`: Update an existing template
+
+### Domain Security
+- `GET /api/dmarc/reports`: Get all DMARC reports
+- `POST /api/dmarc/parse`: Parse a DMARC report
+- `POST /api/dmarc/check-alignment`: Check domain alignment
+
+### System Monitoring
+- `GET /api/monitoring/service-health`: Check service health status
+- `GET /api/monitoring/api-calls`: View recent API calls
+- `GET /api/monitoring/system-metrics`: Retrieve system performance metrics
+
 ## Security 🔒
 
 - HTTPS enforced in production
@@ -127,9 +147,26 @@ For support, email support@radicalzero.com or join our Slack channel.
 ![Results Dashboard](screenshots/results-dashboard.png)
 ![Email Report](screenshots/email-report.png)
 
+## Recent Enhancements 🚀
+
+### Email System Improvements
+- Fixed issue with submissions being prematurely marked as "email sent" 
+- Enhanced email templates with proper HTML formatting for consistent spacing
+- Implemented proper HTML template structure with paragraph tags and styling
+- Created a comprehensive data field helper in the template editor
+- Added fallback mechanisms for Azure Storage unavailability
+
+### Monitoring & Diagnostics
+- Added comprehensive API monitoring with performance metrics
+- Implemented service health checks across all application components
+- Created a dedicated tools section for system administration
+- Enhanced error handling and logging throughout the application
+
 ## Acknowledgments 🙏
 
 - [Shadcn UI](https://ui.shadcn.com/) for the beautiful components
 - [Tailwind CSS](https://tailwindcss.com/) for styling
 - [Framer Motion](https://www.framer.com/motion/) for animations
 - [Drizzle ORM](https://orm.drizzle.team/) for database operations
+- [SendGrid](https://sendgrid.com/) for email delivery services
+- [Azure Blob Storage](https://azure.microsoft.com/en-us/services/storage/blobs/) for document storage
