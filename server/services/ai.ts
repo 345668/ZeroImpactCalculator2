@@ -165,9 +165,29 @@ export class AIService {
           body = body.replace(regex, String(value));
         });
         
-        // Process markdown-style formatting
+        // Process email template HTML content
         const processEmailTemplate = (content: string): string => {
           let processed = content;
+          
+          // If the content already contains HTML tags, assume it's formatted and only add missing styling
+          if (content.includes('<p>') || content.includes('<div>') || content.includes('<ul>')) {
+            // Add default styling to paragraph elements that don't have styling
+            processed = processed.replace(/<p(?![^>]*style)[^>]*>/g, '<p style="margin: 16px 0; padding: 0;">');
+            
+            // Add default styling to list elements that don't have styling
+            processed = processed.replace(/<ul(?![^>]*style)[^>]*>/g, '<ul style="padding-left: 20px; margin: 15px 0;">');
+            processed = processed.replace(/<li(?![^>]*style)[^>]*>/g, '<li style="margin-bottom: 8px;">');
+            
+            // Add styling to links that don't have styling
+            processed = processed.replace(/<a(?![^>]*style)[^>]*>/g, '<a style="color: #007bff; text-decoration: underline;">');
+            
+            // Add styling to horizontal rules
+            processed = processed.replace(/<hr(?![^>]*style)[^>]*>/g, '<hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">');
+            
+            return processed;
+          }
+          
+          // For non-HTML content, convert markdown to HTML
           
           // Convert markdown links to HTML links
           processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #007bff; text-decoration: underline;">$1</a>');
@@ -188,11 +208,11 @@ export class AIService {
           processed = processed.replace(/\n/g, '<br>\n');
           
           // Now convert the paragraph markers back to proper paragraph tags
-          processed = processed.replace(/§PARAGRAPH§/g, '</p><p style="margin: 16px 0;">');
+          processed = processed.replace(/§PARAGRAPH§/g, '</p><p style="margin: 16px 0; padding: 0;">');
           
           // Wrap in paragraph tags if not already wrapped
           if (!processed.startsWith('<p')) {
-            processed = '<p style="margin: 16px 0;">' + processed;
+            processed = '<p style="margin: 16px 0; padding: 0;">' + processed;
           }
           if (!processed.endsWith('</p>')) {
             processed = processed + '</p>';
