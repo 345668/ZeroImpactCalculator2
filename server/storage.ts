@@ -94,6 +94,7 @@ export class DbStorage implements IStorage {
         fileType: insertSubmission.fileType,
         fileUploadedAt: insertSubmission.fileUploadedAt ? new Date(insertSubmission.fileUploadedAt) : undefined,
         fileMetadata: insertSubmission.fileMetadata,
+        emailSent: "no", // Explicitly set emailSent to "no" when creating
         submittedAt: new Date()
       };
 
